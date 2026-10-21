@@ -25,7 +25,9 @@ function dispatcher(overrides = {}) {
     },
     newSession: async () => ({ agent: { session: { header: { id: 'sess-new' } } } }),
     renameSession: async (_chat, label) => label,
-    listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1', labels: {} }),
+    archiveSession: async () => ({ sessionId: 'sess-1', label: 'test' }),
+    unarchiveSession: async () => ({ sessionId: 'sess-1', label: 'test' }),
+    listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1', archived: [], labels: {} }),
     useSession: async () => 'sess-2',
     cancelCurrent: async () => true,
     setSandboxMode: async (_chat, mode) => mode,
@@ -198,6 +200,14 @@ test('/admin can grant and revoke capabilities', async () => {
   assert.match(sent[0].text, /已更新 42 的白名单：write/)
   await run('/admin perms 42')
   assert.match(sent[1].text, /L1）：read/)
+})
+
+test('/archive and /unarchive manage archived sessions', async () => {
+  const { run, sent } = dispatcher()
+  await run('/archive test')
+  assert.match(sent[0].text, /已归档会话 test/)
+  await run('/unarchive test')
+  assert.match(sent[1].text, /已恢复会话 test/)
 })
 
 test('/sandbox is L3-only and switches the mode', async () => {

@@ -82,6 +82,9 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 | `/reset [名称]` | 重置为新会话（等同 `/new`） |
 | `/rename <名称>` | 给当前会话命名 |
 | `/sessions` | 当前工作区的会话列表（显示名称） |
+| `/archive [名称\|序号]` | 归档会话，从列表隐藏，可恢复 |
+| `/unarchive <名称\|会话id>` | 恢复已归档会话 |
+| `/archived` | 已归档会话列表 |
 | `/use <序号\|名称>` | 切换会话 |
 | `/stop` | 中断当前回合 |
 

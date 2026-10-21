@@ -260,6 +260,47 @@ export class CommandDispatcher {
       },
     })
 
+    this.register('archive', {
+      usage: 'archive [名称|序号]',
+      description: '归档会话（从列表隐藏，可恢复）',
+      minLevel: 'L1',
+      capability: 'workspace',
+      handler: async ({ message, args, level }) => {
+        if (message.chat.type === 'group' && level !== 'L3') throw new Error('群聊是共享会话，只有 L3 能归档')
+        const token = args.join(' ').trim() || undefined
+        const { sessionId, label } = await this.manager.archiveSession(message.chat, token)
+        return `已归档会话 ${label ?? shortId(sessionId)}；用 /archived 查看，/unarchive 恢复。`
+      },
+    })
+
+    this.register('unarchive', {
+      usage: 'unarchive <名称|会话id>',
+      description: '恢复已归档会话',
+      minLevel: 'L1',
+      capability: 'workspace',
+      handler: async ({ message, args }) => {
+        const token = args.join(' ').trim()
+        if (token === '') throw new Error('用法：/unarchive <名称|会话id>')
+        const { sessionId, label } = await this.manager.unarchiveSession(message.chat, token)
+        return `已恢复会话 ${label ?? shortId(sessionId)}。`
+      },
+    })
+
+    this.register('archived', {
+      usage: 'archived',
+      description: '已归档会话列表',
+      minLevel: 'L1',
+      capability: 'workspace',
+      handler: async ({ message, level }) => {
+        const { archived, labels } = await this.manager.listSessions(message.chat, level)
+        if (archived.length === 0) return ['没有已归档的会话。']
+        return [
+          '已归档会话：',
+          ...archived.map((id, index) => `${index + 1}. ${labels[id] ? labels[id] + '  ' : ''}${shortId(id)}`),
+        ]
+      },
+    })
+
     this.register('bind', {
       usage: 'bind <配对码>',
       description: '用配对码绑定账号',

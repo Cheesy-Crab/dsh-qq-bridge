@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.12.0
+
+- 新增会话归档：`/archive [名称|序号]`、`/archived`、`/unarchive <名称|id>`。
+- 归档会调用 DSH 的 `archiveSession`，并持久化在 `state.json` 的 `archived` 里；
+  列表隐藏但日志保留，可恢复。
+- 归档当前会话后会清空 active，下一条消息自动新建会话。
+- 有回合在跑时拒绝归档。
+
 ## 0.11.0
 
 - 会话支持可选名称：`/new test`、`/reset test`、`/rename 新名字`。

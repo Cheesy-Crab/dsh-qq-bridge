@@ -56,6 +56,7 @@ export class ChatAgentManager {
         sessionId: saved?.sessionId,
         sessions: saved?.sessions ?? {},
         labels: saved?.labels ?? {},
+        archived: saved?.archived ?? [],
         guest: false,
         level: 'L1',
         capabilities: [],
@@ -75,6 +76,7 @@ export class ChatAgentManager {
       sessionId: state.sessionId,
       sessions: state.sessions,
       labels: state.labels,
+      archived: state.archived,
       updatedAt: Date.now(),
     })
   }
@@ -436,12 +438,76 @@ export class ChatAgentManager {
     const state = this.stateFor(chat)
     state.level = level
     const workspace = await this.ensureWorkspace(state)
+    const archived = new Set(state.archived ?? [])
     return {
       workspace,
       activeSessionId: state.sessionId,
-      sessionIds: [...workspace.sessionIds],
+      sessionIds: [...workspace.sessionIds].filter((id) => !archived.has(id)),
+      archived: [...archived],
       labels: { ...state.labels },
     }
+  }
+
+  /**
+   * Resolve a session by 1-based index, label, or id prefix.
+   * @param {{ type: string, id: string }} chat
+   * @param {string} token
+   * @param {{ includeArchived?: boolean }} [options]
+   */
+  async resolveSession(chat, token, { includeArchived = false } = {}) {
+    const { sessionIds, archived, labels } = await this.listSessions(chat)
+    const pool = includeArchived ? [...sessionIds, ...archived] : sessionIds
+    const index = Number(token)
+    if (Number.isInteger(index) && index >= 1 && index <= pool.length) return pool[index - 1]
+    return pool.find((id) => labels[id] === token)
+      ?? pool.find((id) => id.startsWith(String(token)))
+  }
+
+  async archiveSession(chat, token) {
+    const state = this.stateFor(chat)
+    if (state.pending > 0) throw new Error('当前还有回合在跑，结束后再归档')
+    const { sessionIds, labels } = await this.listSessions(chat, state.level ?? 'L1')
+    let sessionId
+    if (token === undefined || token === '') sessionId = state.sessionId
+    else {
+      const index = Number(token)
+      sessionId = Number.isInteger(index) && index >= 1 && index <= sessionIds.length
+        ? sessionIds[index - 1]
+        : sessionIds.find((id) => labels[id] === token) ?? sessionIds.find((id) => id.startsWith(String(token)))
+    }
+    if (!sessionId) throw new Error(`找不到可归档的会话：${token ?? '当前会话'}`)
+
+    try {
+      const registry = this.ctx.get('workspaceRegistry')
+      await registry?.archiveSession?.(sessionId)
+    } catch (error) {
+      this.log('warn', `workspace archive refused for ${sessionId}: ${error?.message ?? error}`)
+    }
+
+    state.archived = [...new Set([...(state.archived ?? []), sessionId])]
+    if (state.sessionId === sessionId) {
+      state.sessionId = undefined
+      state.handle = undefined
+    }
+    this.persist(state)
+    this.log('info', `session archived ${state.key} ${sessionId}`)
+    return { sessionId, label: state.labels[sessionId] }
+  }
+
+  async unarchiveSession(chat, token) {
+    const state = this.stateFor(chat)
+    const sessionId = await this.resolveSession(chat, token, { includeArchived: true })
+    if (!sessionId) throw new Error(`找不到归档会话：${token}`)
+    try {
+      const registry = this.ctx.get('workspaceRegistry')
+      await registry?.unarchiveSession?.(sessionId)
+    } catch (error) {
+      this.log('warn', `workspace unarchive refused for ${sessionId}: ${error?.message ?? error}`)
+    }
+    state.archived = (state.archived ?? []).filter((id) => id !== sessionId)
+    this.persist(state)
+    this.log('info', `session unarchived ${state.key} ${sessionId}`)
+    return { sessionId, label: state.labels[sessionId] }
   }
 
   async useSession(chat, token, level = 'L1') {

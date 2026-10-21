@@ -54,6 +54,8 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
         }
         return workspace
       },
+      archiveSession: async () => {},
+      unarchiveSession: async () => {},
     },
     agents: {
       get: () => undefined,
@@ -162,4 +164,20 @@ test('named sessions persist labels and can be selected by name', async () => {
   assert.equal(await manager.renameSession(chat, 'renamed'), 'renamed')
   list = await manager.listSessions(chat, 'L1')
   assert.equal(list.labels[list.activeSessionId], 'renamed')
+})
+
+test('archiving hides a session and unarchive restores it', async () => {
+  const { manager } = fakeEnvironment()
+  const chat = { type: 'private', id: '42' }
+
+  await manager.newSession(chat, 'L1', 'test')
+  await manager.archiveSession(chat)
+  let list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.sessionIds.length, 0)
+  assert.equal(list.archived.length, 1)
+
+  await manager.unarchiveSession(chat, 'test')
+  list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.sessionIds.length, 1)
+  assert.equal(list.archived.length, 0)
 })
