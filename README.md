@@ -121,6 +121,10 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 - 未绑定（L0）用户在群里发普通消息会收到「先 /bind」提示；指令仍可用。
 - 审批请求会 @ 发起人，只有发起人能回 1/2。
 
+## Windows 另一台电脑部署
+
+见 [docs/deploy-windows.md](docs/deploy-windows.md)：建 profile、装插件（私有仓库鉴权或路径安装）、配管理员与 key、接 NapCat、开机自启。
+
 ## Linux 部署
 
 完整步骤见 [docs/deploy-linux.md](docs/deploy-linux.md)，包含：
