@@ -205,6 +205,8 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 - 管理员账号就是 L3，等同于服务器权限；不要随意 `/admin level` 提权。
 - 群工作区内容对群成员可见，提醒用户不要发敏感信息。
 - 审批 fail-closed：超时、错人、无应答者都会拒绝。
+- **L3 也不自动放行**：L3 的沙箱是 `danger-full-access`，但审批仍是 `ask`，由 L3 的 QQ 本人回 `1`/`2`。
+- **没有跨会话授权**：另一个会话无法代授权限；DSH 权限按会话与每次调用判定。
 - 密钥文件只给运行 DSH 的账号读；不要提交进 git。
 
 ## 9. 升级
