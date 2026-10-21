@@ -28,6 +28,13 @@ test('config keeps group and limit defaults', () => {
   assert.equal(config.sandbox.modeByLevel.L1, 'read-only')
   assert.equal(config.sandbox.modeByLevel.L3, 'danger-full-access')
   assert.deepEqual(config.access.whitelist, {})
+  assert.deepEqual(config.commandPrefix, ['/', '!', '#'])
+})
+
+test('config accepts a custom prefix list', () => {
+  const config = normalizeConfig({ commandPrefix: ['!', '。'] })
+  assert.deepEqual(config.commandPrefix, ['!', '。'])
+  assert.throws(() => normalizeConfig({ commandPrefix: [] }), /commandPrefix/)
 })
 
 test('config validates the capability whitelist', () => {

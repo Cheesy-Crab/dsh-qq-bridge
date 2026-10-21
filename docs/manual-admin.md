@@ -165,6 +165,7 @@ access:
 - id: qq-bridge
   config:
     workspacesRoot: E:\QQdsh
+    commandPrefix: ['/', '!', '#']
     agent:
       provider: deepseek-official
       model: deepseek-flash

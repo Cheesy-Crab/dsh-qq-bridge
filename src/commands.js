@@ -8,18 +8,22 @@ const shortId = (id) => {
 }
 
 /**
- * Parse `<prefix>name args...`.
+ * Parse `<prefix>name args...` for any accepted prefix.
  * @param {string} text
- * @param {string} prefix
- * @returns {{ name: string, args: string[] } | null}
+ * @param {string | string[]} prefixes
+ * @returns {{ name: string, args: string[], prefix: string } | null}
  */
-export function parseCommand(text, prefix = '/') {
+export function parseCommand(text, prefixes = '/') {
   const trimmed = String(text ?? '').trim()
-  if (!trimmed.startsWith(prefix)) return null
+  const list = (Array.isArray(prefixes) ? prefixes : [prefixes])
+    .filter((prefix) => typeof prefix === 'string' && prefix !== '')
+    .sort((left, right) => right.length - left.length)
+  const prefix = list.find((candidate) => trimmed.startsWith(candidate))
+  if (prefix === undefined) return null
   const body = trimmed.slice(prefix.length).trim()
-  if (body === '') return { name: 'help', args: [] }
+  if (body === '') return { name: 'help', args: [], prefix }
   const [name, ...args] = body.split(/\s+/)
-  return { name: name.toLowerCase(), args }
+  return { name: name.toLowerCase(), args, prefix }
 }
 
 /**
@@ -50,8 +54,13 @@ export class CommandDispatcher {
     for (const alias of aliases) this.commands.set(alias, this.commands.get(name))
   }
 
+  prefixes() {
+    const value = this.config.commandPrefix
+    return (Array.isArray(value) ? value : [value]).filter((prefix) => typeof prefix === 'string' && prefix !== '')
+  }
+
   prefix() {
-    return this.config.commandPrefix
+    return this.prefixes()[0] ?? '/'
   }
 
   /**
@@ -60,12 +69,12 @@ export class CommandDispatcher {
    * @returns {Promise<boolean>} whether the message was a command
    */
   async execute(message, { level = 'L0', capabilities = [] } = {}) {
-    const parsed = parseCommand(message.text, this.prefix())
+    const parsed = parseCommand(message.text, this.prefixes())
     if (!parsed) return false
     this.manager?.setContext?.(message.chat, { level, capabilities })
     const command = this.commands.get(parsed.name)
     if (!command) {
-      await this.reply(message.chat, `未知指令 ${this.prefix()}${parsed.name}，发 ${this.prefix()}help 查看可用指令。`)
+      await this.reply(message.chat, `未知指令 ${parsed.prefix}${parsed.name}，发 ${parsed.prefix}help 查看可用指令。`)
       return true
     }
     if (!atLeast(level, command.minLevel)) {
@@ -350,7 +359,7 @@ export class CommandDispatcher {
   }
 
   helpText() {
-    const lines = ['可用指令：']
+    const lines = [`可用指令（前缀：${this.prefixes().join('  ')}）：`]
     const seen = new Set()
     for (const [name, command] of this.commands) {
       if (seen.has(command)) continue

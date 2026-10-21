@@ -61,9 +61,16 @@ function dispatcher(overrides = {}) {
 }
 
 test('parseCommand splits name and args', () => {
-  assert.deepEqual(parseCommand('/ws new demo', '/'), { name: 'ws', args: ['new', 'demo'] })
-  assert.deepEqual(parseCommand('/', '/'), { name: 'help', args: [] })
+  assert.deepEqual(parseCommand('/ws new demo', '/'), { name: 'ws', args: ['new', 'demo'], prefix: '/' })
+  assert.deepEqual(parseCommand('/', '/'), { name: 'help', args: [], prefix: '/' })
   assert.equal(parseCommand('hello', '/'), null)
+})
+
+test('parseCommand accepts multiple prefixes and prefers the longest', () => {
+  assert.equal(parseCommand('!whoami', ['/', '!', '#']).name, 'whoami')
+  assert.equal(parseCommand('#status', ['/', '!', '#']).name, 'status')
+  assert.equal(parseCommand('!!help', ['/', '!!']).name, 'help')
+  assert.equal(parseCommand('hello', ['/', '!']), null)
 })
 
 test('non-command text is not handled', async () => {

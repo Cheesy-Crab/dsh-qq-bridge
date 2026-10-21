@@ -162,7 +162,7 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 | `guestWorkspaceName` | `_guest` | 访客沙箱目录名 |
 | `defaultWorkspaceName` | `default` | 每个 QQ 的默认工作区名 |
 | `stateFile` | `${DSH_HOME}/storages/qq-bridge/state.json` | 聊天/工作区/会话映射 |
-| `commandPrefix` | `/` | 指令前缀 |
+| `commandPrefix` | `['/', '!', '#']` | 指令前缀，可配置字符串或数组；多字符前缀按最长匹配 |
 | `agent.provider` / `agent.model` | `deepseek-official` / `deepseek-flash` | 会话使用的模型路由 |
 | `agent.preset` | `standard` | agent preset（决定工具集，缺省会导致只有全局工具） |
 | `agent.turnTimeoutMs` | `300000` | 单轮超时（毫秒） |

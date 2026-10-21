@@ -6,7 +6,7 @@ export const DEFAULTS = Object.freeze({
   workspacesRoot: '',
   defaultWorkspaceName: 'default',
   stateFile: '',
-  commandPrefix: '/',
+  commandPrefix: Object.freeze(['/', '!', '#']),
   guestWorkspaceName: '_guest',
   apiKeyFile: '',
   apiKeyEnv: 'DEEPSEEK_API_KEY',
@@ -95,8 +95,13 @@ export function normalizeConfig(raw) {
   if (input.stateFile !== undefined && typeof input.stateFile !== 'string') {
     fail('stateFile must be a string')
   }
-  if (input.commandPrefix !== undefined && (typeof input.commandPrefix !== 'string' || input.commandPrefix.trim() === '')) {
-    fail('commandPrefix must be a non-empty string')
+  let commandPrefix = [...DEFAULTS.commandPrefix]
+  if (input.commandPrefix !== undefined) {
+    const list = Array.isArray(input.commandPrefix) ? input.commandPrefix : [input.commandPrefix]
+    if (list.length === 0 || list.some((prefix) => typeof prefix !== 'string' || prefix.trim() === '')) {
+      fail('commandPrefix must be a non-empty string or an array of non-empty strings')
+    }
+    commandPrefix = [...new Set(list.map((prefix) => prefix.trim()))]
   }
   const rawTransport = input.transport ?? {}
   const transport = {
@@ -211,6 +216,7 @@ export function normalizeConfig(raw) {
     access,
     approval,
     sandbox,
+    commandPrefix,
     selfTestModel,
   }
 }
