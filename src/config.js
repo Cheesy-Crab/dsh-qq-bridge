@@ -16,6 +16,7 @@ export const DEFAULTS = Object.freeze({
   agent: Object.freeze({
     provider: 'deepseek-official',
     model: 'deepseek-flash',
+    preset: 'standard',
     turnTimeoutMs: 300000,
     maxQueue: 3,
   }),
@@ -25,6 +26,14 @@ export const DEFAULTS = Object.freeze({
   }),
   approval: Object.freeze({
     timeoutSec: 120,
+  }),
+  sandbox: Object.freeze({
+    modeByLevel: Object.freeze({
+      L0: 'read-only',
+      L1: 'workspace-write',
+      L2: 'workspace-write',
+      L3: 'danger-full-access',
+    }),
   }),
   transport: Object.freeze({
     kind: 'onebot',
@@ -151,9 +160,23 @@ export function normalizeConfig(raw) {
   if (!Number.isInteger(approval.timeoutSec) || approval.timeoutSec <= 0) {
     fail('approval.timeoutSec must be a positive integer')
   }
+
+  const SANDBOX_MODES = new Set(['read-only', 'workspace-write', 'danger-full-access'])
+  const rawSandbox = input.sandbox ?? {}
+  const sandbox = {
+    ...DEFAULTS.sandbox,
+    ...rawSandbox,
+    modeByLevel: { ...DEFAULTS.sandbox.modeByLevel, ...(rawSandbox.modeByLevel ?? {}) },
+  }
+  for (const [level, mode] of Object.entries(sandbox.modeByLevel)) {
+    if (!SANDBOX_MODES.has(mode)) {
+      fail(`sandbox.modeByLevel.${level} must be one of ${[...SANDBOX_MODES].join(', ')}`)
+    }
+  }
   const agent = { ...DEFAULTS.agent, ...(input.agent ?? {}) }
   if (typeof agent.provider !== 'string' || agent.provider === '') fail('agent.provider must be a non-empty string')
   if (typeof agent.model !== 'string' || agent.model === '') fail('agent.model must be a non-empty string')
+  if (typeof agent.preset !== 'string' || agent.preset === '') fail('agent.preset must be a non-empty string')
   if (!Number.isInteger(agent.turnTimeoutMs) || agent.turnTimeoutMs <= 0) fail('agent.turnTimeoutMs must be a positive integer')
   if (!Number.isInteger(agent.maxQueue) || agent.maxQueue <= 0) fail('agent.maxQueue must be a positive integer')
   if (input.defaultWorkspaceName !== undefined) {
@@ -174,6 +197,7 @@ export function normalizeConfig(raw) {
     agent,
     access,
     approval,
+    sandbox,
     selfTestModel,
   }
 }

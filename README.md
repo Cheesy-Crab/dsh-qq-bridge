@@ -164,8 +164,10 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 | `stateFile` | `${DSH_HOME}/storages/qq-bridge/state.json` | 聊天/工作区/会话映射 |
 | `commandPrefix` | `/` | 指令前缀 |
 | `agent.provider` / `agent.model` | `deepseek-official` / `deepseek-flash` | 会话使用的模型路由 |
+| `agent.preset` | `standard` | agent preset（决定工具集，缺省会导致只有全局工具） |
 | `agent.turnTimeoutMs` | `300000` | 单轮超时（毫秒） |
 | `agent.maxQueue` | `3` | 每个聊天最多排队的消息数 |
+| `sandbox.modeByLevel` | `L0 read-only`；`L1/L2 workspace-write`；`L3 danger-full-access` | 每个等级会话的文件沙箱模式 |
 | `access.admins` | `[]` | 管理员 openid 列表（L3） |
 | `access.bindCodeTtlMinutes` | `5` | 配对码有效期 |
 | `limits.maxWorkspaces` | `{L1:3, L2:10, L3:0}` | 每人工作区数，0 为不限 |

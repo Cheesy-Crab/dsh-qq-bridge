@@ -120,6 +120,16 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 
 等级与配额含义见 [使用手册](manual-user.md#7-权限等级)。
 
+文件策略按等级自动套用（默认见上表），L3 也可以在 QQ 里临时切换当前会话：
+
+```
+/sandbox danger-full-access
+/sandbox workspace-write
+/sandbox
+```
+
+`agent.preset` 决定会话能看到哪些工具。不要删除，否则会话只剩全局的 `working_directory`，连写文件都做不到。
+
 ## 5. 配置项
 
 在 profile 的 `cordis.patch.yml` 里按 id 覆盖：
@@ -131,7 +141,14 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
     agent:
       provider: deepseek-official
       model: deepseek-flash
+      preset: standard
       turnTimeoutMs: 300000
+    sandbox:
+      modeByLevel:
+        L0: read-only
+        L1: workspace-write
+        L2: workspace-write
+        L3: danger-full-access
     limits:
       maxChars: 1800
       maxWorkspaces: { L1: 3, L2: 10, L3: 0 }

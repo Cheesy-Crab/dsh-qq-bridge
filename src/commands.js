@@ -119,6 +119,7 @@ export class CommandDispatcher {
           `工作区：${workspaceName ?? '（未创建）'}`,
           `路径：${workspacePath ?? '（无）'}`,
           `会话：${summary.sessionShort || '（未创建）'}`,
+          `文件策略：${summary.sandboxMode ?? '默认'}`,
           `排队：${summary.pending}`,
         ]
       },
@@ -203,6 +204,23 @@ export class CommandDispatcher {
       description: '工作区管理',
       minLevel: 'L1',
       handler: ({ message, args, level }) => this.handleWorkspace(message, args, level),
+    })
+
+    this.register('sandbox', {
+      usage: 'sandbox [read-only|workspace-write|danger-full-access]',
+      description: '查看或切换当前会话的文件沙箱模式（L3）',
+      minLevel: 'L3',
+      handler: async ({ message, args }) => {
+        const modes = ['read-only', 'workspace-write', 'danger-full-access']
+        if (args.length === 0) {
+          const summary = this.manager.sessionSummary(message.chat)
+          return `当前文件策略：${summary.sandboxMode ?? '默认'}`
+        }
+        const mode = String(args[0]).toLowerCase()
+        if (!modes.includes(mode)) throw new Error(`用法：${this.prefix()}sandbox ${modes.join('|')}`)
+        await this.manager.setSandboxMode(message.chat, mode)
+        return `已切换文件策略：${mode}`
+      },
     })
 
     this.register('bind', {

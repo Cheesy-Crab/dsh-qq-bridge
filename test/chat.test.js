@@ -14,9 +14,12 @@ test.after(() => fs.rmSync(root, { recursive: true, force: true }))
 function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
   const created = { workspaces: [], agents: [] }
   const followups = []
+  const events = []
   let idleCalls = 0
   const session = {
     seq: 3,
+    header: { id: 'sess-test' },
+    append: (type, data) => events.push({ type, data }),
     deriveMessages: () => (reply === '' ? [] : [{ role: 'assistant', content: [{ type: 'text', text: reply }] }]),
     snapshotEvents: () => (error ? [{ type: 'turn/end', data: { reason: { kind: 'error', error: { message: error } } } }] : []),
   }
@@ -59,11 +62,11 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
     },
     store: { load: () => {}, get: () => undefined, set: () => {} },
   })
-  return { manager, created, sent, session, followups, idleCalls: () => idleCalls }
+  return { manager, created, sent, session, followups, events, idleCalls: () => idleCalls }
 }
 
 test('first message provisions a workspace and session, later messages reuse it', async () => {
-  const { manager, created, sent, followups } = fakeEnvironment()
+  const { manager, created, sent, followups, events } = fakeEnvironment()
 
   await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' })
   await manager.handle({ id: 'm2', chat: { type: 'private', id: '42' }, text: 'again' })
@@ -74,10 +77,17 @@ test('first message provisions a workspace and session, later messages reuse it'
   assert.equal(created.agents[0].agentOptions.provider, 'deepseek-official')
   assert.equal(followups[0].role, 'user')
   assert.equal(followups[0].id, 'qq-private-42-m1')
+  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['workspace-write'])
   assert.deepEqual(sent, [
     { chat: { type: 'private', id: '42' }, text: 'pong' },
     { chat: { type: 'private', id: '42' }, text: 'pong' },
   ])
+})
+
+test('L3 sessions get danger-full-access', async () => {
+  const { manager, events } = fakeEnvironment()
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' }, { level: 'L3' })
+  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['danger-full-access'])
 })
 
 test('failed turns are reported to the chat', async () => {

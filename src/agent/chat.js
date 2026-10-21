@@ -86,6 +86,29 @@ export class ChatAgentManager {
     return { provider: this.config.agent.provider, model: this.config.agent.model }
   }
 
+  /**
+   * Mount the configured agent preset (tools/prompt/skills). Raw
+   * `agents.create` does not select one, which leaves the agent with only
+   * host-global tools such as `working_directory`.
+   * @param {any} agent
+   */
+  async ensurePreset(agent) {
+    const preset = this.config.agent.preset
+    const presets = this.ctx.get('agentPresets')
+    if (!preset || !presets) return
+    try {
+      if (presets.composedPreset?.(agent.ctx) === preset) return
+      if (presets.composedPreset?.(agent.ctx) === undefined && typeof presets.recompose === 'function') {
+        await presets.recompose(agent.ctx, preset)
+      } else {
+        await presets.select(agent, preset)
+      }
+      this.log('info', `agent preset ${preset} mounted for ${agent.id}`)
+    } catch (error) {
+      this.log('warn', `agent preset ${preset} was not applied: ${error?.message ?? error}`)
+    }
+  }
+
   async ensureWorkspace(state) {
     const { workspaceRegistry } = this.services()
     const level = state.level ?? 'L1'
@@ -164,8 +187,10 @@ export class ChatAgentManager {
       try {
         const handle = await agents.resume({ resumeSessionId: state.sessionId, agentOptions: this.agentOptions() })
         await this.attach(workspace, state.sessionId)
+        await this.ensurePreset(handle.agent)
         this.applyPolicy(handle, state.level ?? 'L1')
         this.track(state, state.sessionId)
+        this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state)
         state.handle = handle
         this.log('info', `session resumed ${state.key} ${state.sessionId}`)
         return handle
@@ -182,12 +207,17 @@ export class ChatAgentManager {
     const sessionId = `sess-qq-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
     const handle = await agents.create({
       sessionId,
-      meta: { cwd: workspace.path },
+      meta: {
+        cwd: workspace.path,
+        ...(this.config.agent.preset ? { agentPreset: this.config.agent.preset } : {}),
+      },
       agentOptions: this.agentOptions(),
     })
     await this.attach(workspace, sessionId)
+    await this.ensurePreset(handle.agent)
     this.applyPolicy(handle, state.level ?? 'L1')
     this.track(state, sessionId)
+    this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state)
 
     state.sessionId = sessionId
     state.sessions[workspace.id] = sessionId
@@ -243,6 +273,42 @@ export class ChatAgentManager {
       level: state.level ?? 'L1',
       requester: String(requester),
     })
+  }
+
+  /**
+   * Appoint the session's sandbox mode from the level mapping. The mode lives
+   * in the session log (`sandbox/mode`), so replay keeps it across restarts.
+   * @param {any} session
+   * @param {string} level
+   * @param {any} state
+   */
+  applySandboxMode(session, level, state) {
+    const mode = this.config.sandbox?.modeByLevel?.[level] ?? 'workspace-write'
+    if (state.sandboxMode === mode) return mode
+    try {
+      const policy = this.ctx.get('sandboxPolicy')
+      const current = policy?.overrideOf?.(session)
+      if (current !== mode) session.append('sandbox/mode', { mode })
+      state.sandboxMode = mode
+      this.log('info', `sandbox mode ${mode} for ${state.key}`)
+    } catch (error) {
+      this.log('warn', `sandbox mode was not applied: ${error?.message ?? error}`)
+    }
+    return mode
+  }
+
+  /**
+   * Explicit switch used by the `/sandbox` command.
+   * @param {{ type: string, id: string }} chat
+   * @param {'read-only' | 'workspace-write' | 'danger-full-access'} mode
+   */
+  async setSandboxMode(chat, mode) {
+    const state = this.stateFor(chat)
+    const handle = await this.ensureSession(state)
+    handle.agent.session.append('sandbox/mode', { mode })
+    state.sandboxMode = mode
+    this.log('info', `sandbox mode ${mode} switched for ${state.key}`)
+    return mode
   }
 
   async listWorkspaces(chat) {
@@ -376,6 +442,7 @@ export class ChatAgentManager {
       workspaceName: state.workspaceName,
       sessionId: state.sessionId,
       sessionShort: shortId(state.sessionId),
+      sandboxMode: state.sandboxMode,
       pending: state.pending,
     }
   }
@@ -408,6 +475,7 @@ export class ChatAgentManager {
     const handle = await this.ensureSession(state)
     const session = handle.agent.session
     this.track(state, session?.header?.id, message.userId)
+    this.applySandboxMode(session, state.level ?? 'L1', state)
     const fromSeq = session.seq
 
     handle.agent.followup({

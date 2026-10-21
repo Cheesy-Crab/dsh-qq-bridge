@@ -130,6 +130,28 @@ const handle = await ctx.agents.resume({
 - 同一会话已经 live 时（`ctx.agents.get(id)` 有值）不要再 resume，直接复用裸 Agent。
 - `ws.sessionIds` 是过滤后的视图，只列 header.cwd 能解析且匹配该工作区路径的会话。
 
+## Agent preset
+
+- 裸 `ctx.agents.create()` **不会挂载 preset**，会话只拿到 Host 全局工具（常见现象：只有 `working_directory`，没有 read/write/bash）。
+- 创建时把 preset 写进 header：`meta: { cwd, agentPreset: 'standard' }`。
+- 随后必须显式挂载，才能让工具进入该 agent 的 scope：
+
+```js
+const presets = ctx.get('agentPresets')
+// 新 agent（未开始轮次）
+await presets.select(agent, 'standard')
+// 已有历史的 agent：select 会抛 agent-preset/locked，用 recompose 仅挂载工具
+await presets.recompose(agent.ctx, 'standard')
+```
+
+- `agentPresets.composedPreset(agent.ctx)` 可判断当前是否已挂载。
+
+## 会话沙箱模式
+
+- 会话级模式是日志事件：`session.append('sandbox/mode', { mode })`，可选 `read-only` / `workspace-write` / `danger-full-access`。
+- `ctx.sandboxPolicy.overrideOf(session)` 读当前覆盖；`resolve({ session })` 得到生效模式与工作区根。
+- `workspace-write` 的写入边界是会话 cwd；`danger-full-access` 会关闭沙箱限制，适合管理员会话。
+
 ## 加载与生命周期
 
 - 插件 `apply(ctx, config)` 时 root 上只有 `loader`；其他服务稍后才注册，需要轮询 `ctx.get(name)` 或声明 `inject`。

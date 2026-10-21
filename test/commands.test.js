@@ -27,6 +27,7 @@ function dispatcher(overrides = {}) {
     listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1' }),
     useSession: async () => 'sess-2',
     cancelCurrent: async () => true,
+    setSandboxMode: async (_chat, mode) => mode,
     ...overrides,
   }
   const commands = new CommandDispatcher({
@@ -148,4 +149,12 @@ test('groups share one session and only L3 can reset it', async () => {
   assert.match(sent[0].text, /群聊是共享会话，只有 L3 能重置/)
   await run('/ws list', 'L1', group)
   assert.match(sent[1].text, /群聊里只能使用 \/ws info/)
+})
+
+test('/sandbox is L3-only and switches the mode', async () => {
+  const { run, sent } = dispatcher()
+  await run('/sandbox', 'L1')
+  assert.match(sent[0].text, /权限不足：该指令需要 L3/)
+  await run('/sandbox danger-full-access', 'L3')
+  assert.match(sent[1].text, /已切换文件策略：danger-full-access/)
 })

@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.8.0
+
+- 修复：会话没有挂载 agent preset，导致只有 `working_directory`、无法写文件或执行命令。
+- 新增 `agent.preset`（默认 `standard`），创建与恢复会话时挂载。
+- 新增按等级的文件沙箱策略 `sandbox.modeByLevel`：L0 只读、L1/L2 工作区可写、L3 完全访问。
+- 新增管理员指令 `/sandbox [模式]`，可查看或切换当前会话的文件策略。
+
 ## 0.7.0 — M6（进行中）
 
 - 新增 GitHub Actions 双平台 CI（ubuntu / windows）。
