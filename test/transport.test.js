@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
@@ -82,6 +83,30 @@ test('transport adopts a reconnecting client', async () => {
   second.close()
   assert.equal(await waitFor(() => transport.status().connected === false), true)
 
+  await transport.stop()
+})
+
+test('sendImage posts a base64 image segment', async () => {
+  const transport = new OneBotTransport({ host: '127.0.0.1', port: 0, log: () => {} })
+  await transport.start()
+  const ws = await openClient(`ws://127.0.0.1:${transport.port}/`)
+  const actions = []
+  ws.addEventListener('message', (event) => {
+    const payload = JSON.parse(event.data)
+    actions.push(payload)
+    ws.send(JSON.stringify({ status: 'ok', retcode: 0, data: {}, echo: payload.echo }))
+  })
+
+  const file = path.join(os.tmpdir(), `qq-shot-${Date.now()}.jpg`)
+  fs.writeFileSync(file, Buffer.from([0xff, 0xd8, 0xff, 0xd9]))
+  await transport.sendImage({ type: 'private', id: '42' }, file)
+  assert.equal(actions[0].action, 'send_private_msg')
+  assert.equal(actions[0].params.message[0].type, 'image')
+  assert.match(actions[0].params.message[0].data.file, /^base64:\/\//)
+  fs.rmSync(file, { force: true })
+
+  ws.close()
+  await wait(50)
   await transport.stop()
 })
 

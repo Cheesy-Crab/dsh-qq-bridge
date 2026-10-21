@@ -82,6 +82,7 @@ export class QqBridge {
       root: this.root,
       log: this.log,
       send,
+      sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       status: () => this.status(),
     })
     try {

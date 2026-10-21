@@ -7,7 +7,9 @@ import { validateName } from '../src/paths.js'
 
 function dispatcher(overrides = {}) {
   const sent = []
+  const images = []
   const manager = {
+    workspacePathFor: async () => '/root/ws',
     sessionSummary: () => ({
       workspaceId: 'ws-1',
       workspaceName: 'default',
@@ -55,13 +57,17 @@ function dispatcher(overrides = {}) {
     send: async (chat, text) => {
       sent.push({ chat, text })
     },
+    sendImage: async (chat, file, options) => {
+      images.push({ chat, file, options })
+    },
+    screenshot: async ({ dir }) => `${dir}/shot.jpg`,
     status: () => ({ transport: { connected: true }, chats: { chats: 1, pending: 0 }, dedupeSize: 2 }),
   })
   const chat = { type: 'private', id: '42' }
   const ALL = ['workspace', 'read', 'write', 'exec']
   const run = (text, level = 'L3', target = chat, capabilities = ALL) =>
     commands.execute({ chat: target, text }, { level, capabilities })
-  return { commands, sent, run }
+  return { commands, sent, images, run }
 }
 
 test('parseCommand splits name and args', () => {
@@ -208,6 +214,21 @@ test('/ws delete removes the registration and reports the path', async () => {
   await run('/ws delete demo')
   assert.match(sent[0].text, /已从登记中移除工作区 demo/)
   assert.match(sent[0].text, /目录和会话历史保留/)
+})
+
+test('/screenshot captures and sends an image for L3', async () => {
+  const { run, sent, images } = dispatcher()
+  await run('/screenshot')
+  assert.equal(images.length, 1)
+  assert.match(images[0].file, /shot\.jpg$/)
+  assert.match(sent[0].text, /已截屏并发送/)
+})
+
+test('/screenshot is rejected below L3', async () => {
+  const { run, sent, images } = dispatcher()
+  await run('/screenshot', 'L1')
+  assert.equal(images.length, 0)
+  assert.match(sent[0].text, /权限不足：该指令需要 L3/)
 })
 
 test('/archive and /unarchive manage archived sessions', async () => {

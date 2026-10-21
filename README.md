@@ -86,6 +86,7 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 | `/archive [名称\|序号]` | 归档会话，从列表隐藏，可恢复 |
 | `/unarchive <名称\|会话id>` | 恢复已归档会话 |
 | `/archived` | 已归档会话列表 |
+| `/screenshot` | 截取当前屏幕并发送到 QQ（L3） |
 | `/use <序号\|名称>` | 切换会话 |
 | `/stop` | 中断当前回合 |
 

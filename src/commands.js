@@ -1,5 +1,8 @@
+import path from 'node:path'
+
 import { normalizeCapabilities } from './auth/capabilities.js'
 import { atLeast, normalizeLevel } from './auth/levels.js'
+import { captureScreen } from './screenshot.js'
 
 const clip = (value, limit = 200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
 const shortId = (id) => {
@@ -37,14 +40,16 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, status }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen }) {
     this.manager = manager
     this.users = users
     this.config = config
     this.root = root
     this.log = log
     this.send = send
+    this.sendImage = sendImage
     this.status = status
+    this.screenshot = screenshot
     this.commands = new Map()
     this.registerBuiltins()
   }
@@ -298,6 +303,19 @@ export class CommandDispatcher {
           '已归档会话：',
           ...archived.map((id, index) => `${index + 1}. ${labels[id] ? labels[id] + '  ' : ''}${shortId(id)}`),
         ]
+      },
+    })
+
+    this.register('screenshot', {
+      usage: 'screenshot',
+      description: '截取当前屏幕并发送到 QQ（L3）',
+      minLevel: 'L3',
+      handler: async ({ message }) => {
+        const workspacePath = await this.manager.workspacePathFor(message.chat)
+        const dir = path.join(workspacePath, 'attachments', 'qq')
+        const file = await this.screenshot({ dir })
+        await this.sendImage(message.chat, file, message.chat.mention ? { mention: message.chat.mention } : {})
+        return `已截屏并发送（${path.basename(file)}）。`
       },
     })
 

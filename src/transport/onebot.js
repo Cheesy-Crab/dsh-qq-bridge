@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import http from 'node:http'
 import { WebSocket, WebSocketServer } from 'ws'
 
@@ -250,6 +251,24 @@ export class OneBotTransport {
       return this.action('send_group_msg', { group_id: Number(chat.id), message: mention })
     }
     return this.action('send_private_msg', { user_id: Number(chat.id), message: mention })
+  }
+
+  /**
+   * Send a local image file as an image message segment.
+   * @param {{ type: 'private' | 'group', id: string }} chat
+   * @param {string} file
+   * @param {{ mention?: string }} [options]
+   */
+  async sendImage(chat, file, options = {}) {
+    const data = fs.readFileSync(file)
+    const image = { type: 'image', data: { file: `base64://${data.toString('base64')}` } }
+    const message = chat.type === 'group' && options.mention
+      ? [{ type: 'at', data: { qq: String(options.mention) } }, image]
+      : [image]
+    if (chat.type === 'group') {
+      return this.action('send_group_msg', { group_id: Number(chat.id), message })
+    }
+    return this.action('send_private_msg', { user_id: Number(chat.id), message })
   }
 
   action(action, params) {

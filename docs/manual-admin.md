@@ -209,7 +209,22 @@ access:
 - 备份：停掉 DSH，复制 `E:\QQdsh` 和 `~/.dsh/storages/qq-bridge` 即可；密钥文件单独保管。
 - 重置某个用户：删 `users.json` 里对应条目（先停 DSH），或 `/admin level` 重设。
 
-## 7. 日志与排障
+## 7. 截图
+
+L3 在 QQ 里发送：
+
+```
+/screenshot
+```
+
+插件会抓取所有显示器（虚拟屏幕），压缩成 JPEG（质量 70），保存到当前工作区的
+`attachments/qq/`，再以 OneBot `image` 段（base64）发回当前聊天；群里会附带 @。
+
+依赖：Python + Pillow。DSH 自带的 Python 通常已含 Pillow；找不到时可设
+`DSH_QQ_PYTHON` 指向带 Pillow 的 `python.exe`。抓屏需要交互式桌面会话，服务化/
+无桌面环境会失败。
+
+## 8. 日志与排障
 
 | 现象 | 排查 |
 |---|---|
@@ -228,7 +243,7 @@ access:
 
 打开调试日志：启动 DSH 前设 `DSH_QQ_BRIDGE_DEBUG=1`。
 
-## 8. 安全
+## 9. 安全
 
 - NapCat 和插件都在 `127.0.0.1`，不对外暴露 6700/6099。
 - **OneBot token 尚未设置**（见 [TODO](../TODO.md)）：本机自用可接受，跨机/多用户前必须加，填 `websocketClients[].token` 与 `QQ_ONEBOT_TOKEN`。
@@ -239,7 +254,7 @@ access:
 - **没有跨会话授权**：另一个会话无法代授权限；DSH 权限按会话与每次调用判定。
 - 密钥文件只给运行 DSH 的账号读；不要提交进 git。
 
-## 9. 升级
+## 10. 升级
 
 ```powershell
 cd 'E:\dsh\工作区对接QQ'
@@ -249,6 +264,6 @@ git pull
 
 然后重启 DSH。NapCat 不需要动。升级前备份工作区和状态目录。
 
-## 10. 已知缺口
+## 11. 已知缺口
 
 见 [TODO.md](../TODO.md)：官方机器人适配、图片/文件、去重持久化、开机自启、早期测试工作区清理。

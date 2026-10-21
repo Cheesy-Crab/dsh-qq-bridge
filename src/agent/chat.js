@@ -566,6 +566,13 @@ export class ChatAgentManager {
     return workspaceRegistry.list()
   }
 
+  /** Directory of the chat's current workspace, provisioning it if needed. */
+  async workspacePathFor(chat) {
+    const state = this.stateFor(chat)
+    const workspace = await this.ensureWorkspace(state)
+    return workspace.path
+  }
+
   async cancelCurrent(chat) {
     const state = this.stateFor(chat)
     if (!state.handle) return false

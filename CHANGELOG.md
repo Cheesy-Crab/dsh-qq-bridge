@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.14.0
+
+- 新增 L3 指令 `/screenshot`：抓取所有显示器，保存 JPEG 到当前工作区
+  `attachments/qq/`，通过 OneBot `image` 段（base64）发回 QQ；群聊附带 @。
+- 传输层新增 `sendImage`；FakeTransport 同步支持，便于测试。
+- 截图使用 Python + Pillow（优先 DSH 自带 Python，可用 `DSH_QQ_PYTHON` 覆盖），
+  避开 PowerShell 屏幕抓取被 AMSI 拦截的问题。
+
 ## 0.13.0
 
 - 新增 `/ws delete <序号|名称>`：把工作区从 DSH 登记中移除。

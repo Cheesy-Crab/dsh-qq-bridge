@@ -8,6 +8,7 @@ export class FakeTransport {
     this.log = log
     this.handlers = new Set()
     this.sent = []
+    this.images = []
     this.connected = false
   }
 
@@ -42,6 +43,11 @@ export class FakeTransport {
   async sendText(chat, text, options = {}) {
     this.sent.push({ chat, text, options })
     return { messageId: `fake-${this.sent.length}` }
+  }
+
+  async sendImage(chat, file, options = {}) {
+    this.images.push({ chat, file, options })
+    return { messageId: `fake-image-${this.images.length}` }
   }
 
   status() {
