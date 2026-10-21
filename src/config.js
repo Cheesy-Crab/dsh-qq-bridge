@@ -31,8 +31,8 @@ export const DEFAULTS = Object.freeze({
   sandbox: Object.freeze({
     modeByLevel: Object.freeze({
       L0: 'read-only',
-      L1: 'workspace-write',
-      L2: 'workspace-write',
+      L1: 'read-only',
+      L2: 'read-only',
       L3: 'danger-full-access',
     }),
   }),

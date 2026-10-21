@@ -25,7 +25,7 @@ test('config keeps group and limit defaults', () => {
   assert.equal(config.group.sessionScope, 'shared')
   assert.equal(config.limits.maxChars, 1800)
   assert.equal(config.workspacesRoot, '')
-  assert.equal(config.sandbox.modeByLevel.L1, 'workspace-write')
+  assert.equal(config.sandbox.modeByLevel.L1, 'read-only')
   assert.equal(config.sandbox.modeByLevel.L3, 'danger-full-access')
   assert.deepEqual(config.access.whitelist, {})
 })
