@@ -1,0 +1,46 @@
+# 变更记录
+
+## 0.7.0 — M6（进行中）
+
+- 新增 GitHub Actions 双平台 CI（ubuntu / windows）。
+- 新增 `scripts/ci.ps1`、`scripts/ci.sh`，本地可跑与 CI 相同的两步。
+- 新增 Linux 部署文档与 systemd 单元。
+- 新增发布前检查清单。
+
+## 0.6.0 — M5
+
+- 每个群一个专属工作区（`g-<hash>`），全群共享会话。
+- 群聊必须 @机器人；回复自动 @ 发送者。
+- 群指令限制：`/ws info` 可用，`/new` `/reset` 仅 L3。
+
+## 0.5.0 — M4
+
+- 四级权限（L0–L3）、`/bind` 配对码、每日轮次与工作区配额。
+- L0 访客只读：guest 工作区 + 工具限制 + 审批拒绝。
+- QQ 审批桥：`1` 允许 / `2` 拒绝，只认发起人，超时拒绝。
+- 管理指令：`/admin users|invite|level|freeze|unfreeze|ws list`。
+
+## 0.4.0 — M3
+
+- 聊天状态持久化（工作区、会话、每工作区上次会话）。
+- 重启后 `agents.resume()` 续聊，失败回退新会话。
+- 指令层：`/help` `/whoami` `/status` `/ws ...` `/new` `/reset` `/sessions` `/use` `/stop`。
+
+## 0.3.0 — M2
+
+- QQ 私聊消息进入工作区会话，模型回复发回 QQ。
+- 每聊天一个 agent 会话，消息排队串行。
+- API key 从文本文件读取并导入 DSH 凭据存储。
+- 修复：`followup` 必须带 `role` 与 `id`。
+
+## 0.2.0 — M1
+
+- OneBot 11 反向 WebSocket、token 校验、action 回包关联。
+- 消息去重（内存 TTL）、断线重连、客户端断开时拒绝在途 action。
+- 回显模式与假 NapCat 联调脚本。
+
+## 0.1.0 — M0
+
+- 插件骨架：bundle patch、配置校验、生命周期。
+- 跨平台路径层（`E:\QQdsh` / `${DSH_HOME}/qq-workspaces`）。
+- 四个宿主接缝自检：工作区、会话/agent、审批策略、工具限制。

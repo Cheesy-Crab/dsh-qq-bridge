@@ -1,0 +1,30 @@
+[Unit]
+Description=DSH QQ Bridge (dsh-qq-bridge)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dsh
+Group=dsh
+
+# Adjust to where DSH is installed and where its state lives.
+Environment=DSH_HOME=/home/dsh/.dsh
+Environment=NODE_ENV=production
+WorkingDirectory=/home/dsh
+
+# `dsh web` keeps the host (and this plugin) running; replace with the
+# profile you installed the plugin into.
+ExecStart=/usr/local/bin/dsh web
+
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+# The credentials file and DSH home belong to the service user only.
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

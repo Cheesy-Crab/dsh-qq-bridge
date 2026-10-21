@@ -1,0 +1,8 @@
+- insert:
+    - id: qq-bridge
+      name: dsh-qq-bridge
+      config:
+        # workspacesRoot 默认：Windows 为 E:\QQdsh，其他平台为
+        # ${DSH_HOME}/qq-workspaces。在 profile 的 cordis.patch.yml 里按 id
+        # 覆盖即可换成别的目录。
+        selfTest: false

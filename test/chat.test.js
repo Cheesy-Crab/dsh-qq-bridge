@@ -1,0 +1,110 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import test from 'node:test'
+
+import { ChatAgentManager } from '../src/agent/chat.js'
+import { normalizeConfig } from '../src/config.js'
+
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-chat-'))
+
+test.after(() => fs.rmSync(root, { recursive: true, force: true }))
+
+function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
+  const created = { workspaces: [], agents: [] }
+  const followups = []
+  let idleCalls = 0
+  const session = {
+    seq: 3,
+    deriveMessages: () => (reply === '' ? [] : [{ role: 'assistant', content: [{ type: 'text', text: reply }] }]),
+    snapshotEvents: () => (error ? [{ type: 'turn/end', data: { reason: { kind: 'error', error: { message: error } } } }] : []),
+  }
+  const agent = {
+    session,
+    status: 'idle',
+    followup: (message) => followups.push(message),
+    whenIdle: () => {
+      idleCalls += 1
+      return hang ? new Promise(() => {}) : Promise.resolve()
+    },
+    cancel: () => {},
+  }
+  const handle = { agent, dispose: async () => {} }
+  const services = {
+    workspaceRegistry: {
+      list: () => [],
+      create: async (dir, title) => {
+        created.workspaces.push({ dir, title })
+        return { path: dir, title, attachSession: async () => {} }
+      },
+    },
+    agents: {
+      create: async (options) => {
+        created.agents.push(options)
+        return handle
+      },
+    },
+    approval: { setPolicy: () => {} },
+  }
+  const ctx = { get: (name) => services[name] }
+  const sent = []
+  const manager = new ChatAgentManager({
+    ctx,
+    config: normalizeConfig({ transport: { kind: 'fake' }, agent: { turnTimeoutMs: 30 } }),
+    root,
+    log: () => {},
+    send: async (chat, text) => {
+      sent.push({ chat, text })
+    },
+    store: { load: () => {}, get: () => undefined, set: () => {} },
+  })
+  return { manager, created, sent, session, followups, idleCalls: () => idleCalls }
+}
+
+test('first message provisions a workspace and session, later messages reuse it', async () => {
+  const { manager, created, sent, followups } = fakeEnvironment()
+
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' })
+  await manager.handle({ id: 'm2', chat: { type: 'private', id: '42' }, text: 'again' })
+
+  assert.equal(created.workspaces.length, 1)
+  assert.match(created.workspaces[0].dir, /u-[0-9a-f]{8}[\\/]default-[0-9a-f]{6}$/)
+  assert.equal(created.agents.length, 1)
+  assert.equal(created.agents[0].agentOptions.provider, 'deepseek-official')
+  assert.equal(followups[0].role, 'user')
+  assert.equal(followups[0].id, 'qq-private-42-m1')
+  assert.deepEqual(sent, [
+    { chat: { type: 'private', id: '42' }, text: 'pong' },
+    { chat: { type: 'private', id: '42' }, text: 'pong' },
+  ])
+})
+
+test('failed turns are reported to the chat', async () => {
+  const { manager, sent } = fakeEnvironment({ error: 'no API key' })
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' })
+  assert.equal(sent.length, 1)
+  assert.match(sent[0].text, /处理失败：no API key/)
+})
+
+test('a hung turn times out and cancels', async () => {
+  const { manager, sent } = fakeEnvironment({ hang: true })
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' })
+  assert.equal(sent.length, 1)
+  assert.match(sent[0].text, /超时/)
+})
+
+test('long replies are split into QQ-sized chunks', async () => {
+  const { manager, sent } = fakeEnvironment({ reply: 'abcd' })
+  manager.config.limits.maxChars = 2
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' })
+  assert.deepEqual(sent.map((item) => item.text), ['ab', 'cd'])
+})
+
+test('group chats provision one workspace under g-<hash>', async () => {
+  const { manager, created } = fakeEnvironment()
+  await manager.handle({ id: 'g1', chat: { type: 'group', id: '999' }, text: 'hello' }, { level: 'L1' })
+  assert.equal(created.workspaces.length, 1)
+  assert.match(created.workspaces[0].dir, /g-[0-9a-f]{8}$/)
+  assert.equal(created.workspaces[0].title, 'QQ Group 999')
+})

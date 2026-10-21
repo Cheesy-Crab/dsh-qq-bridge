@@ -1,0 +1,32 @@
+{
+  "name": "dsh-qq-bridge",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "description": "QQ <-> DSH workspace bridge: per-user workspaces, permission tiers, and a command layer.",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}
