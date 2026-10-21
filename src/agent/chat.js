@@ -434,7 +434,7 @@ export class ChatAgentManager {
     } else {
       sessionId = sessionIds.find((id) => id.startsWith(String(token)))
     }
-    if (!sessionId) throw new Error(`找不到会话：${token}`)
+    if (!sessionId) throw new Error(`找不到会话：${token}（切换工作区请用 /ws use <名称|序号>）`)
 
     state.sessionId = sessionId
     state.sessions[state.workspaceId] = sessionId
