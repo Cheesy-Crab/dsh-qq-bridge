@@ -25,6 +25,7 @@ function dispatcher(overrides = {}) {
     },
     newSession: async () => ({ agent: { session: { header: { id: 'sess-new' } } } }),
     renameSession: async (_chat, label) => label,
+    deleteWorkspace: async (_chat, token) => ({ title: token, path: `/root/${token}` }),
     archiveSession: async () => ({ sessionId: 'sess-1', label: 'test' }),
     unarchiveSession: async () => ({ sessionId: 'sess-1', label: 'test' }),
     listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1', archived: [], labels: {} }),
@@ -200,6 +201,13 @@ test('/admin can grant and revoke capabilities', async () => {
   assert.match(sent[0].text, /已更新 42 的白名单：write/)
   await run('/admin perms 42')
   assert.match(sent[1].text, /L1）：read/)
+})
+
+test('/ws delete removes the registration and reports the path', async () => {
+  const { run, sent } = dispatcher()
+  await run('/ws delete demo')
+  assert.match(sent[0].text, /已从登记中移除工作区 demo/)
+  assert.match(sent[0].text, /目录和会话历史保留/)
 })
 
 test('/archive and /unarchive manage archived sessions', async () => {

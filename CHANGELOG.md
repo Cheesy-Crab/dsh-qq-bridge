@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.13.0
+
+- 新增 `/ws delete <序号|名称>`：把工作区从 DSH 登记中移除。
+- 只解除登记，不删除目录和会话历史；会话变为 ungrouped，目录仍在原路径。
+- 删除当前工作区后会清空 active，下一条消息重新创建默认工作区。
+- 修复 `workspaceRegistry.delete()` 参数：必须传 workspace id，不能传实体对象。
+
 ## 0.12.0
 
 - 新增会话归档：`/archive [名称|序号]`、`/archived`、`/unarchive <名称|id>`。

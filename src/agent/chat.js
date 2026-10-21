@@ -405,6 +405,35 @@ export class ChatAgentManager {
     return workspace
   }
 
+  /**
+   * Remove a workspace from the DSH registry. DSH never deletes the directory
+   * or its sessions; they simply become ungrouped. The caller should tell the
+   * user that files are kept.
+   * @param {{ type: string, id: string }} chat
+   * @param {string} token 1-based index or title
+   * @param {string} level
+   */
+  async deleteWorkspace(chat, token, level = 'L1') {
+    const workspaces = await this.listWorkspaces(chat)
+    const workspace = resolveByIndexOrName(workspaces, token)
+    if (!workspace) throw new Error(`找不到工作区：${token}`)
+
+    const state = this.stateFor(chat)
+    state.level = level
+    await this.services().workspaceRegistry.delete(workspace.id)
+    if (state.workspaceId === workspace.id) {
+      state.workspaceId = undefined
+      state.workspacePath = undefined
+      state.workspaceName = undefined
+      state.sessionId = undefined
+      state.handle = undefined
+      state.sessions = {}
+    }
+    this.persist(state)
+    this.log('info', `workspace removed ${state.key} ${workspace.path}`)
+    return workspace
+  }
+
   async newSession(chat, level = 'L1', label) {
     const state = this.stateFor(chat)
     state.level = level

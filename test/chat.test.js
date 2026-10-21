@@ -42,6 +42,7 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
         let workspace = workspaces.get(dir)
         if (!workspace) {
           workspace = {
+            id: dir,
             path: dir,
             title,
             sessionIds: [],
@@ -56,6 +57,9 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
       },
       archiveSession: async () => {},
       unarchiveSession: async () => {},
+      delete: async (id) => {
+        workspaces.delete(id)
+      },
     },
     agents: {
       get: () => undefined,
@@ -164,6 +168,18 @@ test('named sessions persist labels and can be selected by name', async () => {
   assert.equal(await manager.renameSession(chat, 'renamed'), 'renamed')
   list = await manager.listSessions(chat, 'L1')
   assert.equal(list.labels[list.activeSessionId], 'renamed')
+})
+
+test('deleting a workspace removes the registration but keeps the path', async () => {
+  const { manager } = fakeEnvironment()
+  const chat = { type: 'private', id: '42' }
+  await manager.newSession(chat, 'L1', 'test')
+
+  const before = await manager.listWorkspaces(chat)
+  assert.equal(before.length, 1)
+  const removed = await manager.deleteWorkspace(chat, before[0].title, 'L1')
+  assert.match(removed.path, /u-[0-9a-f]{8}/)
+  assert.equal((await manager.listWorkspaces(chat)).length, 0)
 })
 
 test('archiving hides a session and unarchive restores it', async () => {

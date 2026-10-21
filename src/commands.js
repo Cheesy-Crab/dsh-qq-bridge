@@ -236,7 +236,7 @@ export class CommandDispatcher {
     })
 
     this.register('ws', {
-      usage: 'ws list|new|use|info|rename',
+      usage: 'ws list|new|use|info|rename|delete',
       description: '工作区管理',
       minLevel: 'L1',
       capability: 'workspace',
@@ -412,7 +412,12 @@ export class CommandDispatcher {
       const workspace = await this.manager.renameWorkspace(message.chat, rest)
       return `已重命名工作区为 ${workspace.title}（目录不变）。`
     }
-    throw new Error('用法：/ws list|new|use|info|rename')
+    if (sub === 'delete') {
+      if (rest === '') throw new Error('用法：/ws delete <序号|名称>')
+      const workspace = await this.manager.deleteWorkspace(message.chat, rest, level)
+      return `已从登记中移除工作区 ${workspace.title}；目录和会话历史保留在 ${workspace.path}。`
+    }
+    throw new Error('用法：/ws list|new|use|info|rename|delete')
   }
 
   helpText() {
@@ -428,6 +433,7 @@ export class CommandDispatcher {
         lines.push(`  ${this.prefix()}ws use <序号|名称> — 切换工作区`)
         lines.push(`  ${this.prefix()}ws info — 当前工作区信息`)
         lines.push(`  ${this.prefix()}ws rename <名称> — 重命名当前工作区`)
+        lines.push(`  ${this.prefix()}ws delete <序号|名称> — 移除工作区登记（保留目录）`)
       }
     }
     return lines

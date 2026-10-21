@@ -205,6 +205,7 @@ access:
 
 - 会话恢复失败会自动新建，旧会话仍在 DSH 里，可 `/sessions` 后 `/use` 切回。
 - 归档（`/archive`）只把会话从列表隐藏并调用 DSH 的 archive，不删除 `~/.dsh/sessions` 下的日志；需要彻底删除只能停服务后手动清理。
+- `/ws delete` 调用 `workspaceRegistry.delete(id)`，只移除工作区登记，不删目录和会话；会话会变成 ungrouped。
 - 备份：停掉 DSH，复制 `E:\QQdsh` 和 `~/.dsh/storages/qq-bridge` 即可；密钥文件单独保管。
 - 重置某个用户：删 `users.json` 里对应条目（先停 DSH），或 `/admin level` 重设。
 
