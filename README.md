@@ -137,7 +137,7 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 
 CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/workflows/ci.yml](.github/workflows/ci.yml)。
 
-发布前检查与推送步骤见 [docs/release-checklist.md](docs/release-checklist.md)，版本历史见 [CHANGELOG.md](CHANGELOG.md)。
+发布前检查与推送步骤见 [docs/release-checklist.md](docs/release-checklist.md)，版本历史见 [CHANGELOG.md](CHANGELOG.md)，未完成事项见 [TODO.md](TODO.md)。
 
 ## 配置
 
