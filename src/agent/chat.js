@@ -24,12 +24,13 @@ export class ChatAgentManager {
    *           send: (chat: { type: string, id: string }, text: string) => Promise<unknown>,
    *           store: import('../store.js').JsonStore }} options
    */
-  constructor({ ctx, config, root, log, send, store, approval }) {
+  constructor({ ctx, config, root, log, send, sendImage, store, approval }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
     this.send = send
+    this.sendImage = sendImage
     this.store = store
     this.approval = approval
     this.chats = new Map()
@@ -669,6 +670,8 @@ export class ChatAgentManager {
       return
     }
 
+    await this.forwardPresentedImages(state, session, fromSeq)
+
     const reply = extractReplyText(session.deriveMessages())
     if (reply === '') {
       await this.reply(state.chat, '[qq-bridge] 模型没有返回文本。')
@@ -677,6 +680,41 @@ export class ChatAgentManager {
     for (const chunk of splitText(reply, this.config.limits.maxChars)) {
       await this.reply(state.chat, chunk)
     }
+  }
+
+  /**
+   * Images the agent declared via `present` during this turn. They only reach
+   * the DSH UI otherwise, so QQ sessions forward them explicitly.
+   * @param {any} session
+   * @param {number} fromSeq
+   * @returns {string[]}
+   */
+  presentedImages(session, fromSeq) {
+    const files = []
+    try {
+      for (const event of session.snapshotEvents(fromSeq)) {
+        if (event?.type !== 'deliverables/presented') continue
+        for (const file of event.data?.files ?? []) {
+          if (typeof file?.path === 'string' && /\.(png|jpe?g|gif|webp)$/i.test(file.path)) files.push(file.path)
+        }
+      }
+    } catch (error) {
+      this.log('warn', `could not read presented deliverables: ${error?.message ?? error}`)
+    }
+    return [...new Set(files)]
+  }
+
+  async forwardPresentedImages(state, session, fromSeq) {
+    const files = this.presentedImages(session, fromSeq)
+    for (const file of files) {
+      try {
+        const options = state.chat.mention ? { mention: state.chat.mention } : {}
+        await this.sendImage?.(state.chat, file, options)
+      } catch (error) {
+        this.log('warn', `could not forward presented image ${file}: ${error?.message ?? error}`)
+      }
+    }
+    return files
   }
 
   withTimeout(promise, timeoutMs) {

@@ -11,17 +11,25 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-chat-'))
 
 test.after(() => fs.rmSync(root, { recursive: true, force: true }))
 
-function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
+function fakeEnvironment({ reply = 'pong', error, hang = false, presented = [] } = {}) {
   const created = { workspaces: [], agents: [] }
   const followups = []
   const events = []
+  const images = []
   let idleCalls = 0
+  const presentedEvents = presented.map((file) => ({
+    type: 'deliverables/presented',
+    data: { files: [{ path: file, description: 'test' }] },
+  }))
   const session = {
     seq: 3,
     header: { id: 'sess-test' },
     append: (type, data) => events.push({ type, data }),
     deriveMessages: () => (reply === '' ? [] : [{ role: 'assistant', content: [{ type: 'text', text: reply }] }]),
-    snapshotEvents: () => (error ? [{ type: 'turn/end', data: { reason: { kind: 'error', error: { message: error } } } }] : []),
+    snapshotEvents: () => [
+      ...(error ? [{ type: 'turn/end', data: { reason: { kind: 'error', error: { message: error } } } }] : []),
+      ...presentedEvents,
+    ],
   }
   const agent = {
     session,
@@ -81,9 +89,12 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
     send: async (chat, text) => {
       sent.push({ chat, text })
     },
+    sendImage: async (chat, file, options) => {
+      images.push({ chat, file, options })
+    },
     store: { load: () => {}, get: () => undefined, set: () => {} },
   })
-  return { manager, created, sent, session, followups, events, idleCalls: () => idleCalls }
+  return { manager, created, sent, images, session, followups, events, idleCalls: () => idleCalls }
 }
 
 test('first message provisions a workspace and session, later messages reuse it', async () => {
@@ -180,6 +191,19 @@ test('deleting a workspace removes the registration but keeps the path', async (
   const removed = await manager.deleteWorkspace(chat, before[0].title, 'L1')
   assert.match(removed.path, /u-[0-9a-f]{8}/)
   assert.equal((await manager.listWorkspaces(chat)).length, 0)
+})
+
+test('presented images are forwarded to the QQ chat', async () => {
+  const { manager, images } = fakeEnvironment({ presented: ['E:\\ws\\a.png', 'E:\\ws\\b.jpg'] })
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'show me' })
+  assert.deepEqual(images.map((item) => item.file), ['E:\\ws\\a.png', 'E:\\ws\\b.jpg'])
+  assert.deepEqual(images[0].chat, { type: 'private', id: '42' })
+})
+
+test('presented non-image files are ignored', async () => {
+  const { manager, images } = fakeEnvironment({ presented: ['E:\\ws\\report.pdf'] })
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'show me' })
+  assert.equal(images.length, 0)
 })
 
 test('archiving hides a session and unarchive restores it', async () => {

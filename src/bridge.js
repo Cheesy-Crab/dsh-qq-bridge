@@ -71,6 +71,7 @@ export class QqBridge {
       root: this.root,
       log: this.log,
       send,
+      sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       store: new JsonStore({ file: stateFile, log: this.log }),
       approval: this.approval,
     })

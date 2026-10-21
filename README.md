@@ -150,6 +150,12 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 
 发布前检查与推送步骤见 [docs/release-checklist.md](docs/release-checklist.md)，版本历史见 [CHANGELOG.md](CHANGELOG.md)，未完成事项见 [TODO.md](TODO.md)。
 
+## 图片验收
+
+- agent 在回复里用 `present` 展示图片（png/jpg/jpeg/gif/webp）时，这一轮结束后插件会自动把图片发到对应的 QQ 会话，不需要额外指令。
+- 非图片文件（pdf、zip 等）不会自动转发，仍然只发文字说明。
+- 也可以直接发 `/screenshot` 抓当前整个桌面；L3 专用。
+
 ## 配置
 
 默认工作区根目录：Windows 是 `E:\QQdsh`，其他平台是 `${DSH_HOME}/qq-workspaces`。想改，在 profile 的 `cordis.patch.yml` 里按 id 覆盖：

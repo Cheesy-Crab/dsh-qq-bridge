@@ -224,6 +224,9 @@ L3 在 QQ 里发送：
 `DSH_QQ_PYTHON` 指向带 Pillow 的 `python.exe`。抓屏需要交互式桌面会话，服务化/
 无桌面环境会失败。
 
+另外，agent 在回复里用 `present` 展示图片时，桥接器会在该轮结束时把图片自动转发到
+对应的 QQ 会话（只转发 png/jpg/jpeg/gif/webp；其他文件仍只发文字）。
+
 ## 8. 日志与排障
 
 | 现象 | 排查 |

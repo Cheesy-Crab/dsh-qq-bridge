@@ -1,7 +1,8 @@
-// Verify /screenshot returns an image segment without printing the base64 body.
-// Usage: node scripts/test-screenshot.mjs [ws://127.0.0.1:6700/] [userId]
+// Verify a turn that should return an image segment.
+// Usage: node scripts/screenshot-check.mjs [ws://127.0.0.1:6700/] [userId] ["message"]
 const url = process.argv[2] ?? 'ws://127.0.0.1:6700/'
 const userId = Number(process.argv[3] ?? 10001)
+const text = process.argv[4] ?? '/screenshot'
 const ws = new WebSocket(url)
 let settled = false
 
@@ -20,7 +21,7 @@ ws.addEventListener('open', () => {
     message_type: 'private',
     user_id: userId,
     message_id: `shot-${Date.now()}`,
-    message: [{ type: 'text', data: { text: '/screenshot' } }],
+    message: [{ type: 'text', data: { text } }],
     time: Math.floor(Date.now() / 1000),
     self_id: 10000,
   }))
