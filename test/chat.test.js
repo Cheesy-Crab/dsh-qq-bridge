@@ -34,15 +34,30 @@ function fakeEnvironment({ reply = 'pong', error, hang = false } = {}) {
     cancel: () => {},
   }
   const handle = { agent, dispose: async () => {} }
+  const workspaces = new Map()
   const services = {
     workspaceRegistry: {
-      list: () => [],
+      list: () => [...workspaces.values()],
       create: async (dir, title) => {
-        created.workspaces.push({ dir, title })
-        return { path: dir, title, attachSession: async () => {} }
+        let workspace = workspaces.get(dir)
+        if (!workspace) {
+          workspace = {
+            path: dir,
+            title,
+            sessionIds: [],
+            attachSession: async (id) => {
+              if (!workspace.sessionIds.includes(id)) workspace.sessionIds.push(id)
+            },
+          }
+          workspaces.set(dir, workspace)
+          created.workspaces.push({ dir, title })
+        }
+        return workspace
       },
     },
     agents: {
+      get: () => undefined,
+      resume: async () => handle,
       create: async (options) => {
         created.agents.push(options)
         return handle
@@ -126,4 +141,25 @@ test('group chats provision one workspace under g-<hash>', async () => {
   assert.equal(created.workspaces.length, 1)
   assert.match(created.workspaces[0].dir, /g-[0-9a-f]{8}$/)
   assert.equal(created.workspaces[0].title, 'QQ Group 999')
+})
+
+test('named sessions persist labels and can be selected by name', async () => {
+  const { manager } = fakeEnvironment()
+  const chat = { type: 'private', id: '42' }
+
+  await manager.newSession(chat, 'L1', 'test')
+  let list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.labels[list.activeSessionId], 'test')
+
+  await manager.newSession(chat, 'L1', 'other')
+  list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.labels[list.activeSessionId], 'other')
+
+  await manager.useSession(chat, 'test', 'L1')
+  list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.labels[list.activeSessionId], 'test')
+
+  assert.equal(await manager.renameSession(chat, 'renamed'), 'renamed')
+  list = await manager.listSessions(chat, 'L1')
+  assert.equal(list.labels[list.activeSessionId], 'renamed')
 })

@@ -10,6 +10,7 @@ const shortId = (id) => {
   const text = String(id ?? '')
   return text.length <= 10 ? text : `…${text.slice(-10)}`
 }
+const normalizeLabel = (label) => String(label ?? '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 32)
 
 /**
  * One agent Session per QQ chat, persisted across restarts. The first message
@@ -54,6 +55,7 @@ export class ChatAgentManager {
         workspaceName: saved?.workspaceName,
         sessionId: saved?.sessionId,
         sessions: saved?.sessions ?? {},
+        labels: saved?.labels ?? {},
         guest: false,
         level: 'L1',
         capabilities: [],
@@ -72,6 +74,7 @@ export class ChatAgentManager {
       workspaceName: state.workspaceName,
       sessionId: state.sessionId,
       sessions: state.sessions,
+      labels: state.labels,
       updatedAt: Date.now(),
     })
   }
@@ -400,7 +403,7 @@ export class ChatAgentManager {
     return workspace
   }
 
-  async newSession(chat, level = 'L1') {
+  async newSession(chat, level = 'L1', label) {
     const state = this.stateFor(chat)
     state.level = level
     await this.ensureWorkspace(state)
@@ -408,8 +411,25 @@ export class ChatAgentManager {
     state.handle = undefined
     this.persist(state)
     const handle = await this.ensureSession(state)
+    if (label !== undefined) {
+      this.setSessionLabel(state, label)
+    }
     this.log('info', `new session ${state.key} ${state.sessionId}`)
     return handle
+  }
+
+  setSessionLabel(state, label) {
+    const clean = normalizeLabel(label)
+    if (!clean) throw new Error('会话名称不能为空')
+    state.labels[state.sessionId] = clean
+    this.persist(state)
+    return clean
+  }
+
+  async renameSession(chat, label) {
+    const state = this.stateFor(chat)
+    await this.ensureSession(state)
+    return this.setSessionLabel(state, label)
   }
 
   async listSessions(chat, level = 'L1') {
@@ -420,19 +440,21 @@ export class ChatAgentManager {
       workspace,
       activeSessionId: state.sessionId,
       sessionIds: [...workspace.sessionIds],
+      labels: { ...state.labels },
     }
   }
 
   async useSession(chat, token, level = 'L1') {
     const state = this.stateFor(chat)
     state.level = level
-    const { sessionIds } = await this.listSessions(chat, level)
+    const { sessionIds, labels } = await this.listSessions(chat, level)
     const index = Number(token)
     let sessionId
     if (Number.isInteger(index) && index >= 1 && index <= sessionIds.length) {
       sessionId = sessionIds[index - 1]
     } else {
-      sessionId = sessionIds.find((id) => id.startsWith(String(token)))
+      sessionId = sessionIds.find((id) => labels[id] === token)
+        ?? sessionIds.find((id) => id.startsWith(String(token)))
     }
     if (!sessionId) throw new Error(`找不到会话：${token}（切换工作区请用 /ws use <名称|序号>）`)
 
@@ -465,6 +487,7 @@ export class ChatAgentManager {
       workspaceName: state.workspaceName,
       sessionId: state.sessionId,
       sessionShort: shortId(state.sessionId),
+      sessionLabel: state.labels[state.sessionId],
       sandboxMode: state.sandboxMode,
       pending: state.pending,
     }

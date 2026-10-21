@@ -24,7 +24,8 @@ function dispatcher(overrides = {}) {
       return { id: 'ws-3', title: name, path: `/root/${name}` }
     },
     newSession: async () => ({ agent: { session: { header: { id: 'sess-new' } } } }),
-    listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1' }),
+    renameSession: async (_chat, label) => label,
+    listSessions: async () => ({ workspace: { title: 'default' }, sessionIds: ['sess-1', 'sess-2'], activeSessionId: 'sess-1', labels: {} }),
     useSession: async () => 'sess-2',
     cancelCurrent: async () => true,
     setSandboxMode: async (_chat, mode) => mode,
@@ -125,6 +126,25 @@ test('unknown commands get a hint', async () => {
   const { run, sent } = dispatcher()
   await run('/nope')
   assert.match(sent[0].text, /未知指令/)
+})
+
+test('/new uses an optional name', async () => {
+  const { run, sent } = dispatcher()
+  await run('/new test')
+  assert.match(sent[0].text, /已新建会话 test/)
+})
+
+test('/sessions lists session ids', async () => {
+  const { run, sent } = dispatcher()
+  await run('/sessions')
+  assert.match(sent[0].text, /sess-1/)
+  assert.match(sent[0].text, /← 当前/)
+})
+
+test('/rename names the current session', async () => {
+  const { run, sent } = dispatcher()
+  await run('/rename demo')
+  assert.match(sent[0].text, /已将会话命名为 demo/)
 })
 
 test('/use switches session by index', async () => {

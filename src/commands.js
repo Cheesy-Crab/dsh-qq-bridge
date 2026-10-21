@@ -134,7 +134,7 @@ export class CommandDispatcher {
           `能力：${level === 'L3' ? '全部' : (capabilities.length > 0 ? capabilities.join(', ') : '仅聊天')}`,
           `工作区：${workspaceName ?? '（未创建）'}`,
           `路径：${workspacePath ?? '（无）'}`,
-          `会话：${summary.sessionShort || '（未创建）'}`,
+          `会话：${summary.sessionLabel ?? (summary.sessionShort || '（未创建）')}`,
           `文件策略：${summary.sandboxMode ?? '默认'}`,
           `排队：${summary.pending}`,
         ]
@@ -157,26 +157,41 @@ export class CommandDispatcher {
     })
 
     this.register('new', {
-      usage: 'new',
+      usage: 'new [名称]',
       description: '在当前工作区新开会话',
       minLevel: 'L1',
       capability: 'workspace',
-      handler: async ({ message, level }) => {
+      handler: async ({ message, args, level }) => {
+        const label = args.join(' ').trim() || undefined
         if (message.chat.type === 'group' && level !== 'L3') throw new Error('群聊是共享会话，只有 L3 能重置')
-        const handle = await this.manager.newSession(message.chat, level)
-        return `已新建会话 ${shortId(handle.agent.session.header.id)}。`
+        const handle = await this.manager.newSession(message.chat, level, label)
+        return `已新建会话 ${label ?? shortId(handle.agent.session.header.id)}。`
       },
     })
 
     this.register('reset', {
-      usage: 'reset',
+      usage: 'reset [名称]',
       description: '重置当前会话（等同 /new）',
       minLevel: 'L1',
       capability: 'workspace',
-      handler: async ({ message, level }) => {
+      handler: async ({ message, args, level }) => {
+        const label = args.join(' ').trim() || undefined
         if (message.chat.type === 'group' && level !== 'L3') throw new Error('群聊是共享会话，只有 L3 能重置')
-        const handle = await this.manager.newSession(message.chat, level)
-        return `已重置为新会话 ${shortId(handle.agent.session.header.id)}。`
+        const handle = await this.manager.newSession(message.chat, level, label)
+        return `已重置为新会话 ${label ?? shortId(handle.agent.session.header.id)}。`
+      },
+    })
+
+    this.register('rename', {
+      usage: 'rename <名称>',
+      description: '给当前会话命名',
+      minLevel: 'L1',
+      capability: 'workspace',
+      handler: async ({ message, args }) => {
+        const label = args.join(' ').trim()
+        if (label === '') throw new Error('用法：/rename <名称>')
+        const name = await this.manager.renameSession(message.chat, label)
+        return `已将会话命名为 ${name}。`
       },
     })
 
@@ -187,11 +202,12 @@ export class CommandDispatcher {
       capability: 'workspace',
       handler: async ({ message, level }) => {
         if (message.chat.type === 'group') throw new Error('群聊使用共享会话，没有会话列表')
-        const { workspace, sessionIds, activeSessionId } = await this.manager.listSessions(message.chat, level)
+        const { workspace, sessionIds, activeSessionId, labels } = await this.manager.listSessions(message.chat, level)
         if (sessionIds.length === 0) return [`工作区 ${workspace.title} 还没有会话。`]
         const lines = [`工作区 ${workspace.title} 的会话：`]
         sessionIds.forEach((id, index) => {
-          lines.push(`${index + 1}. ${shortId(id)}${id === activeSessionId ? '  ← 当前' : ''}`)
+          const name = labels[id] ? `${labels[id]}  ` : ''
+          lines.push(`${index + 1}. ${name}${shortId(id)}${id === activeSessionId ? '  ← 当前' : ''}`)
         })
         return lines
       },
@@ -347,7 +363,7 @@ export class CommandDispatcher {
         `路径：${summary.workspacePath}`,
         `ID：${summary.workspaceId}`,
         `会话数：${sessionIds.length}`,
-        `当前会话：${summary.sessionShort || '（无）'}`,
+        `当前会话：${summary.sessionLabel ?? (summary.sessionShort || '（无）')}`,
       ]
     }
     if (sub === 'rename') {
