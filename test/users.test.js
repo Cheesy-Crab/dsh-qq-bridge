@@ -71,3 +71,22 @@ test('users persist across store instances', () => {
   second.load()
   assert.equal(second.levelOf('user-9'), 'L3')
 })
+
+test('capabilities default to chat-only and can be granted or revoked', () => {
+  const store = new UserStore({ file: path.join(dir, 'caps.json') })
+  store.load()
+  store.setLevel('user-1', 'L1')
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), [])
+  assert.deepEqual(store.addCapabilities('user-1', ['read', 'write']), ['read', 'write'])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), ['read', 'write'])
+  assert.deepEqual(store.removeCapabilities('user-1', ['write']), ['read'])
+})
+
+test('capability whitelist merges into stored users', () => {
+  const store = new UserStore({ file: path.join(dir, 'whitelist.json') })
+  store.load()
+  store.setLevel('user-1', 'L1')
+  store.addCapabilities('user-1', ['read'])
+  store.applyWhitelist({ 'user-1': ['workspace', 'exec'] })
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1').sort(), ['exec', 'read', 'workspace'])
+})

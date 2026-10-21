@@ -77,7 +77,7 @@ test('first message provisions a workspace and session, later messages reuse it'
   assert.equal(created.agents[0].agentOptions.provider, 'deepseek-official')
   assert.equal(followups[0].role, 'user')
   assert.equal(followups[0].id, 'qq-private-42-m1')
-  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['workspace-write'])
+  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['read-only'])
   assert.deepEqual(sent, [
     { chat: { type: 'private', id: '42' }, text: 'pong' },
     { chat: { type: 'private', id: '42' }, text: 'pong' },
@@ -88,6 +88,15 @@ test('L3 sessions get danger-full-access', async () => {
   const { manager, events } = fakeEnvironment()
   await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' }, { level: 'L3' })
   assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['danger-full-access'])
+})
+
+test('whitelisted write capability upgrades the sandbox to workspace-write', async () => {
+  const { manager, events } = fakeEnvironment()
+  await manager.handle(
+    { id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' },
+    { level: 'L1', capabilities: ['read', 'write'] },
+  )
+  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['workspace-write'])
 })
 
 test('failed turns are reported to the chat', async () => {

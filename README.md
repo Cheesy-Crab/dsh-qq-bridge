@@ -170,6 +170,7 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 | `sandbox.modeByLevel` | `L0 read-only`；`L1/L2 workspace-write`；`L3 danger-full-access` | 每个等级会话的文件沙箱模式 |
 | `access.admins` | `[]` | 管理员 openid 列表（L3） |
 | `access.bindCodeTtlMinutes` | `5` | 配对码有效期 |
+| `access.whitelist` | `{}` | 非 L3 的能力白名单，如 `{'123': ['workspace','read','write','exec']}` |
 | `limits.maxWorkspaces` | `{L1:3, L2:10, L3:0}` | 每人工作区数，0 为不限 |
 | `limits.dailyTurns` | `{L0:20, L1:200, L2:1000, L3:0}` | 每日模型轮次，0 为不限 |
 | `approval.timeoutSec` | `120` | QQ 审批等待时间 |

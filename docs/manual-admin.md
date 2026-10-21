@@ -118,7 +118,34 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 
 绑定流程：管理员 `/admin invite L1` → 把六位码给用户 → 用户 `/bind 123456`。
 
-等级与配额含义见 [使用手册](manual-user.md#7-权限等级)。
+等级与配额含义见 [使用手册](manual-user.md#7-权限等级与白名单)。
+
+### 4.1 能力白名单
+
+L3 以外默认仅聊天。按账号授予：
+
+| 能力 | 作用 |
+|---|---|
+| `workspace` | `/ws`、`/new`、`/sessions`、`/use` |
+| `read` | read/glob/grep 等读取工具 |
+| `write` | 写文件（隐含 read） |
+| `exec` | 执行命令（隐含 read/write，工具集全开） |
+
+```text
+/admin allow <openid> workspace write
+/admin deny <openid> exec
+/admin perms <openid>
+```
+
+也可以写在 profile 配置里（启动时合并进用户记录）：
+
+```yaml
+access:
+  whitelist:
+    '123456': ['workspace', 'read', 'write']
+```
+
+白名单变更后，该用户下一条消息生效；已建立的会话会用新能力重新挂 guard 和沙箱模式。
 
 文件策略按等级自动套用（默认见上表），L3 也可以在 QQ 里临时切换当前会话：
 

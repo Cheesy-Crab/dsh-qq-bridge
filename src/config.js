@@ -23,6 +23,7 @@ export const DEFAULTS = Object.freeze({
   access: Object.freeze({
     admins: Object.freeze([]),
     bindCodeTtlMinutes: 5,
+    whitelist: Object.freeze({}),
   }),
   approval: Object.freeze({
     timeoutSec: 120,
@@ -154,6 +155,18 @@ export function normalizeConfig(raw) {
   }
   if (!Number.isInteger(access.bindCodeTtlMinutes) || access.bindCodeTtlMinutes <= 0) {
     fail('access.bindCodeTtlMinutes must be a positive integer')
+  }
+  if (access.whitelist === null || typeof access.whitelist !== 'object' || Array.isArray(access.whitelist)) {
+    fail('access.whitelist must be an object of openid → capability array')
+  }
+  const allowedCapabilities = new Set(['workspace', 'read', 'write', 'exec'])
+  for (const [openid, capabilities] of Object.entries(access.whitelist)) {
+    if (!Array.isArray(capabilities)) fail(`access.whitelist.${openid} must be an array`)
+    for (const capability of capabilities) {
+      if (!allowedCapabilities.has(capability)) {
+        fail(`access.whitelist.${openid} has unknown capability ${JSON.stringify(capability)}`)
+      }
+    }
   }
 
   const approval = { ...DEFAULTS.approval, ...(input.approval ?? {}) }

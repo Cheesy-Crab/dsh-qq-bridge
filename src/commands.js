@@ -1,3 +1,4 @@
+import { normalizeCapabilities } from './auth/capabilities.js'
 import { atLeast, normalizeLevel } from './auth/levels.js'
 
 const clip = (value, limit = 200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
@@ -44,8 +45,8 @@ export class CommandDispatcher {
     this.registerBuiltins()
   }
 
-  register(name, { usage, description, handler, minLevel = 'L0', aliases = [] }) {
-    this.commands.set(name, { usage, description, handler, minLevel })
+  register(name, { usage, description, handler, minLevel = 'L0', capability, aliases = [] }) {
+    this.commands.set(name, { usage, description, handler, minLevel, capability })
     for (const alias of aliases) this.commands.set(alias, this.commands.get(name))
   }
 
@@ -58,9 +59,10 @@ export class CommandDispatcher {
    * @param {{ level?: string }} [options]
    * @returns {Promise<boolean>} whether the message was a command
    */
-  async execute(message, { level = 'L0' } = {}) {
+  async execute(message, { level = 'L0', capabilities = [] } = {}) {
     const parsed = parseCommand(message.text, this.prefix())
     if (!parsed) return false
+    this.manager?.setContext?.(message.chat, { level, capabilities })
     const command = this.commands.get(parsed.name)
     if (!command) {
       await this.reply(message.chat, `未知指令 ${this.prefix()}${parsed.name}，发 ${this.prefix()}help 查看可用指令。`)
@@ -70,8 +72,12 @@ export class CommandDispatcher {
       await this.reply(message.chat, `权限不足：该指令需要 ${command.minLevel}，你当前是 ${level}。`)
       return true
     }
+    if (command.capability && level !== 'L3' && !capabilities.includes(command.capability)) {
+      await this.reply(message.chat, `权限不足：该指令需要管理员把 ${command.capability} 加入你的白名单。`)
+      return true
+    }
     try {
-      const result = await command.handler({ message, args: parsed.args, command, level })
+      const result = await command.handler({ message, args: parsed.args, command, level, capabilities })
       const lines = Array.isArray(result) ? result : result === undefined ? [] : [result]
       const text = lines
         .filter((line) => line !== undefined && line !== null && String(line) !== '')
@@ -103,7 +109,7 @@ export class CommandDispatcher {
     this.register('whoami', {
       usage: 'whoami',
       description: '我的工作区与会话',
-      handler: async ({ message, level }) => {
+      handler: async ({ message, level, capabilities }) => {
         const summary = this.manager.sessionSummary(message.chat)
         let { workspaceName, workspacePath } = summary
         if (!summary.workspaceId) {
@@ -116,6 +122,7 @@ export class CommandDispatcher {
         return [
           `QQ：${message.chat.id}`,
           `等级：${level}`,
+          `能力：${level === 'L3' ? '全部' : (capabilities.length > 0 ? capabilities.join(', ') : '仅聊天')}`,
           `工作区：${workspaceName ?? '（未创建）'}`,
           `路径：${workspacePath ?? '（无）'}`,
           `会话：${summary.sessionShort || '（未创建）'}`,
@@ -144,6 +151,7 @@ export class CommandDispatcher {
       usage: 'new',
       description: '在当前工作区新开会话',
       minLevel: 'L1',
+      capability: 'workspace',
       handler: async ({ message, level }) => {
         if (message.chat.type === 'group' && level !== 'L3') throw new Error('群聊是共享会话，只有 L3 能重置')
         const handle = await this.manager.newSession(message.chat, level)
@@ -155,6 +163,7 @@ export class CommandDispatcher {
       usage: 'reset',
       description: '重置当前会话（等同 /new）',
       minLevel: 'L1',
+      capability: 'workspace',
       handler: async ({ message, level }) => {
         if (message.chat.type === 'group' && level !== 'L3') throw new Error('群聊是共享会话，只有 L3 能重置')
         const handle = await this.manager.newSession(message.chat, level)
@@ -166,6 +175,7 @@ export class CommandDispatcher {
       usage: 'sessions',
       description: '当前工作区的会话列表',
       minLevel: 'L1',
+      capability: 'workspace',
       handler: async ({ message, level }) => {
         if (message.chat.type === 'group') throw new Error('群聊使用共享会话，没有会话列表')
         const { workspace, sessionIds, activeSessionId } = await this.manager.listSessions(message.chat, level)
@@ -182,6 +192,7 @@ export class CommandDispatcher {
       usage: 'use <序号>',
       description: '切换会话',
       minLevel: 'L1',
+      capability: 'workspace',
       handler: async ({ message, args, level }) => {
         if (message.chat.type === 'group') throw new Error('群聊使用共享会话，无需切换')
         if (args.length === 0) throw new Error('用法：/use <序号>')
@@ -203,6 +214,7 @@ export class CommandDispatcher {
       usage: 'ws list|new|use|info|rename',
       description: '工作区管理',
       minLevel: 'L1',
+      capability: 'workspace',
       handler: ({ message, args, level }) => this.handleWorkspace(message, args, level),
     })
 
@@ -247,7 +259,25 @@ export class CommandDispatcher {
     if (sub === 'users' || sub === undefined) {
       const users = this.users.list()
       if (users.length === 0) return ['还没有用户。']
-      return ['用户列表：', ...users.map((user) => `${user.openid}  ${user.level}  ${user.status}  今日 ${user.turns} 轮`)]
+      return ['用户列表：', ...users.map((user) => {
+        const caps = user.level === 'L3' ? 'all' : (user.capabilities.length > 0 ? user.capabilities.join(',') : 'chat-only')
+        return `${user.openid}  ${user.level}  ${user.status}  能力=${caps}  今日 ${user.turns} 轮`
+      })]
+    }
+    if (sub === 'allow' || sub === 'deny') {
+      if (args.length < 3) throw new Error(`用法：/admin ${sub} <openid> <workspace|read|write|exec ...>`)
+      const capabilities = normalizeCapabilities(args.slice(2))
+      if (capabilities.length === 0) throw new Error('能力只能是 workspace/read/write/exec')
+      const result = sub === 'allow'
+        ? this.users.addCapabilities(args[1], capabilities)
+        : this.users.removeCapabilities(args[1], capabilities)
+      return `已更新 ${args[1]} 的白名单：${result.length > 0 ? result.join(', ') : '仅聊天'}`
+    }
+    if (sub === 'perms') {
+      if (args.length < 2) throw new Error('用法：/admin perms <openid>')
+      const user = this.users.user(args[1])
+      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec'] : normalizeCapabilities(user.capabilities ?? [])
+      return `${args[1]}（${user.level}）：${caps.length > 0 ? caps.join(', ') : '仅聊天'}`
     }
     if (sub === 'invite') {
       const level = normalizeLevel(args[1] ?? 'L1')
@@ -270,7 +300,7 @@ export class CommandDispatcher {
       if (workspaces.length === 0) return ['还没有工作区。']
       return ['全部工作区：', ...workspaces.map((workspace) => `${workspace.title}  ${workspace.path}`)]
     }
-    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|ws list')
+    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|allow|deny|perms|ws list')
   }
 
   async handleWorkspace(message, args, level = 'L1') {

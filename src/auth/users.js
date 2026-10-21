@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { normalizeCapabilities } from './capabilities.js'
 import { normalizeLevel } from './levels.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -65,9 +66,10 @@ export class UserStore {
   ensure(openid) {
     let user = this.state.users[openid]
     if (!user) {
-      user = { level: 'L0', status: 'active', createdAt: this.now(), daily: { date: today(), turns: 0 } }
+      user = { level: 'L0', status: 'active', capabilities: [], createdAt: this.now(), daily: { date: today(), turns: 0 } }
       this.state.users[openid] = user
     }
+    user.capabilities ??= []
     user.daily ??= { date: today(), turns: 0 }
     return user
   }
@@ -77,7 +79,57 @@ export class UserStore {
    * @returns {{ level: string, status: string, daily: { date: string, turns: number } }}
    */
   user(openid) {
-    return this.state.users[openid] ?? { level: 'L0', status: 'active', daily: { date: today(), turns: 0 } }
+    return this.state.users[openid] ?? { level: 'L0', status: 'active', capabilities: [], daily: { date: today(), turns: 0 } }
+  }
+
+  /**
+   * Capabilities that take effect for this user. L3 is implicitly everything.
+   * @param {string} openid
+   * @param {string} level
+   * @returns {string[]}
+   */
+  capabilitiesOf(openid, level) {
+    if (level === 'L3') return ['workspace', 'read', 'write', 'exec']
+    return normalizeCapabilities(this.user(openid).capabilities ?? [])
+  }
+
+  setCapabilities(openid, capabilities) {
+    const user = this.ensure(openid)
+    user.capabilities = normalizeCapabilities(capabilities)
+    this.save()
+    return user.capabilities
+  }
+
+  addCapabilities(openid, capabilities) {
+    const user = this.ensure(openid)
+    user.capabilities = normalizeCapabilities([...(user.capabilities ?? []), ...capabilities])
+    this.save()
+    return user.capabilities
+  }
+
+  removeCapabilities(openid, capabilities) {
+    const user = this.ensure(openid)
+    const remove = new Set(normalizeCapabilities(capabilities))
+    user.capabilities = normalizeCapabilities((user.capabilities ?? []).filter((capability) => !remove.has(capability)))
+    this.save()
+    return user.capabilities
+  }
+
+  /**
+   * Merge the deployment whitelist into stored users.
+   * @param {Record<string, string[]>} whitelist
+   */
+  applyWhitelist(whitelist = {}) {
+    let changed = false
+    for (const [openid, capabilities] of Object.entries(whitelist)) {
+      const user = this.ensure(openid)
+      const merged = normalizeCapabilities([...(user.capabilities ?? []), ...capabilities])
+      if (merged.length !== user.capabilities.length) {
+        user.capabilities = merged
+        changed = true
+      }
+    }
+    if (changed) this.save()
   }
 
   levelOf(openid) {
@@ -154,6 +206,7 @@ export class UserStore {
       openid,
       level: normalizeLevel(user.level),
       status: user.status ?? 'active',
+      capabilities: normalizeCapabilities(user.capabilities ?? []),
       turns: user.daily?.date === today() ? user.daily.turns : 0,
     }))
   }

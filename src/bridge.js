@@ -53,6 +53,7 @@ export class QqBridge {
     })
     this.users.load()
     this.users.ensureAdmins()
+    this.users.applyWhitelist(this.config.access.whitelist)
 
     const send = (chat, text) => this.transport.sendText(chat, text, chat?.mention ? { mention: chat.mention } : {})
 
@@ -115,6 +116,7 @@ export class QqBridge {
       return
     }
     const level = this.users.levelOf(message.userId)
+    const capabilities = this.users.capabilitiesOf(message.userId, level)
 
     if (this.approval.tryAnswer(message)) return
 
@@ -132,7 +134,7 @@ export class QqBridge {
       message.chat.mention = message.userId
     }
 
-    if (await this.commands.execute(message, { level })) return
+    if (await this.commands.execute(message, { level, capabilities })) return
 
     if (message.chat.type === 'group' && level === 'L0') {
       await this.transport.sendText(message.chat, '[qq-bridge] 群聊里需要先 /bind 绑定账号。', { mention: message.userId })
@@ -144,7 +146,7 @@ export class QqBridge {
       await this.transport.sendText(message.chat, `[qq-bridge] 今日额度已用完（${quota.used}/${quota.limit}）。`)
       return
     }
-    await this.chat.handle(message, { level })
+    await this.chat.handle(message, { level, capabilities })
   }
 
   async stop() {

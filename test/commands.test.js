@@ -28,6 +28,9 @@ function dispatcher(overrides = {}) {
     useSession: async () => 'sess-2',
     cancelCurrent: async () => true,
     setSandboxMode: async (_chat, mode) => mode,
+    addCapabilities: (_openid, caps) => caps,
+    removeCapabilities: (_openid, caps) => caps,
+    user: () => ({ level: 'L1', capabilities: ['read'] }),
     ...overrides,
   }
   const commands = new CommandDispatcher({
@@ -38,6 +41,9 @@ function dispatcher(overrides = {}) {
       invite: () => '123456',
       setLevel: () => {},
       freeze: () => {},
+      addCapabilities: (_openid, caps) => caps,
+      removeCapabilities: (_openid, caps) => caps,
+      user: () => ({ level: 'L1', capabilities: ['read'] }),
     },
     config: normalizeConfig({ transport: { kind: 'fake' } }),
     root: '/root',
@@ -48,7 +54,9 @@ function dispatcher(overrides = {}) {
     status: () => ({ transport: { connected: true }, chats: { chats: 1, pending: 0 }, dedupeSize: 2 }),
   })
   const chat = { type: 'private', id: '42' }
-  const run = (text, level = 'L3', target = chat) => commands.execute({ chat: target, text }, { level })
+  const ALL = ['workspace', 'read', 'write', 'exec']
+  const run = (text, level = 'L3', target = chat, capabilities = ALL) =>
+    commands.execute({ chat: target, text }, { level, capabilities })
   return { commands, sent, run }
 }
 
@@ -145,10 +153,24 @@ test('/admin is rejected below L3', async () => {
 test('groups share one session and only L3 can reset it', async () => {
   const { run, sent } = dispatcher()
   const group = { type: 'group', id: '99' }
-  await run('/new', 'L1', group)
+  await run('/new', 'L1', group, ['workspace'])
   assert.match(sent[0].text, /群聊是共享会话，只有 L3 能重置/)
-  await run('/ws list', 'L1', group)
+  await run('/ws list', 'L1', group, ['workspace'])
   assert.match(sent[1].text, /群聊里只能使用 \/ws info/)
+})
+
+test('non-L3 without workspace capability is chat-only', async () => {
+  const { run, sent } = dispatcher()
+  await run('/ws list', 'L1', { type: 'private', id: '42' }, [])
+  assert.match(sent[0].text, /需要管理员把 workspace 加入你的白名单/)
+})
+
+test('/admin can grant and revoke capabilities', async () => {
+  const { run, sent } = dispatcher()
+  await run('/admin allow 42 write')
+  assert.match(sent[0].text, /已更新 42 的白名单：write/)
+  await run('/admin perms 42')
+  assert.match(sent[1].text, /L1）：read/)
 })
 
 test('/sandbox is L3-only and switches the mode', async () => {

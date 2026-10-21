@@ -27,6 +27,16 @@ test('config keeps group and limit defaults', () => {
   assert.equal(config.workspacesRoot, '')
   assert.equal(config.sandbox.modeByLevel.L1, 'workspace-write')
   assert.equal(config.sandbox.modeByLevel.L3, 'danger-full-access')
+  assert.deepEqual(config.access.whitelist, {})
+})
+
+test('config validates the capability whitelist', () => {
+  const config = normalizeConfig({ access: { whitelist: { '42': ['workspace', 'write'] } } })
+  assert.deepEqual(config.access.whitelist['42'], ['workspace', 'write'])
+  assert.throws(
+    () => normalizeConfig({ access: { whitelist: { '42': ['root'] } } }),
+    /unknown capability/,
+  )
 })
 
 test('config rejects an unknown sandbox mode', () => {

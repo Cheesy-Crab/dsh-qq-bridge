@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.9.0
+
+- 非 L3 用户默认**仅聊天**：不能管理/切换工作区，也不能读写文件或执行命令。
+- 新增能力白名单 `workspace` / `read` / `write` / `exec`，按账号授予。
+- 管理员指令：`/admin allow`、`/admin deny`、`/admin perms`；也可用 `access.whitelist` 配置。
+- 能力变更在用户下一条消息生效；guard 读取实时状态，等级提升/降级也即时生效。
+- L1/L2 未获 `write`/`exec` 时沙箱为 `read-only`；获授后为 `workspace-write`；L3 仍为 `danger-full-access`。
+
 ## 0.8.0
 
 - 修复：会话没有挂载 agent preset，导致只有 `working_directory`、无法写文件或执行命令。

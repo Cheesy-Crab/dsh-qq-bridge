@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { toolAllowed } from '../auth/capabilities.js'
 import { groupDir, isInside, uniquenessKey, userDir, validateName, workspacePath } from '../paths.js'
 import { extractReplyText, splitText, turnError } from './reply.js'
 
@@ -55,6 +56,7 @@ export class ChatAgentManager {
         sessions: saved?.sessions ?? {},
         guest: false,
         level: 'L1',
+        capabilities: [],
         handle: undefined,
       }
       this.chats.set(key, state)
@@ -72,6 +74,13 @@ export class ChatAgentManager {
       sessions: state.sessions,
       updatedAt: Date.now(),
     })
+  }
+
+  setContext(chat, { level = 'L1', capabilities = [] } = {}) {
+    const state = this.stateFor(chat)
+    state.level = level
+    state.capabilities = capabilities
+    return state
   }
 
   services() {
@@ -188,9 +197,9 @@ export class ChatAgentManager {
         const handle = await agents.resume({ resumeSessionId: state.sessionId, agentOptions: this.agentOptions() })
         await this.attach(workspace, state.sessionId)
         await this.ensurePreset(handle.agent)
-        this.applyPolicy(handle, state.level ?? 'L1')
+        this.applyPolicy(handle, state.level ?? 'L1', state)
         this.track(state, state.sessionId)
-        this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state)
+        this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state.capabilities ?? [], state)
         state.handle = handle
         this.log('info', `session resumed ${state.key} ${state.sessionId}`)
         return handle
@@ -215,9 +224,9 @@ export class ChatAgentManager {
     })
     await this.attach(workspace, sessionId)
     await this.ensurePreset(handle.agent)
-    this.applyPolicy(handle, state.level ?? 'L1')
+    this.applyPolicy(handle, state.level ?? 'L1', state)
     this.track(state, sessionId)
-    this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state)
+    this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state.capabilities ?? [], state)
 
     state.sessionId = sessionId
     state.sessions[workspace.id] = sessionId
@@ -235,34 +244,39 @@ export class ChatAgentManager {
     }
   }
 
-  applyPolicy(handle, level) {
+  applyPolicy(handle, level, state) {
     const { approval } = this.services()
-    try {
-      approval?.setPolicy?.(handle.agent, level === 'L0' ? 'never' : 'ask')
-    } catch (error) {
-      this.log('warn', `approval policy was not set: ${error?.message ?? error}`)
+    const capabilities = state.capabilities ?? []
+    const policy = level === 'L3' || capabilities.length > 0 ? 'ask' : 'never'
+    if (state.approvalPolicy !== policy) {
+      try {
+        approval?.setPolicy?.(handle.agent, policy)
+        state.approvalPolicy = policy
+      } catch (error) {
+        this.log('warn', `approval policy was not set: ${error?.message ?? error}`)
+      }
     }
-    if (level === 'L0') this.restrictGuestTools(handle.agent)
+    if (!state.guarded) {
+      this.guardTools(handle.agent, state)
+      state.guarded = true
+    }
   }
 
-  /** Guest chats are read-only: deny write/exec tools and add a hard guard. */
-  restrictGuestTools(agent) {
-    const unsafe = (name) => /^(write|edit|bash|pwsh|apply_patch|job|subagent|schedule|goal)/i.test(String(name ?? ''))
+  /**
+   * Non-L3 sessions are chat-only unless the admin whitelists capabilities.
+   * Preset tools are scoped registrations, so a guard is the enforcement seam
+   * that survives them; `tools.restrict` only masks host-global tools. The
+   * guard reads live state, so whitelist and level changes apply next turn.
+   */
+  guardTools(agent, state) {
     try {
-      const tools = agent.ctx.tools
-      if (typeof tools.restrict === 'function') {
-        const schemas = typeof tools.schemas === 'function' ? tools.schemas() : []
-        const deny = (schemas ?? []).map((schema) => schema?.name).filter((name) => name && unsafe(name))
-        if (deny.length > 0) tools.restrict({ deny })
-      }
-      if (typeof tools.guard === 'function') {
-        tools.guard((exec) => {
-          const name = exec?.toolName ?? exec?.tool?.name ?? exec?.name
-          return unsafe(name) ? '访客只读：禁止写操作或执行命令' : undefined
-        })
-      }
+      agent.ctx.tools.guard((exec) => {
+        if (state.level === 'L3') return undefined
+        const name = exec?.toolName ?? exec?.tool?.name ?? exec?.name
+        return toolAllowed(name, state.capabilities ?? []) ? undefined : '当前账号仅允许聊天；该工具需要管理员加入白名单'
+      })
     } catch (error) {
-      this.log('warn', `guest tool restriction failed: ${error?.message ?? error}`)
+      this.log('warn', `tool guard was not installed: ${error?.message ?? error}`)
     }
   }
 
@@ -282,8 +296,17 @@ export class ChatAgentManager {
    * @param {string} level
    * @param {any} state
    */
-  applySandboxMode(session, level, state) {
-    const mode = this.config.sandbox?.modeByLevel?.[level] ?? 'workspace-write'
+  applySandboxMode(session, level, capabilities, state) {
+    let mode
+    if (level === 'L3') {
+      mode = this.config.sandbox?.modeByLevel?.L3 ?? 'danger-full-access'
+    } else if (level === 'L0') {
+      mode = 'read-only'
+    } else if (capabilities.includes('write') || capabilities.includes('exec')) {
+      mode = 'workspace-write'
+    } else {
+      mode = 'read-only'
+    }
     if (state.sandboxMode === mode) return mode
     try {
       const policy = this.ctx.get('sandboxPolicy')
@@ -450,9 +473,10 @@ export class ChatAgentManager {
   /**
    * @param {{ id: string, chat: { type: 'private' | 'group', id: string }, text: string }} message
    */
-  async handle(message, { level = 'L1' } = {}) {
+  async handle(message, { level = 'L1', capabilities = [] } = {}) {
     const state = this.stateFor(message.chat)
     state.level = level
+    state.capabilities = capabilities
     if (state.pending >= this.config.agent.maxQueue) {
       await this.reply(message.chat, '[qq-bridge] 当前还有消息在处理，请稍后再发。')
       return
@@ -474,8 +498,9 @@ export class ChatAgentManager {
   async run(state, message) {
     const handle = await this.ensureSession(state)
     const session = handle.agent.session
+    this.applyPolicy(handle, state.level ?? 'L1', state)
     this.track(state, session?.header?.id, message.userId)
-    this.applySandboxMode(session, state.level ?? 'L1', state)
+    this.applySandboxMode(session, state.level ?? 'L1', state.capabilities ?? [], state)
     const fromSeq = session.seq
 
     handle.agent.followup({
