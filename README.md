@@ -186,6 +186,7 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 | `limits.maxWorkspaces` | `{L1:3, L2:10, L3:0}` | 每人工作区数，0 为不限 |
 | `limits.dailyTurns` | `{L0:20, L1:200, L2:1000, L3:0}` | 每日模型轮次，0 为不限 |
 | `approval.timeoutSec` | `120` | QQ 审批等待时间 |
+| `questions.timeoutSec` | `1800` | QQ 提问等待时间；`0` 表示不限时 |
 | `apiKeyFile` | `${DSH_HOME}/deepseek-key.txt` | 启动时读取密钥的文本文件 |
 | `apiKeyEnv` | `DEEPSEEK_API_KEY` | 读到的密钥写入哪个环境变量 |
 | `registerToDsh` | `true` | 工作区是否注册进 DSH 注册表 |

@@ -29,6 +29,7 @@ test('config keeps group and limit defaults', () => {
   assert.equal(config.sandbox.modeByLevel.L3, 'danger-full-access')
   assert.deepEqual(config.access.whitelist, {})
   assert.deepEqual(config.commandPrefix, ['/', '!', '#'])
+  assert.equal(config.questions.timeoutSec, 1800)
 })
 
 test('config accepts a custom prefix list', () => {

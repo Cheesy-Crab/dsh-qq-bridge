@@ -4,6 +4,7 @@ import { ChatAgentManager } from './agent/chat.js'
 import { ApprovalBridge } from './approval.js'
 import { UserStore } from './auth/users.js'
 import { CommandDispatcher } from './commands.js'
+import { UserQuestionBridge } from './questions.js'
 import { JsonStore, resolveStateFile } from './store.js'
 import { DedupeStore } from './transport/dedupe.js'
 import { FakeTransport } from './transport/fake.js'
@@ -29,6 +30,7 @@ export class QqBridge {
     this.store = undefined
     this.users = undefined
     this.approval = undefined
+    this.questions = undefined
     this.startedAt = undefined
   }
 
@@ -76,6 +78,15 @@ export class QqBridge {
       approval: this.approval,
     })
     this.chat.init()
+
+    this.questions = new UserQuestionBridge({
+      ctx: this.ctx,
+      log: this.log,
+      send,
+      resolveChat: (sessionId) => this.chat.chatForSession(sessionId),
+      timeoutMs: this.config.questions.timeoutSec * 1000,
+    })
+    this.questions.register()
     this.commands = new CommandDispatcher({
       manager: this.chat,
       users: this.users,
@@ -121,6 +132,7 @@ export class QqBridge {
     const capabilities = this.users.capabilitiesOf(message.userId, level)
 
     if (this.approval.tryAnswer(message)) return
+    if (this.questions.tryAnswer(message)) return
 
     if (this.config.transport.echo) {
       await this.transport.sendText(message.chat, `[qq-bridge] 收到：${message.text}`)

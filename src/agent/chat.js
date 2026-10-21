@@ -574,6 +574,18 @@ export class ChatAgentManager {
     return workspace.path
   }
 
+  /**
+   * Find the QQ chat that owns a live session (used by question/answer and
+   * other session-scoped callbacks).
+   * @param {string} sessionId
+   */
+  chatForSession(sessionId) {
+    for (const state of this.chats.values()) {
+      if (state.sessionId === sessionId) return state.chat
+    }
+    return undefined
+  }
+
   async cancelCurrent(chat) {
     const state = this.stateFor(chat)
     if (!state.handle) return false

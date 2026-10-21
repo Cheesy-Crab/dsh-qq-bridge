@@ -36,6 +36,9 @@ export const DEFAULTS = Object.freeze({
       L3: 'danger-full-access',
     }),
   }),
+  questions: Object.freeze({
+    timeoutSec: 1800,
+  }),
   transport: Object.freeze({
     kind: 'onebot',
     echo: false,
@@ -191,6 +194,10 @@ export function normalizeConfig(raw) {
       fail(`sandbox.modeByLevel.${level} must be one of ${[...SANDBOX_MODES].join(', ')}`)
     }
   }
+  const questions = { ...DEFAULTS.questions, ...(input.questions ?? {}) }
+  if (!Number.isInteger(questions.timeoutSec) || questions.timeoutSec < 0) {
+    fail('questions.timeoutSec must be 0 or a positive integer')
+  }
   const agent = { ...DEFAULTS.agent, ...(input.agent ?? {}) }
   if (typeof agent.provider !== 'string' || agent.provider === '') fail('agent.provider must be a non-empty string')
   if (typeof agent.model !== 'string' || agent.model === '') fail('agent.model must be a non-empty string')
@@ -216,6 +223,7 @@ export function normalizeConfig(raw) {
     access,
     approval,
     sandbox,
+    questions,
     commandPrefix,
     selfTestModel,
   }
