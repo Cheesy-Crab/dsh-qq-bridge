@@ -121,6 +121,11 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 - 未绑定（L0）用户在群里发普通消息会收到「先 /bind」提示；指令仍可用。
 - 审批请求会 @ 发起人，只有发起人能回 1/2。
 
+## 手册
+
+- [使用手册（QQ 用户）](docs/manual-user.md)：怎么和机器人聊天、指令、工作区、群聊、权限、审批。
+- [管理手册（部署者）](docs/manual-admin.md)：部署、启动停止、管理员与配对码、配置、排障、备份、升级。
+
 ## Windows 另一台电脑部署
 
 见 [docs/deploy-windows.md](docs/deploy-windows.md)：建 profile、装插件（私有仓库鉴权或路径安装）、配管理员与 key、接 NapCat、开机自启。
