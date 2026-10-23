@@ -4,6 +4,7 @@ import { ChatAgentManager } from './agent/chat.js'
 import { ApprovalBridge } from './approval.js'
 import { UserStore } from './auth/users.js'
 import { CommandDispatcher } from './commands.js'
+import { saveIncomingImage } from './images.js'
 import { UserQuestionBridge } from './questions.js'
 import { JsonStore, resolveStateFile } from './store.js'
 import { DedupeStore } from './transport/dedupe.js'
@@ -121,7 +122,7 @@ export class QqBridge {
       this.log('debug', `duplicate message skipped: ${message.id}`)
       return
     }
-    if (!message.text) return
+    if (!message.text && !(message.images?.length)) return
 
     const record = this.users.user(message.userId)
     if (record.status === 'frozen') {
@@ -148,6 +149,13 @@ export class QqBridge {
       message.chat.mention = message.userId
     }
 
+    const saved = await this.saveIncomingImages(message)
+    if (saved.length > 0) {
+      message.text = [message.text, ...saved.map((file) => `[图片已保存] ${file}`)].filter(Boolean).join('\n')
+    } else if (message.images?.length) {
+      message.text = [message.text, '[图片下载失败]'].filter(Boolean).join('\n')
+    }
+
     if (await this.commands.execute(message, { level, capabilities })) return
 
     if (message.chat.type === 'group' && level === 'L0') {
@@ -161,6 +169,30 @@ export class QqBridge {
       return
     }
     await this.chat.handle(message, { level, capabilities })
+  }
+
+  /**
+   * Download every image segment into the chat's workspace so the agent can
+   * read it by path. Failures are logged and surfaced as text.
+   * @param {{ chat: any, images?: any[] }} message
+   * @returns {Promise<string[]>}
+   */
+  async saveIncomingImages(message) {
+    const images = message.images ?? []
+    if (images.length === 0) return []
+    const workspace = await this.chat.workspacePathFor(message.chat)
+    const dir = path.join(workspace, 'attachments', 'incoming')
+    const saved = []
+    for (const image of images) {
+      try {
+        const file = await saveIncomingImage(image, dir)
+        saved.push(file)
+        this.log('info', `image saved ${message.chat.type}:${message.chat.id} ${file}`)
+      } catch (error) {
+        this.log('warn', `image save failed: ${error?.message ?? error}`)
+      }
+    }
+    return saved
   }
 
   async stop() {

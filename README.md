@@ -87,6 +87,7 @@ dsh plugin --profile qqweb add dsh-qq-bridge
 | `/unarchive <名称\|会话id>` | 恢复已归档会话 |
 | `/archived` | 已归档会话列表 |
 | `/screenshot` | 截取当前屏幕并发送到 QQ（L3） |
+| `/sendimage <路径>` | 发送工作区里的图片（L3） |
 | `/use <序号\|名称>` | 切换会话 |
 | `/stop` | 中断当前回合 |
 
@@ -150,11 +151,16 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 
 发布前检查与推送步骤见 [docs/release-checklist.md](docs/release-checklist.md)，版本历史见 [CHANGELOG.md](CHANGELOG.md)，未完成事项见 [TODO.md](TODO.md)。
 
-## 图片验收
+## 图片收发
 
-- agent 在回复里用 `present` 展示图片（png/jpg/jpeg/gif/webp）时，这一轮结束后插件会自动把图片发到对应的 QQ 会话，不需要额外指令。
+- 入站：QQ 里的图片会下载到当前工作区 `attachments/incoming/qq-*.jpg|png`，并把
+  `[图片已保存] 路径` 追加到消息里；agent 可以用 `read_image` 或脚本继续处理。
+  模型能否“看懂”图片取决于它是否支持视觉输入。
+- 出站：
+  - agent 用 `present` 展示图片时，自动转发到对应 QQ 会话；
+  - L3 可用 `/screenshot` 抓整个桌面；
+  - L3 可用 `/sendimage <路径>` 发送工作区里的任意图片。
 - 非图片文件（pdf、zip 等）不会自动转发，仍然只发文字说明。
-- 也可以直接发 `/screenshot` 抓当前整个桌面；L3 专用。
 
 ## 配置
 

@@ -60,6 +60,7 @@
 | `/unarchive <名称\|会话id>` | 恢复已归档会话 |
 | `/archived` | 查看已归档会话 |
 | `/screenshot` | 截全屏并发到当前聊天（仅 L3） |
+| `/sendimage <路径>` | 发送工作区里的图片（仅 L3） |
 | `/use <序号\|名称>` | 切换到某个会话 |
 | `/stop` | 中断当前这一轮 |
 | `/sandbox [模式]` | 查看/切换当前会话文件策略（仅 L3） |
@@ -144,11 +145,15 @@ agent 用 `ask_user_question` 问你时，原本会在 DSH 弹选项框；现在
 - 默认等待 **30 分钟**，可用 `questions.timeoutSec` 调整，`0` 表示不限时；
 - QQ 会话的提问由 QQ 接管，桌面端的同一个选项框不会同时生效。
 
-## 10. 图片验收
+## 10. 图片收发
 
-- agent 用 `present` 展示图片时，插件会自动把图片发到当前 QQ 会话；
-- 支持 png/jpg/jpeg/gif/webp，其他文件仍只发文字；
-- L3 也可以直接发 `/screenshot` 抓整个桌面。
+- **你发图给机器人**：图片会保存到当前工作区 `attachments/incoming/`，消息里会带上
+  `[图片已保存] 路径`；agent 可以读这个文件。模型能不能识别图片内容，取决于模型是否
+  支持视觉输入。
+- **agent 发图给你**：agent 用 `present` 展示图片时，插件会自动把图片发到当前 QQ 会话；
+- L3 也可以直接发 `/screenshot` 抓整个桌面；
+- L3 发 `/sendimage <路径>` 可以把工作区里的图片发出来；
+- 支持 png/jpg/jpeg/gif/webp/bmp，其他文件仍只发文字。
 
 ## 11. 常见问题
 

@@ -2,6 +2,8 @@ import fs from 'node:fs'
 import http from 'node:http'
 import { WebSocket, WebSocketServer } from 'ws'
 
+import { imagesOf } from '../images.js'
+
 const MAX_PAYLOAD = 2 * 1024 * 1024
 
 /**
@@ -48,6 +50,7 @@ export function normalizeEvent(event) {
       chat: { type: 'private', id: String(event.user_id) },
       userId: String(event.user_id),
       text,
+      images: imagesOf(event.message),
       raw: event,
     }
   }
@@ -64,6 +67,7 @@ export function normalizeEvent(event) {
       groupId: String(event.group_id),
       mentioned: event.self_id != null && atIds.includes(String(event.self_id)),
       text,
+      images: imagesOf(event.message),
       raw: event,
     }
   }

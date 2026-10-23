@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 
 import { normalizeCapabilities } from './auth/capabilities.js'
@@ -316,6 +317,22 @@ export class CommandDispatcher {
         const file = await this.screenshot({ dir })
         await this.sendImage(message.chat, file, message.chat.mention ? { mention: message.chat.mention } : {})
         return `已截屏并发送（${path.basename(file)}）。`
+      },
+    })
+
+    this.register('sendimage', {
+      usage: 'sendimage <路径>',
+      description: '把工作区里的图片发送到当前 QQ 聊天（L3）',
+      minLevel: 'L3',
+      handler: async ({ message, args }) => {
+        const raw = args.join(' ').trim().replace(/^["']|["']$/g, '')
+        if (raw === '') throw new Error('用法：/sendimage <路径>')
+        const workspace = await this.manager.workspacePathFor(message.chat)
+        const file = path.isAbsolute(raw) ? raw : path.join(workspace, raw)
+        if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`文件不存在：${file}`)
+        if (!/\.(png|jpe?g|gif|webp|bmp)$/i.test(file)) throw new Error('只支持 png/jpg/jpeg/gif/webp/bmp')
+        await this.sendImage(message.chat, file, message.chat.mention ? { mention: message.chat.mention } : {})
+        return `已发送图片 ${path.basename(file)}。`
       },
     })
 

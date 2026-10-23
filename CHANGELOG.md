@@ -1,5 +1,14 @@
 # 变更记录
 
+## 0.17.0
+
+- 入站图片：QQ 消息里的图片下载到当前工作区 `attachments/incoming/`，消息追加
+  `[图片已保存] 路径`，agent 可通过 `read_image` 或脚本处理。
+- 支持 http(s) URL、`base64://`、本地 `file://`/路径三种来源，单图上限 20MB。
+- 下载失败时消息追加 `[图片下载失败]`，不阻塞文字处理。
+- 新增 L3 指令 `/sendimage <路径>`，发送工作区里的图片。
+- 出站图片继续支持 `present` 自动转发和 `/screenshot`。
+
 ## 0.16.0
 
 - 新增 QQ 问答桥：agent 的 `ask_user_question` 选项会转成文字发到对应 QQ，

@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import test from 'node:test'
 
 import { CommandDispatcher, parseCommand } from '../src/commands.js'
@@ -214,6 +217,16 @@ test('/ws delete removes the registration and reports the path', async () => {
   await run('/ws delete demo')
   assert.match(sent[0].text, /已从登记中移除工作区 demo/)
   assert.match(sent[0].text, /目录和会话历史保留/)
+})
+
+test('/sendimage sends an existing image file', async () => {
+  const file = path.join(os.tmpdir(), `qq-send-${Date.now()}.png`)
+  fs.writeFileSync(file, Buffer.from([1, 2, 3]))
+  const { run, sent, images } = dispatcher()
+  await run(`/sendimage ${file}`)
+  assert.equal(images.length, 1)
+  assert.match(sent[0].text, /已发送图片/)
+  fs.rmSync(file, { force: true })
 })
 
 test('/screenshot captures and sends an image for L3', async () => {
