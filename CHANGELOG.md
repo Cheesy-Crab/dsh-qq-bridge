@@ -1,5 +1,10 @@
 # 变更记录
 
+## 0.19.2
+
+- 客户端插件补上 Cordis `inject = ["slots"]`，修复 `dsh-qq-bridge: failed` /
+  “1 entry did not activate”。
+
 ## 0.19.1
 
 - 设置页请求改为 `credentials: omit`，避免 Desktop 的 file:// 页面在
