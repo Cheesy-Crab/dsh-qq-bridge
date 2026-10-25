@@ -4,8 +4,9 @@ import path from 'node:path'
 import { QqBridge } from './bridge.js'
 import { normalizeConfig } from './config.js'
 import { ensureCredential } from './credentials.js'
+import { pickDirectory } from './browse.js'
 import { installNapcat } from './napcat-install.js'
-import { NapCatSupervisor } from './napcat.js'
+import { findNapcatDir, NapCatSupervisor } from './napcat.js'
 import { registerNapCatHttp } from './napcat-http.js'
 import { resolveWorkspacesRoot } from './paths.js'
 import { resolveApiKeyFile } from './secrets.js'
@@ -72,6 +73,16 @@ export function apply(ctx, rawConfig) {
       const result = await installNapcat({ source, dir: napcat.dataDir(), log })
       napcat.setCwd(result.cwd)
       return result
+    },
+    browse: async () => {
+      const path = await pickDirectory({ log })
+      return path
+    },
+    useNapcat: async (input) => {
+      const found = findNapcatDir(String(input ?? '').trim())
+      if (!found) throw new Error('该目录里没有 napcat.bat，请选择 NapCat Shell 目录')
+      napcat.setCwd(found)
+      return { cwd: found }
     },
     setApiKey: async (key) => {
       const value = String(key ?? '').trim()

@@ -58,21 +58,19 @@ D:\dsh-qq-bridge
 
 ## 4. 部署向导（全部用按钮）
 
-### 4.1 安装 NapCat
+### 4.1 提供 NapCat 路径
 
-点 **下载并安装 NapCat**。默认下载官方 Shell，解压到：
-
-```
-%USERPROFILE%\.dsh\qq-bridge\napcat
-```
-
-网络不通或想用现成目录时，在输入框填：
+设置页有一行 **NapCat 路径**：
 
 ```
-D:\NapCat\NapCat.Shell.Windows.Node
+[ D:\NapCat\NapCat.Shell.Windows.Node ]  [选择目录]  [下载]
 ```
 
-或本地 zip 路径，再点安装。
+- 已有 NapCat：点 **选择目录**，或直接把路径粘进输入框后按回车；
+- 没有 NapCat：点右侧 **下载**，自动装到
+  `%USERPROFILE%\.dsh\qq-bridge\napcat`；
+- 路径会保存到 `%USERPROFILE%\.dsh\qq-bridge\settings.json`，重启后继续使用；
+- 只接受包含 `napcat.bat` 的 NapCat Shell 目录。
 
 ### 4.2 保存 API Key
 

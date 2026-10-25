@@ -1,5 +1,14 @@
 # 变更记录
 
+## 0.21.0
+
+- NapCat 部署改成路径输入栏：已有 NapCat 只需选择目录或粘贴路径，右侧提供
+  「选择目录」和「下载」按钮。
+- 路径持久化到 `~/.dsh/qq-bridge/settings.json`，重启后继续使用。
+- 目录选择：Desktop 内用 Electron 原生目录对话框；CLI Host 回退到
+  PowerShell / zenity / osascript。
+- 下载仍安装到 `~/.dsh/qq-bridge/napcat`，不再强制覆盖已有路径。
+
 ## 0.20.0
 
 - DSH Desktop 一键部署：设置页新增安装 NapCat、保存 API Key、设置管理员、

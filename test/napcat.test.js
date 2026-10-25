@@ -18,11 +18,15 @@ const config = (overrides = {}) => ({
   ...overrides,
 })
 
+const settingsFile = path.join(os.tmpdir(), 'napcat-test-settings.json')
+fs.rmSync(settingsFile, { force: true })
+
 test('isPortOpen sees a listening port and a closed one', async () => {
   const server = net.createServer().listen(0, '127.0.0.1')
   await new Promise((resolve) => server.once('listening', resolve))
   const port = server.address().port
   assert.equal(await isPortOpen(port), true)
+  server.closeAllConnections?.()
   await new Promise((resolve) => server.close(resolve))
   assert.equal(await isPortOpen(port), false)
 })
@@ -31,9 +35,10 @@ test('status reports not running when the port is closed', async () => {
   const server = net.createServer().listen(0, '127.0.0.1')
   await new Promise((resolve) => server.once('listening', resolve))
   const port = server.address().port
+  server.closeAllConnections?.()
   await new Promise((resolve) => server.close(resolve))
 
-  const supervisor = new NapCatSupervisor({ config: config(), log: () => {}, port })
+  const supervisor = new NapCatSupervisor({ config: config(), log: () => {}, port, settingsFile })
   const status = await supervisor.status()
   assert.equal(status.running, false)
   assert.equal(status.managed, false)
@@ -46,6 +51,7 @@ test('an external OneBot client is reported and never started over', async () =>
     log: () => {},
     port: 6700,
     isConnected: () => true,
+    settingsFile,
   })
   const status = await supervisor.status()
   assert.equal(status.running, true)
@@ -61,6 +67,7 @@ test('start fails fast when the bundled directory is missing', async () => {
     config: config({ cwd: path.join(os.tmpdir(), 'missing-napcat-dir') }),
     log: () => {},
     port: 1,
+    settingsFile,
   })
   await assert.rejects(() => supervisor.start(), /NapCat 目录不存在/)
 })

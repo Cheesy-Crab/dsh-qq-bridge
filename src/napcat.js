@@ -53,32 +53,51 @@ export class NapCatSupervisor {
    * @param {{ config: any, log: (level: string, message: string) => void, port: number,
    *           isConnected?: () => boolean }} options
    */
-  constructor({ config, log, port, isConnected = () => false }) {
+  constructor({ config, log, port, isConnected = () => false, settingsFile }) {
     this.config = config
     this.log = log
     this.port = port
     this.isConnected = isConnected
+    this.settingsPath = settingsFile
     this.child = undefined
     this.stopping = false
     this.external = false
     this.lastExit = undefined
     this.restartTimer = undefined
     this.installedCwd = undefined
+    this.loadSettings()
+  }
+
+  settingsFile() {
+    return this.settingsPath ?? path.join(os.homedir(), '.dsh', 'qq-bridge', 'settings.json')
+  }
+
+  loadSettings() {
+    try {
+      const value = JSON.parse(fs.readFileSync(this.settingsFile(), 'utf8'))
+      if (typeof value?.napcatCwd === 'string' && findNapcatDir(value.napcatCwd)) {
+        this.installedCwd = value.napcatCwd
+      }
+    } catch {}
   }
 
   dataDir() {
     return path.join(os.homedir(), '.dsh', 'qq-bridge', 'napcat')
   }
 
-  /** Remember a directory produced by the setup installer. */
+  /** Remember a directory produced by the setup installer or picked by the user. */
   setCwd(dir) {
     this.installedCwd = dir
+    try {
+      fs.mkdirSync(path.dirname(this.settingsFile()), { recursive: true })
+      fs.writeFileSync(this.settingsFile(), `${JSON.stringify({ napcatCwd: dir }, null, 2)}\n`)
+    } catch {}
   }
 
   cwd() {
+    if (this.installedCwd) return this.installedCwd
     if (this.config.cwd) return this.config.cwd
     const candidates = [
-      this.installedCwd,
       path.join(PLUGIN_DIR, 'vendor', 'napcat'),
       this.dataDir(),
     ]

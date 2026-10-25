@@ -80,6 +80,17 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
           sendJson(res, 200, await setup.install(String(body.source ?? '')))
           return
         }
+        if (route === '/setup/browse' && req.method === 'POST') {
+          if (!setup?.browse) throw new Error('部署接口不可用')
+          sendJson(res, 200, { path: await setup.browse() })
+          return
+        }
+        if (route === '/setup/napcat-path' && req.method === 'POST') {
+          if (!setup?.useNapcat) throw new Error('部署接口不可用')
+          const body = await readJson(req)
+          sendJson(res, 200, await setup.useNapcat(String(body.path ?? '')))
+          return
+        }
         if (route === '/setup/api-key' && req.method === 'POST') {
           if (!setup?.setApiKey) throw new Error('部署接口不可用')
           const body = await readJson(req)
