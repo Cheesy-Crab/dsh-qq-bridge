@@ -1,5 +1,7 @@
 # 架构
 
+![QQ Bridge 架构与图片通路](architecture.png)
+
 QQ Bridge 分为 **两个业务域 + 一个运行支撑层**。依赖方向是单向的：
 
 ```text
