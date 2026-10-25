@@ -50,14 +50,17 @@ src/
     reply.js                回复提取与分段
   agent-ext/                agent 行为扩展域
     registry.js             扩展注册表（Cordis 服务 agentExtensions）
-    builtins.js             QQ 内置扩展：prompt/policy/present
+    builtins.js             QQ 内置扩展：prompt/visual-design/policy/present
     approval.js             审批转 QQ
     questions.js            ask_user_question 转 QQ
     images.js               入站图片落盘
     screenshot.js           全屏截图
     present.js              present 图片自动转发
-    prompt.js               QQ 专用系统提示
     policy.js               审批策略 + 工具 guard
+    prompts/                所有系统提示词（*.prompt.js）
+      qq-images.prompt.js   QQ 图片发送约定
+      visual-design.prompt.js 视觉设计协作规则
+      index.js              提示词统一出口
   qq/                       QQ 适配层
     bridge.js               组合根：用户、审批、问答、命令、聊天
     router.js               sessionId ↔ chat 索引
@@ -110,11 +113,12 @@ const dispose = registry.register({
 - 多个扩展按注册顺序执行；
 - 单个扩展抛错只记录日志，不影响其他扩展；
 - `register()` 返回 disposer；
-- QQ 的 prompt / policy / present 只是三个内置扩展：
+- QQ 的 prompt / visual-design / policy / present 只是四个内置扩展：
 
 ```text
-qq:prompt   → agent-ext/prompt.js
-qq:policy   → agent-ext/policy.js
+qq:prompt        → agent-ext/prompts/qq-images.prompt.js
+qq:visual-design → agent-ext/prompts/visual-design.prompt.js
+qq:policy        → agent-ext/policy.js
 qq:present  → agent-ext/present.js
 ```
 

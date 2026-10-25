@@ -1,5 +1,11 @@
 # 变更记录
 
+## 0.27.1
+
+- 系统提示词统一收进 `src/agent-ext/prompts/`，文件名统一为 `*.prompt.js`。
+- 提示词通过 `prompts/index.js` 统一导出，行为文件与提示词文件明确分开。
+- `qq:visual-design` 增加无 `image` 权限时的约束，避免无权限会话尝试生图。
+
 ## 0.27.0
 
 - 新增 `image` 能力：非 L3 用户可被授予 `generate_image` / `edit_image` /

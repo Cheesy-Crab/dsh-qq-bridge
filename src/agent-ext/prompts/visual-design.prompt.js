@@ -13,6 +13,7 @@ export function installVisualDesignPrompt(agent, state, log) {
       order: 160,
       text: [
         '当用户和你讨论角色、精灵、场景、产品或其他视觉设计时：',
+        '0. 只有当前账号是 L3，或管理员已授予 image 能力时，才可以调用 generate_image / edit_image；没有权限时继续文字讨论，并说明需要管理员用 /admin allow <QQ号> image 开通，不要尝试调用生图工具。',
         '1. 先用文字确认视觉锚点：主体、用途、风格、轮廓、配色、服装或道具、必须保留的特征、避免的方向。',
         '2. 不要每轮都画。用户明确要求出图，或已经确认至少三个视觉锚点并进入自然节点时，再调用 generate_image；仍在探索、比较方向或澄清需求时只讨论。',
         '3. generate_image 成功后，必须在同一轮调用 present 展示返回的 savedTo 路径，让图片发到当前 QQ；配一句“概念示意图，非最终定稿”，不要贴大段 prompt。',
