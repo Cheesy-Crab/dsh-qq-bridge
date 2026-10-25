@@ -47,6 +47,8 @@ src/
     chat.js                 工作区/会话/agent 生命周期
     reply.js                回复提取与分段
   agent-ext/                agent 行为扩展域
+    registry.js             扩展注册表（Cordis 服务 agentExtensions）
+    builtins.js             QQ 内置扩展：prompt/policy/present
     approval.js             审批转 QQ
     questions.js            ask_user_question 转 QQ
     images.js               入站图片落盘
@@ -83,13 +85,39 @@ src/
 
 ```js
 behavior = {
-  installPrompt(agent, state) {},
-  applyPolicy(handle, level, state) {},
-  forwardImages({ sendImage, chat, session, fromSeq, log }) {},
+  sessionReady(context) {},
+  turnEnd(context) {},
 }
 ```
 
 `workspace/` 不 import `agent-ext/`；由 `qq/bridge.js` 负责装配。
+
+## agent 扩展注册表
+
+`index.js` 把 `AgentExtensionRegistry` 暴露为 Cordis 服务：
+
+```js
+const registry = ctx.get('agentExtensions')
+const dispose = registry.register({
+  name: 'my-plugin',
+  onSession({ agent, session, chat, state, level, sendText, sendImage, log }) {},
+  onTurnEnd({ chat, session, fromSeq, sendImage, sendText, state, log }) {},
+})
+```
+
+- 多个扩展按注册顺序执行；
+- 单个扩展抛错只记录日志，不影响其他扩展；
+- `register()` 返回 disposer；
+- QQ 的 prompt / policy / present 只是三个内置扩展：
+
+```text
+qq:prompt   → agent-ext/prompt.js
+qq:policy   → agent-ext/policy.js
+qq:present  → agent-ext/present.js
+```
+
+因此其他渠道插件可以注册自己的提示词、审批策略、turn 结束行为，而不需要改
+`workspace/` 或 `qq/`。
 
 ### agent-ext：agent 行为扩展域
 
@@ -168,8 +196,8 @@ DSH approval/request
 
 ## 扩展点
 
+- **新增 agent 行为**：注册一个 `agentExtensions` 扩展，不需要改 workspace；
 - **新增工作区能力**：只改 `workspace/` + `qq/commands.js`；
-- **新增 agent 行为**：只加 `agent-ext/` 模块，由 `qq/bridge.js` 或 manager 注入；
 - **换 QQ 协议**：新增 `transport/` 实现，workspace/agent-ext 不变；
 - **换部署方式**：只改 `runtime/` 与 `index.js`。
 

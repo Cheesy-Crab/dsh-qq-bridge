@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { QqBridge } from './qq/bridge.js'
+import { AgentExtensionRegistry } from './agent-ext/registry.js'
 import { normalizeConfig } from './core/config.js'
 import { ensureCredential } from './core/credentials.js'
 import { pickDirectory } from './runtime/browse.js'
@@ -43,6 +44,13 @@ export function apply(ctx, rawConfig) {
     })
   }
 
+  const agentExtensions = new AgentExtensionRegistry({ log })
+  try {
+    ctx.provide('agentExtensions', agentExtensions)
+  } catch (error) {
+    log('warn', `agentExtensions service was not provided: ${error?.message ?? error}`)
+  }
+
   const napcat = new NapCatSupervisor({
     config: config.napcat,
     log,
@@ -50,7 +58,7 @@ export function apply(ctx, rawConfig) {
     isConnected: () => bridge.transport?.connected === true,
   })
 
-  const bridge = new QqBridge({ ctx, config, root, log, napcat })
+  const bridge = new QqBridge({ ctx, config, root, log, napcat, agentExtensions })
 
   let credentials
   ctx.inject(['credentials'], (credCtx) => {

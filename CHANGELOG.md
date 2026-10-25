@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.26.0
+
+- agent 行为改成可扩展注册表：其他插件可通过 Cordis 服务
+  `agentExtensions` 注册 `onSession` / `onTurnEnd`。
+- QQ 的 prompt / policy / present 变成三个内置扩展，由 bridge 注册。
+- `ChatAgentManager` 不再认识任何 QQ 行为，只调用 `sessionReady` / `turnEnd`。
+- 新增 `docs/architecture.md` 的扩展 API 说明与 registry 测试。
+
 ## 0.25.0
 
 - 架构重构：按 `core / access / transport / workspace / agent-ext / qq / runtime`

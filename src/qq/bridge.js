@@ -5,9 +5,7 @@ import { ApprovalBridge } from '../agent-ext/approval.js'
 import { UserStore } from '../access/users.js'
 import { CommandDispatcher } from './commands.js'
 import { saveIncomingImage } from '../agent-ext/images.js'
-import { applyAgentPolicy } from '../agent-ext/policy.js'
-import { forwardPresentedImages } from '../agent-ext/present.js'
-import { installQqPrompt } from '../agent-ext/prompt.js'
+import { qqBuiltinExtensions } from '../agent-ext/builtins.js'
 import { UserQuestionBridge } from '../agent-ext/questions.js'
 import { JsonStore, resolveStateFile } from '../core/store.js'
 import { ConversationRouter } from './router.js'
@@ -23,12 +21,14 @@ export class QqBridge {
   /**
    * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log, napcat }) {
+  constructor({ ctx, config, root, log, napcat, agentExtensions }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
     this.napcat = napcat
+    this.agentExtensions = agentExtensions
+    this.extensionsRegistered = false
     this.transport = undefined
     this.dedupe = new DedupeStore()
     this.chat = undefined
@@ -74,16 +74,16 @@ export class QqBridge {
     this.approval.register()
     this.router = new ConversationRouter()
 
+    if (this.agentExtensions && !this.extensionsRegistered) {
+      for (const extension of qqBuiltinExtensions({ approval: this.approval, log: this.log })) {
+        this.agentExtensions.register(extension)
+      }
+      this.extensionsRegistered = true
+    }
+
     const behavior = {
-      installPrompt: (agent, state) => installQqPrompt(agent, state, this.log),
-      applyPolicy: (handle, level, state) => applyAgentPolicy({
-        approval: this.approval,
-        agent: handle.agent,
-        level,
-        state,
-        log: this.log,
-      }),
-      forwardImages: (options) => forwardPresentedImages(options),
+      sessionReady: (context) => this.agentExtensions?.sessionReady(context),
+      turnEnd: (context) => this.agentExtensions?.turnEnd(context),
     }
 
     this.chat = new ChatAgentManager({

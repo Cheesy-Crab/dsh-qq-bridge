@@ -113,8 +113,17 @@ export class ChatAgentManager {
    * Tell the agent that images only reach QQ when they go through `present`.
    * Without this, models often write a file path in prose and believe it was sent.
    */
-  ensureQqPrompt(agent, state) {
-    this.behavior.installPrompt?.(agent, state)
+  applySessionExtensions(handle, state) {
+    return this.behavior.sessionReady?.({
+      agent: handle.agent,
+      session: handle.agent.session,
+      chat: state.chat,
+      state,
+      level: state.level ?? 'L1',
+      sendText: this.send,
+      sendImage: this.sendImage,
+      log: this.log,
+    })
   }
 
   async ensurePreset(agent) {
@@ -213,8 +222,7 @@ export class ChatAgentManager {
         const handle = await agents.resume({ resumeSessionId: state.sessionId, agentOptions: this.agentOptions() })
         await this.attach(workspace, state.sessionId)
         await this.ensurePreset(handle.agent)
-        this.ensureQqPrompt(handle.agent, state)
-        this.applyPolicy(handle, state.level ?? 'L1', state)
+        await this.applySessionExtensions(handle, state)
         this.track(state, state.sessionId)
         this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state.capabilities ?? [], state)
         state.handle = handle
@@ -241,8 +249,7 @@ export class ChatAgentManager {
     })
     await this.attach(workspace, sessionId)
     await this.ensurePreset(handle.agent)
-    this.ensureQqPrompt(handle.agent, state)
-    this.applyPolicy(handle, state.level ?? 'L1', state)
+    await this.applySessionExtensions(handle, state)
     this.track(state, sessionId)
     this.applySandboxMode(handle.agent.session, state.level ?? 'L1', state.capabilities ?? [], state)
 
@@ -260,10 +267,6 @@ export class ChatAgentManager {
     } catch (error) {
       this.log('warn', `attach failed for ${sessionId}: ${error?.message ?? error}`)
     }
-  }
-
-  applyPolicy(handle, level, state) {
-    this.behavior.applyPolicy?.(handle, level, state)
   }
 
   track(state, sessionId, requester = state.chat.id) {
@@ -618,7 +621,7 @@ export class ChatAgentManager {
   async run(state, message) {
     const handle = await this.ensureSession(state)
     const session = handle.agent.session
-    this.applyPolicy(handle, state.level ?? 'L1', state)
+    await this.applySessionExtensions(handle, state)
     this.track(state, session?.header?.id, message.userId)
     this.applySandboxMode(session, state.level ?? 'L1', state.capabilities ?? [], state)
     const fromSeq = session.seq
@@ -664,11 +667,14 @@ export class ChatAgentManager {
       return
     }
 
-    await this.behavior.forwardImages?.({
+    await this.behavior.turnEnd?.({
       sendImage: this.sendImage,
+      sendText: this.send,
       chat: state.chat,
       session,
       fromSeq,
+      state,
+      level: state.level ?? 'L1',
       log: this.log,
     })
 

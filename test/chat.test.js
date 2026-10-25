@@ -95,7 +95,7 @@ function fakeEnvironment({ reply = 'pong', error, hang = false, presented = [] }
     },
     store: { load: () => {}, get: () => undefined, set: () => {} },
     behavior: {
-      forwardImages: (options) => forwardPresentedImages(options),
+      turnEnd: (options) => forwardPresentedImages(options),
     },
   })
   return { manager, created, sent, images, session, followups, events, idleCalls: () => idleCalls }
