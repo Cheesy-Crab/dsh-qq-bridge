@@ -405,13 +405,13 @@ export class CommandDispatcher {
       if (users.length === 0) return ['还没有用户。']
       return ['用户列表：', ...users.map((user) => {
         const caps = user.level === 'L3' ? 'all' : (user.capabilities.length > 0 ? user.capabilities.join(',') : 'chat-only')
-        return `${user.openid}  ${user.level}  ${user.status}  能力=${caps}  今日 ${user.turns} 轮`
+        return `${user.openid}  ${user.level}  ${user.status}  能力=${caps}  额度=${user.imageQuota}  今日 ${user.turns} 轮`
       })]
     }
     if (sub === 'allow' || sub === 'deny') {
-      if (args.length < 3) throw new Error(`用法：/admin ${sub} <openid> <workspace|read|write|exec ...>`)
+      if (args.length < 3) throw new Error(`用法：/admin ${sub} <openid> <workspace|read|write|exec|image ...>`)
       const capabilities = normalizeCapabilities(args.slice(2))
-      if (capabilities.length === 0) throw new Error('能力只能是 workspace/read/write/exec')
+      if (capabilities.length === 0) throw new Error('能力只能是 workspace/read/write/exec/image')
       const result = sub === 'allow'
         ? this.users.addCapabilities(args[1], capabilities)
         : this.users.removeCapabilities(args[1], capabilities)
@@ -420,8 +420,15 @@ export class CommandDispatcher {
     if (sub === 'perms') {
       if (args.length < 2) throw new Error('用法：/admin perms <openid>')
       const user = this.users.user(args[1])
-      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec'] : normalizeCapabilities(user.capabilities ?? [])
-      return `${args[1]}（${user.level}）：${caps.length > 0 ? caps.join(', ') : '仅聊天'}`
+      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec', 'image'] : normalizeCapabilities(user.capabilities ?? [])
+      return `${args[1]}（${user.level}）：${caps.length > 0 ? caps.join(', ') : '仅聊天'}；生图额度=${this.users.imageQuotaOf?.(args[1]) ?? 0} Buzz`
+    }
+    if (sub === 'quota') {
+      if (args.length < 2) throw new Error('用法：/admin quota <openid> [Buzz额度]')
+      if (args.length === 2) return `${args[1]} 的生图额度：${this.users.imageQuotaOf(args[1])} Buzz`
+      const amount = Number(args[2])
+      if (!Number.isFinite(amount) || amount < 0) throw new Error('额度必须是非负数字')
+      return `已把 ${args[1]} 的生图额度设为 ${this.users.setImageQuota(args[1], amount)} Buzz。`
     }
     if (sub === 'invite') {
       const level = normalizeLevel(args[1] ?? 'L1')
@@ -444,7 +451,7 @@ export class CommandDispatcher {
       if (workspaces.length === 0) return ['还没有工作区。']
       return ['全部工作区：', ...workspaces.map((workspace) => `${workspace.title}  ${workspace.path}`)]
     }
-    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|allow|deny|perms|ws list')
+    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|allow|deny|perms|quota|ws list')
   }
 
   async handleWorkspace(message, args, level = 'L1') {

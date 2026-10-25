@@ -57,7 +57,7 @@ test('disposer removes an extension', async () => {
 
 test('QQ built-ins are ordinary registrations', () => {
   const extensions = qqBuiltinExtensions({ approval: {}, log: () => {} })
-  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:generated-images', 'qq:present'])
+  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present', 'qq:generated-images'])
 })
 
 test('image-gen results are forwarded once and skipped when already presented', async () => {
@@ -77,4 +77,28 @@ test('image-gen results are forwarded once and skipped when already presented', 
     log: () => {},
   })
   assert.deepEqual(sent, ['/ws/a.png', '/ws/c.jpg'])
+})
+
+test('generated image cost is charged once and reported as remaining quota', async () => {
+  const events = [
+    { type: 'tool/result', data: { meta: { kind: 'dsh-image-gen', savedTo: '/ws/a.png', cost: { total: 4, base: 3 } } } },
+    { type: 'deliverables/presented', data: { files: [{ path: '/ws/a.png' }] } },
+  ]
+  const session = { snapshotEvents: () => events }
+  const charges = []
+  const texts = []
+  await forwardGeneratedImages({
+    sendImage: async () => {},
+    sendText: async (_chat, text) => texts.push(text),
+    charge: async ({ cost }) => {
+      charges.push(cost)
+      return { spent: cost, remaining: 6, overdraw: false }
+    },
+    chat: {},
+    session,
+    fromSeq: 0,
+    log: () => {},
+  })
+  assert.deepEqual(charges, [4])
+  assert.match(texts[0], /消耗 4 Buzz，剩余额度 6 Buzz/)
 })

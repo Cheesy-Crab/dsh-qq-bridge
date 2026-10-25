@@ -89,7 +89,7 @@ export class UserStore {
    * @returns {string[]}
    */
   capabilitiesOf(openid, level) {
-    if (level === 'L3') return ['workspace', 'read', 'write', 'exec']
+    if (level === 'L3') return ['workspace', 'read', 'write', 'exec', 'image']
     return normalizeCapabilities(this.user(openid).capabilities ?? [])
   }
 
@@ -201,6 +201,45 @@ export class UserStore {
     return { allowed: true, used: user.daily.turns, limit }
   }
 
+  /**
+   * Remaining image quota allocated by an admin, in Buzz.
+   * @param {string} openid
+   * @returns {number}
+   */
+  imageQuotaOf(openid) {
+    return Math.max(0, Number(this.user(openid).imageQuota ?? 0) || 0)
+  }
+
+  /**
+   * Set the absolute image quota in Buzz.
+   * @param {string} openid
+   * @param {number} amount
+   * @returns {number}
+   */
+  setImageQuota(openid, amount) {
+    const user = this.ensure(openid)
+    user.imageQuota = Math.max(0, Number(amount) || 0)
+    this.save()
+    return user.imageQuota
+  }
+
+  /**
+   * Charge one image generation. Overdraw is allowed: a positive balance is
+   * floored at zero instead of blocking the generation.
+   * @param {string} openid
+   * @param {number} cost Buzz
+   * @returns {{ spent: number, remaining: number, before: number, overdraw: boolean }}
+   */
+  chargeImageQuota(openid, cost) {
+    const user = this.ensure(openid)
+    const before = this.imageQuotaOf(openid)
+    const spent = Math.max(0, Number(cost) || 0)
+    const remaining = Math.max(0, before - spent)
+    user.imageQuota = remaining
+    this.save()
+    return { spent, remaining, before, overdraw: before > 0 && spent > before }
+  }
+
   list() {
     return Object.entries(this.state.users).map(([openid, user]) => ({
       openid,
@@ -208,6 +247,7 @@ export class UserStore {
       status: user.status ?? 'active',
       capabilities: normalizeCapabilities(user.capabilities ?? []),
       turns: user.daily?.date === today() ? user.daily.turns : 0,
+      imageQuota: Math.max(0, Number(user.imageQuota ?? 0) || 0),
     }))
   }
 }

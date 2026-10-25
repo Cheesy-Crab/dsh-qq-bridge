@@ -75,7 +75,16 @@ export class QqBridge {
     this.router = new ConversationRouter()
 
     if (this.agentExtensions && !this.extensionsRegistered) {
-      for (const extension of qqBuiltinExtensions({ approval: this.approval, log: this.log })) {
+      const chargeImage = ({ chat, state, cost }) => {
+        const billing = this.users.chargeImageQuota(chat.id, cost)
+        if (state) state.imageQuota = billing.remaining
+        return billing
+      }
+      for (const extension of qqBuiltinExtensions({
+        approval: this.approval,
+        chargeImage,
+        log: this.log,
+      })) {
         this.agentExtensions.register(extension)
       }
       this.extensionsRegistered = true
@@ -153,6 +162,7 @@ export class QqBridge {
     }
     const level = this.users.levelOf(message.userId)
     const capabilities = this.users.capabilitiesOf(message.userId, level)
+    const imageQuota = this.users.imageQuotaOf(message.userId)
 
     if (this.approval.tryAnswer(message)) return
     if (this.questions.tryAnswer(message)) return
@@ -190,7 +200,7 @@ export class QqBridge {
       await this.transport.sendText(message.chat, `[qq-bridge] 今日额度已用完（${quota.used}/${quota.limit}）。`)
       return
     }
-    await this.chat.handle(message, { level, capabilities })
+    await this.chat.handle(message, { level, capabilities, imageQuota })
   }
 
   /**

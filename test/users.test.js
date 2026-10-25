@@ -82,6 +82,18 @@ test('capabilities default to chat-only and can be granted or revoked', () => {
   assert.deepEqual(store.removeCapabilities('user-1', ['write']), ['read'])
 })
 
+test('image quota is allocated and overdraw floors at zero', () => {
+  const store = new UserStore({ file: path.join(dir, 'quota.json') })
+  store.load()
+  assert.equal(store.imageQuotaOf('user-1'), 0)
+  assert.equal(store.setImageQuota('user-1', 10), 10)
+  const first = store.chargeImageQuota('user-1', 4)
+  assert.deepEqual({ spent: first.spent, remaining: first.remaining, overdraw: first.overdraw }, { spent: 4, remaining: 6, overdraw: false })
+  const second = store.chargeImageQuota('user-1', 9)
+  assert.deepEqual({ spent: second.spent, remaining: second.remaining, overdraw: second.overdraw }, { spent: 9, remaining: 0, overdraw: true })
+  assert.equal(store.imageQuotaOf('user-1'), 0)
+})
+
 test('capability whitelist merges into stored users', () => {
   const store = new UserStore({ file: path.join(dir, 'whitelist.json') })
   store.load()

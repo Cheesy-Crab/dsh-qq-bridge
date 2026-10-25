@@ -84,10 +84,11 @@ export class ChatAgentManager {
     })
   }
 
-  setContext(chat, { level = 'L1', capabilities = [] } = {}) {
+  setContext(chat, { level = 'L1', capabilities = [], imageQuota } = {}) {
     const state = this.stateFor(chat)
     state.level = level
     state.capabilities = capabilities
+    if (imageQuota !== undefined) state.imageQuota = imageQuota
     return state
   }
 
@@ -596,10 +597,11 @@ export class ChatAgentManager {
   /**
    * @param {{ id: string, chat: { type: 'private' | 'group', id: string }, text: string }} message
    */
-  async handle(message, { level = 'L1', capabilities = [] } = {}) {
+  async handle(message, { level = 'L1', capabilities = [], imageQuota } = {}) {
     const state = this.stateFor(message.chat)
     state.level = level
     state.capabilities = capabilities
+    if (imageQuota !== undefined) state.imageQuota = imageQuota
     if (state.pending >= this.config.agent.maxQueue) {
       await this.reply(message.chat, '[qq-bridge] 当前还有消息在处理，请稍后再发。')
       return

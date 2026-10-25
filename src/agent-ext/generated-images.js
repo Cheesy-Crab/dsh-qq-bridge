@@ -3,16 +3,49 @@ import { archiveSessionImage } from './session-images.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 
+function costOf(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return { total: value }
+  if (value !== null && typeof value === 'object' && typeof value.total === 'number') {
+    return { total: value.total, ...(typeof value.base === 'number' ? { base: value.base } : {}) }
+  }
+  return undefined
+}
+
 /**
- * Collect `savedTo` paths from image-gen tool results. `generate_image`,
- * `generate_images` and `edit_image` all put their workspace path in `meta`.
+ * Collect `savedTo` paths and provider cost from image-gen tool results.
+ * `generate_image`, `generate_images` and `edit_image` all put their workspace
+ * path in `meta`; Civitai also puts the charged Buzz under `meta.cost`.
  * @param {unknown} value
- * @param {Set<string>} files
+ * @param {Map<string, { total?: number, base?: number }>} records
  */
-function collectSavedTo(value, files) {
+function collectRecords(value, records) {
   if (value === null || typeof value !== 'object') return
-  if (typeof value.savedTo === 'string' && IMAGE_RE.test(value.savedTo)) files.add(value.savedTo)
-  for (const child of Object.values(value)) collectSavedTo(child, files)
+  if (typeof value.savedTo === 'string' && IMAGE_RE.test(value.savedTo)) {
+    const cost = costOf(value.cost)
+    if (cost !== undefined) records.set(value.savedTo, cost)
+    else if (!records.has(value.savedTo)) records.set(value.savedTo, {})
+  }
+  for (const child of Object.values(value)) collectRecords(child, records)
+}
+
+/**
+ * Image-gen results in this turn, with the provider cost when available.
+ * @param {any} session
+ * @param {number} fromSeq
+ * @param {(level: string, message: string) => void} log
+ * @returns {{ file: string, cost?: { total?: number, base?: number } }[]}
+ */
+export function generatedImageRecords(session, fromSeq, log) {
+  const records = new Map()
+  try {
+    for (const event of session.snapshotEvents(fromSeq)) {
+      if (event?.type !== 'tool/result') continue
+      collectRecords(event.data?.meta, records)
+    }
+  } catch (error) {
+    log?.('warn', `could not read generated images: ${error?.message ?? error}`)
+  }
+  return [...records].map(([file, cost]) => ({ file, cost }))
 }
 
 /**
@@ -23,39 +56,54 @@ function collectSavedTo(value, files) {
  * @returns {string[]}
  */
 export function generatedImages(session, fromSeq, log) {
-  const files = new Set()
-  try {
-    for (const event of session.snapshotEvents(fromSeq)) {
-      if (event?.type !== 'tool/result') continue
-      collectSavedTo(event.data?.meta, files)
-    }
-  } catch (error) {
-    log?.('warn', `could not read generated images: ${error?.message ?? error}`)
-  }
-  return [...files]
+  return generatedImageRecords(session, fromSeq, log).map((record) => record.file)
+}
+
+function buzz(value) {
+  if (value === undefined) return '?'
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)))
 }
 
 /**
  * Send image-gen results to QQ without requiring an extra `present` call.
- * If the agent already presented the same path, `qq:present` owns it and this
- * extension skips it to avoid duplicates.
- * @param {{ sendImage?: Function, chat: any, session: any, state?: any, fromSeq: number,
+ * Billing is per unique image and happens even when `present` owns delivery.
+ * @param {{ sendImage?: Function, sendText?: Function, charge?: Function,
+ *           chat: any, session: any, state?: any, fromSeq: number,
  *           log: (level: string, message: string) => void }} options
  * @returns {Promise<string[]>}
  */
-export async function forwardGeneratedImages({ sendImage, chat, session, state, fromSeq, log }) {
-  const files = generatedImages(session, fromSeq, log)
+export async function forwardGeneratedImages({ sendImage, sendText, charge, chat, session, state, fromSeq, log }) {
+  const records = generatedImageRecords(session, fromSeq, log)
   const presented = new Set(presentedImages(session, fromSeq, log))
   const sent = []
-  for (const file of files) {
-    if (presented.has(file)) continue
-    try {
-      const archived = await archiveSessionImage(file, { session, state, log })
-      const options = chat.mention ? { mention: chat.mention } : {}
-      await sendImage?.(chat, archived, options)
-      sent.push(archived)
-    } catch (error) {
-      log?.('warn', `could not forward generated image ${file}: ${error?.message ?? error}`)
+  for (const record of records) {
+    let billing
+    const cost = record.cost?.total
+    if (typeof cost === 'number' && cost > 0 && charge) {
+      try {
+        billing = await charge({ chat, state, cost })
+      } catch (error) {
+        log?.('warn', `could not charge image quota: ${error?.message ?? error}`)
+      }
+    }
+    if (!presented.has(record.file)) {
+      try {
+        const archived = await archiveSessionImage(record.file, { session, state, log })
+        const options = chat.mention ? { mention: chat.mention } : {}
+        await sendImage?.(chat, archived, options)
+        sent.push(archived)
+      } catch (error) {
+        log?.('warn', `could not forward generated image ${record.file}: ${error?.message ?? error}`)
+      }
+    }
+    if (billing && sendText) {
+      const suffix = billing.overdraw ? '（额度已用尽）' : ''
+      const text = `本次生图消耗 ${buzz(billing.spent)} Buzz，剩余额度 ${buzz(billing.remaining)} Buzz${suffix}`
+      try {
+        await sendText(chat, text, chat.mention ? { mention: chat.mention } : {})
+      } catch (error) {
+        log?.('warn', `could not send image quota: ${error?.message ?? error}`)
+      }
     }
   }
   return sent

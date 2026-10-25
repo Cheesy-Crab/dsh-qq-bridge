@@ -6,10 +6,10 @@ import { installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
 /**
  * QQ's built-in behavior extensions. They are registered into the shared
  * registry just like third-party extensions, so the manager stays channel-neutral.
- * @param {{ approval: any, log: (level: string, message: string) => void }} options
+ * @param {{ approval: any, chargeImage?: Function, log: (level: string, message: string) => void }} options
  * @returns {{ name: string, onSession?: Function, onTurnEnd?: Function }[]}
  */
-export function qqBuiltinExtensions({ approval, log }) {
+export function qqBuiltinExtensions({ approval, chargeImage, log }) {
   return [
     {
       name: 'qq:prompt',
@@ -24,8 +24,8 @@ export function qqBuiltinExtensions({ approval, log }) {
       onSession: ({ agent, level, state }) => applyAgentPolicy({ approval, agent, level, state, log }),
     },
     {
-      name: 'qq:generated-images',
-      onTurnEnd: ({ sendImage, chat, session, state, fromSeq }) => forwardGeneratedImages({
+      name: 'qq:present',
+      onTurnEnd: ({ sendImage, chat, session, state, fromSeq }) => forwardPresentedImages({
         sendImage,
         chat,
         session,
@@ -35,9 +35,11 @@ export function qqBuiltinExtensions({ approval, log }) {
       }),
     },
     {
-      name: 'qq:present',
-      onTurnEnd: ({ sendImage, chat, session, state, fromSeq }) => forwardPresentedImages({
+      name: 'qq:generated-images',
+      onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardGeneratedImages({
         sendImage,
+        sendText,
+        charge: chargeImage,
         chat,
         session,
         state,

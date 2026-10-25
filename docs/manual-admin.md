@@ -158,10 +158,21 @@ L3 以外默认仅聊天。按账号授予：
 | `image` | `generate_image` / `edit_image` / `present` 等生图与发图工具 |
 
 ```text
-/admin allow <openid> workspace write
+/admin allow <openid> workspace write image
 /admin deny <openid> exec
 /admin perms <openid>
 ```
+
+生图额度按 Buzz 分配，和 Civitai 账户总额无关；QQ 用户只看到自己被分配的余额：
+
+```text
+/admin quota <openid> 100
+/admin quota <openid>
+```
+
+- 额度为 0 时，生图工具会被 guard 拦截；
+- 余额大于 0 但不足以支付一次生成时，允许生成，扣到 0 为止；
+- 每次生成后，QQ 会收到“本次消耗 / 剩余额度”的提示，不显示账户总额。
 
 也可以写在 profile 配置里（启动时合并进用户记录）：
 
