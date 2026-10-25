@@ -2,14 +2,25 @@
 
 适用于 Windows 10/11。目标：独立跑一个带 QQ 机器人的 DSH 实例，不影响桌面端。
 
+## 0. 用发布包（推荐）
+
+在源码目录生成一个包含源码 + `vendor/napcat` 的 zip：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\bundle.ps1
+# 输出：dist\dsh-qq-bridge-<version>.zip
+```
+
+把 zip 复制到目标机器解压，然后按下面的步骤用解压目录做路径安装。没有 zip 时，
+直接复制整个项目目录（必须包含 `vendor\napcat`）也可以。
+
 ## 1. 装什么
 
 | 组件 | 说明 |
 |---|---|
 | DSH | 与当前机器相同的安装包 |
 | Git | 从 GitHub 安装插件时需要；用本地目录安装则不需要 |
-| QQNT | 机器人要登录的 QQ |
-| NapCat | OneBot 11 协议端，连到插件的 6700 |
+| NapCat | 已随项目放在 `vendor/napcat`，由插件启动；不需要单独安装 |
 
 ## 2. 创建 profile
 
@@ -78,13 +89,33 @@ sk-你的key
 DEEPSEEK_API_KEY=sk-你的key
 ```
 
-## 6. NapCat
+## 6. NapCat（已内置）
 
-1. 从 NapCat Release 下载 `NapCat.Shell.zip` 并解压；
-2. 运行启动脚本，按提示选择 QQNT 路径并拉起 QQ；
-3. 扫码登录机器人 QQ；
-4. 在 NapCat 配置里加「WebSocket 反向连接」：`ws://127.0.0.1:6700/`；
-5. 如需 token，设置环境变量 `QQ_ONEBOT_TOKEN`，并在 NapCat 里填同一个值。
+插件会从项目内的 `vendor/napcat` 启动 NapCat，不需要单独下载或运行 `napcat.bat`。
+
+如果拿到的包不含 `vendor/napcat`，先填充：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-napcat.ps1 -Source "D:\NapCat\NapCat.Shell.Windows.Node"
+```
+
+在 profile patch 里启用：
+
+```yaml
+    napcat:
+      enabled: true
+      autoStart: true
+      # 首次扫码登录成功后，可加快速登录：
+      # args: ['-q', '<机器人QQ号>']
+```
+
+首次启动后二维码在：
+
+```
+<项目>\vendor\napcat\napcat\cache\qrcode.png
+```
+
+扫码登录；之后用 `/napcat qr` 可重发，`/napcat status` 看状态。
 
 ## 7. 启动与验证
 
