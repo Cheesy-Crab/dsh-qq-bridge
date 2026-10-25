@@ -41,6 +41,8 @@
 
 ## 运维
 
-- [ ] Windows 开机自启（任务计划程序或 NSSM）；注意 NapCat 重启后可能仍要扫码。
+- [x] NapCat 随插件自启/守护：`vendor/napcat` + `/napcat`，首次扫码，之后 `-q` 快速登录。
+- [ ] DSH 本身开机自启（任务计划程序或 NSSM）。
 - [ ] 清理早期测试留下的空工作区（如 `E:\QQdsh\u-e4431691`、`E:\QQdsh\g-fc82267b`）。
-- [ ] 发布 GitHub Release / tarball（目前从仓库源码安装，无构建产物）。
+- [x] 本地发布包：`scripts/bundle.ps1` 把源码 + `vendor/napcat` 打成 zip。
+- [ ] GitHub Release 附件。

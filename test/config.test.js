@@ -30,6 +30,8 @@ test('config keeps group and limit defaults', () => {
   assert.deepEqual(config.access.whitelist, {})
   assert.deepEqual(config.commandPrefix, ['/', '!', '#'])
   assert.equal(config.questions.timeoutSec, 1800)
+  assert.equal(config.napcat.enabled, false)
+  assert.equal(config.napcat.autoStart, false)
 })
 
 test('config accepts a custom prefix list', () => {

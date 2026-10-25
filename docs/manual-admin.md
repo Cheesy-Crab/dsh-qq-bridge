@@ -71,9 +71,26 @@ DEEPSEEK_API_KEY=sk-...
 
 插件启动时读入并写入 DSH 凭据存储（`~/.dsh/.credentials.yaml`）。文件是每次启动的来源。
 
-### 3.3 NapCat 反向 WS
+### 3.3 内置 NapCat
 
-配置文件：
+插件默认从项目内 `vendor/napcat` 启动 NapCat，不再依赖 `E:\NapCat` 外部目录：
+
+- `vendor/napcat` 约 345MB，已加入 `.gitignore`，用 `scripts/install-napcat.ps1` 填充；
+- 配置：
+
+```yaml
+napcat:
+  enabled: true
+  autoStart: true
+  args: ['-q', '123456789']
+```
+
+- 首次启动仍需扫码，二维码在 `vendor\napcat\napcat\cache\qrcode.png`；
+  登录过一次后 `-q <QQ>` 可快速登录；
+- 已有外部 OneBot 客户端连接时，插件不会重复启动 NapCat，也不会结束外部进程；
+- `/napcat status` 查看状态，`/napcat qr` 重发二维码，`/napcat restart` 重启。
+
+如果继续使用外部 NapCat，反向 WS 配置在：
 
 ```
 E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
@@ -115,6 +132,7 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 | `/admin freeze <openid>` | 冻结 |
 | `/admin unfreeze <openid>` | 解冻 |
 | `/admin ws list` | 所有工作区（跨用户） |
+| `/napcat status\|start\|stop\|restart\|qr` | 管理内置 NapCat |
 
 绑定流程：管理员 `/admin invite L1` → 把六位码给用户 → 用户 `/bind 123456`。
 

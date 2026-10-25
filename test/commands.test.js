@@ -64,6 +64,21 @@ function dispatcher(overrides = {}) {
       images.push({ chat, file, options })
     },
     screenshot: async ({ dir }) => `${dir}/shot.jpg`,
+    napcat: {
+      status: async () => ({
+        enabled: true,
+        running: false,
+        managed: false,
+        external: false,
+        port: 6700,
+        cwd: '/vendor/napcat',
+        autoStart: true,
+        qrFile: undefined,
+      }),
+      start: async () => ({ managed: true, pid: 123 }),
+      stop: async () => ({ running: false }),
+      restart: async () => ({ managed: true, pid: 456 }),
+    },
     status: () => ({ transport: { connected: true }, chats: { chats: 1, pending: 0 }, dedupeSize: 2 }),
   })
   const chat = { type: 'private', id: '42' }
@@ -227,6 +242,14 @@ test('/sendimage sends an existing image file', async () => {
   assert.equal(images.length, 1)
   assert.match(sent[0].text, /已发送图片/)
   fs.rmSync(file, { force: true })
+})
+
+test('/napcat status reports the bundled runtime', async () => {
+  const { run, sent } = dispatcher()
+  await run('/napcat status')
+  assert.match(sent[0].text, /NapCat：未运行/)
+  assert.match(sent[0].text, /端口：6700/)
+  assert.match(sent[0].text, /目录：\/vendor\/napcat/)
 })
 
 test('/screenshot captures and sends an image for L3', async () => {

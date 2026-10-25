@@ -41,7 +41,7 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat }) {
     this.manager = manager
     this.users = users
     this.config = config
@@ -51,6 +51,7 @@ export class CommandDispatcher {
     this.sendImage = sendImage
     this.status = status
     this.screenshot = screenshot
+    this.napcat = napcat
     this.commands = new Map()
     this.registerBuiltins()
   }
@@ -333,6 +334,48 @@ export class CommandDispatcher {
         if (!/\.(png|jpe?g|gif|webp|bmp)$/i.test(file)) throw new Error('只支持 png/jpg/jpeg/gif/webp/bmp')
         await this.sendImage(message.chat, file, message.chat.mention ? { mention: message.chat.mention } : {})
         return `已发送图片 ${path.basename(file)}。`
+      },
+    })
+
+    this.register('napcat', {
+      usage: 'napcat status|start|stop|restart|qr',
+      description: '管理项目内置的 NapCat',
+      minLevel: 'L3',
+      handler: async ({ message, args }) => {
+        if (!this.napcat) throw new Error('NapCat 未配置')
+        const sub = (args[0] ?? 'status').toLowerCase()
+        if (sub === 'status') {
+          const s = await this.napcat.status()
+          return [
+            `NapCat：${s.running ? '运行中' : '未运行'}${s.managed ? '（插件管理）' : s.external ? '（外部实例）' : ''}`,
+            `端口：${s.port}｜PID：${s.pid ?? '—'}｜自动启动：${s.autoStart ? '是' : '否'}`,
+            `目录：${s.cwd}`,
+            s.qrFile ? `二维码：${s.qrFile}` : '二维码：无',
+          ]
+        }
+        if (sub === 'start') {
+          const s = await this.napcat.start()
+          return s.managed ? `NapCat 已启动，PID ${s.pid}。` : '检测到端口已被占用，沿用外部 NapCat。'
+        }
+        if (sub === 'stop') {
+          const before = await this.napcat.status()
+          if (before.external) throw new Error('当前是外部 NapCat，插件不会结束它')
+          const s = await this.napcat.stop()
+          return s.running ? '停止命令已发出。' : 'NapCat 已停止。'
+        }
+        if (sub === 'restart') {
+          const before = await this.napcat.status()
+          if (before.external) throw new Error('当前是外部 NapCat，请手动重启')
+          const s = await this.napcat.restart()
+          return s.managed ? `NapCat 已重启，PID ${s.pid}。` : '重启命令已发出。'
+        }
+        if (sub === 'qr') {
+          const s = await this.napcat.status()
+          if (!s.qrFile) throw new Error('没有可用的二维码文件；先启动 NapCat 触发登录')
+          await this.sendImage(message.chat, s.qrFile, message.chat.mention ? { mention: message.chat.mention } : {})
+          return '已发送 NapCat 登录二维码。'
+        }
+        throw new Error('用法：/napcat status|start|stop|restart|qr')
       },
     })
 

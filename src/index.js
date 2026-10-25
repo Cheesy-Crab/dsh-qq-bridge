@@ -1,6 +1,7 @@
 import { QqBridge } from './bridge.js'
 import { normalizeConfig } from './config.js'
 import { ensureCredential } from './credentials.js'
+import { NapCatSupervisor } from './napcat.js'
 import { resolveWorkspacesRoot } from './paths.js'
 import { runSelfTest } from './selftest.js'
 
@@ -33,11 +34,25 @@ export function apply(ctx, rawConfig) {
     log('warn', `credential import failed: ${error?.stack ?? error}`)
   })
 
-  const bridge = new QqBridge({ ctx, config, root, log })
-  bridge.start().catch((error) => {
+  const napcat = new NapCatSupervisor({
+    config: config.napcat,
+    log,
+    port: config.transport.onebot.port,
+    isConnected: () => bridge.transport?.connected === true,
+  })
+
+  const bridge = new QqBridge({ ctx, config, root, log, napcat })
+  bridge.start().then(async () => {
+    if (config.napcat.enabled && config.napcat.autoStart) {
+      await napcat.start()
+    }
+  }).catch((error) => {
     log('error', `bridge start failed: ${error?.stack ?? error}`)
   })
-  ctx.effect(() => () => bridge.stop())
+  ctx.effect(() => () => {
+    napcat.stop().catch((error) => log('warn', `napcat stop failed: ${error?.message ?? error}`))
+    return bridge.stop()
+  })
 
   const selfTest = config.selfTest || process.env.DSH_QQ_SELFTEST === '1'
   if (selfTest) {

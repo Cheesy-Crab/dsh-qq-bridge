@@ -39,6 +39,15 @@ export const DEFAULTS = Object.freeze({
   questions: Object.freeze({
     timeoutSec: 1800,
   }),
+  napcat: Object.freeze({
+    enabled: false,
+    autoStart: false,
+    command: '',
+    cwd: '',
+    args: Object.freeze([]),
+    restart: true,
+    restartDelayMs: 5000,
+  }),
   transport: Object.freeze({
     kind: 'onebot',
     echo: false,
@@ -198,6 +207,21 @@ export function normalizeConfig(raw) {
   if (!Number.isInteger(questions.timeoutSec) || questions.timeoutSec < 0) {
     fail('questions.timeoutSec must be 0 or a positive integer')
   }
+
+  const napcat = { ...DEFAULTS.napcat, ...(input.napcat ?? {}) }
+  if (typeof napcat.enabled !== 'boolean' || typeof napcat.autoStart !== 'boolean') {
+    fail('napcat.enabled and napcat.autoStart must be booleans')
+  }
+  if (typeof napcat.command !== 'string' || typeof napcat.cwd !== 'string') {
+    fail('napcat.command and napcat.cwd must be strings')
+  }
+  if (!Array.isArray(napcat.args) || napcat.args.some((arg) => typeof arg !== 'string')) {
+    fail('napcat.args must be an array of strings')
+  }
+  if (typeof napcat.restart !== 'boolean') fail('napcat.restart must be a boolean')
+  if (!Number.isInteger(napcat.restartDelayMs) || napcat.restartDelayMs < 0) {
+    fail('napcat.restartDelayMs must be a non-negative integer')
+  }
   const agent = { ...DEFAULTS.agent, ...(input.agent ?? {}) }
   if (typeof agent.provider !== 'string' || agent.provider === '') fail('agent.provider must be a non-empty string')
   if (typeof agent.model !== 'string' || agent.model === '') fail('agent.model must be a non-empty string')
@@ -224,6 +248,7 @@ export function normalizeConfig(raw) {
     approval,
     sandbox,
     questions,
+    napcat,
     commandPrefix,
     selfTestModel,
   }

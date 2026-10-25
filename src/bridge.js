@@ -17,13 +17,14 @@ import { OneBotTransport } from './transport/onebot.js'
  */
 export class QqBridge {
   /**
-   * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void }} options
+   * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log }) {
+  constructor({ ctx, config, root, log, napcat }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
+    this.napcat = napcat
     this.transport = undefined
     this.dedupe = new DedupeStore()
     this.chat = undefined
@@ -97,6 +98,7 @@ export class QqBridge {
       send,
       sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       status: () => this.status(),
+      napcat: this.napcat,
     })
     try {
       await this.transport.start()

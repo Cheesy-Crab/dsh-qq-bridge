@@ -162,6 +162,26 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
   - L3 可用 `/sendimage <路径>` 发送工作区里的任意图片。
 - 非图片文件（pdf、zip 等）不会自动转发，仍然只发文字说明。
 
+## 内置 NapCat
+
+项目支持把 NapCat Shell 作为本地运行时放进 `vendor/napcat`，由插件自动启动和守护：
+
+```yaml
+- id: qq-bridge
+  config:
+    napcat:
+      enabled: true
+      autoStart: true
+      args: ['-q', '123456789']   # 快速登录；首次仍需扫码
+```
+
+- `vendor/napcat` 不进 Git（345MB，含 QQNT 二进制），用 `scripts/install-napcat.ps1` 填充；
+- 插件启动时若没有 OneBot 客户端连接，就拉起 `vendor/napcat/napcat.bat`；
+- 已有外部 NapCat 连接时不会重复启动，也不会杀外部进程；
+- 进程异常退出按 `restartDelayMs` 自动重启；插件停止时结束它；
+- QQ 指令：`/napcat status|start|stop|restart|qr`；
+- `scripts/bundle.ps1` 可把源码 + `vendor/napcat` 打成一个发布 zip。
+
 ## 配置
 
 默认工作区根目录：Windows 是 `E:\QQdsh`，其他平台是 `${DSH_HOME}/qq-workspaces`。想改，在 profile 的 `cordis.patch.yml` 里按 id 覆盖：
@@ -193,6 +213,12 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 | `limits.dailyTurns` | `{L0:20, L1:200, L2:1000, L3:0}` | 每日模型轮次，0 为不限 |
 | `approval.timeoutSec` | `120` | QQ 审批等待时间 |
 | `questions.timeoutSec` | `1800` | QQ 提问等待时间；`0` 表示不限时 |
+| `napcat.enabled` | `false` | 是否由插件管理内置 NapCat |
+| `napcat.autoStart` | `false` | 插件启动时自动拉起 NapCat |
+| `napcat.cwd` | `<plugin>/vendor/napcat` | NapCat 目录 |
+| `napcat.args` | `[]` | 例如 `['-q','123456789']` 快速登录 |
+| `napcat.restart` | `true` | 进程退出后自动重启 |
+| `napcat.restartDelayMs` | `5000` | 重启间隔 |
 | `apiKeyFile` | `${DSH_HOME}/deepseek-key.txt` | 启动时读取密钥的文本文件 |
 | `apiKeyEnv` | `DEEPSEEK_API_KEY` | 读到的密钥写入哪个环境变量 |
 | `registerToDsh` | `true` | 工作区是否注册进 DSH 注册表 |

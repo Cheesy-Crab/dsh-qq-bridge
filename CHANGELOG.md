@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.18.0
+
+- 内置 NapCat：把 NapCat Shell 放进 `vendor/napcat`（git 忽略），由插件启动和守护。
+- `napcat.enabled/autoStart/cwd/args/restart` 配置；`/napcat status|start|stop|restart|qr`。
+- 通过 OneBot 客户端连接状态判断外部实例，不再把桥接器自己的 6700 监听误判成 NapCat。
+- 支持 `args: ['-q','123456789']` 快速登录；首次仍扫码，`/napcat qr` 可重发二维码。
+- 新增 `scripts/install-napcat.ps1`、`scripts/bundle.ps1`（源码 + vendor 打 zip）。
+
 ## 0.17.0
 
 - 入站图片：QQ 消息里的图片下载到当前工作区 `attachments/incoming/`，消息追加
