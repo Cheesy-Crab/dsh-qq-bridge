@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.29.0
+
+- 图片按会话归档：生成/编辑结果额外落到
+  `<workspace>/dsh-image-gen/sessions/<sessionId>/`，每个会话一套图。
+- 保留 image-gen 原始 `savedTo` 供 `edit_image` 使用；QQ 转发使用归档路径。
+- 归档优先硬链接，失败回退复制；归档失败不影响发图。
+
 ## 0.28.0
 
 - 对接新版 dsh-image-gen：新增 `qq:generated-images`，识别

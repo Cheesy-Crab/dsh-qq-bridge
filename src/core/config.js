@@ -176,7 +176,7 @@ export function normalizeConfig(raw) {
   if (access.whitelist === null || typeof access.whitelist !== 'object' || Array.isArray(access.whitelist)) {
     fail('access.whitelist must be an object of openid → capability array')
   }
-  const allowedCapabilities = new Set(['workspace', 'read', 'write', 'exec'])
+  const allowedCapabilities = new Set(['workspace', 'read', 'write', 'exec', 'image'])
   for (const [openid, capabilities] of Object.entries(access.whitelist)) {
     if (!Array.isArray(capabilities)) fail(`access.whitelist.${openid} must be an array`)
     for (const capability of capabilities) {

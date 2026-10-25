@@ -57,6 +57,7 @@ src/
     screenshot.js           全屏截图
     present.js              present 图片自动转发
     generated-images.js     image-gen 结果按 savedTo 自动转发
+    session-images.js       按会话归档图片（sessions/<sessionId>/）
     policy.js               审批策略 + 工具 guard
     prompts/                所有系统提示词（*.prompt.js）
       qq-images.prompt.js   QQ 图片发送约定
@@ -169,6 +170,8 @@ QQ agent 的 `preset: standard` 能看到这些全局工具，因此生成不需
 输出回传由 `qq:generated-images` 处理：
 
 - 读取本轮 `tool/result` 的 `meta.savedTo`，覆盖 `generate_image`、`generate_images`、`edit_image`；
+- 每张图同时归档到 `<workspace>/dsh-image-gen/sessions/<sessionId>/`，原 `savedTo` 仍供
+  `edit_image` 使用；
 - agent 若也调用了 `present`，`qq:present` 会发送，`qq:generated-images` 按路径去重，不会重复发图；
 - 生成提示词与引擎方言交给 `image-gen` skill，QQ agent 在生图前按需加载。
 

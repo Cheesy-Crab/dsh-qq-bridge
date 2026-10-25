@@ -25,20 +25,22 @@ export function qqBuiltinExtensions({ approval, log }) {
     },
     {
       name: 'qq:generated-images',
-      onTurnEnd: ({ sendImage, chat, session, fromSeq }) => forwardGeneratedImages({
+      onTurnEnd: ({ sendImage, chat, session, state, fromSeq }) => forwardGeneratedImages({
         sendImage,
         chat,
         session,
+        state,
         fromSeq,
         log,
       }),
     },
     {
       name: 'qq:present',
-      onTurnEnd: ({ sendImage, chat, session, fromSeq }) => forwardPresentedImages({
+      onTurnEnd: ({ sendImage, chat, session, state, fromSeq }) => forwardPresentedImages({
         sendImage,
         chat,
         session,
+        state,
         fromSeq,
         log,
       }),

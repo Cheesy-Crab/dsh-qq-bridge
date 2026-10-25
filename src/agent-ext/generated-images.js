@@ -1,4 +1,5 @@
 import { presentedImages } from './present.js'
+import { archiveSessionImage } from './session-images.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 
@@ -38,20 +39,21 @@ export function generatedImages(session, fromSeq, log) {
  * Send image-gen results to QQ without requiring an extra `present` call.
  * If the agent already presented the same path, `qq:present` owns it and this
  * extension skips it to avoid duplicates.
- * @param {{ sendImage?: Function, chat: any, session: any, fromSeq: number,
+ * @param {{ sendImage?: Function, chat: any, session: any, state?: any, fromSeq: number,
  *           log: (level: string, message: string) => void }} options
  * @returns {Promise<string[]>}
  */
-export async function forwardGeneratedImages({ sendImage, chat, session, fromSeq, log }) {
+export async function forwardGeneratedImages({ sendImage, chat, session, state, fromSeq, log }) {
   const files = generatedImages(session, fromSeq, log)
   const presented = new Set(presentedImages(session, fromSeq, log))
   const sent = []
   for (const file of files) {
     if (presented.has(file)) continue
     try {
+      const archived = await archiveSessionImage(file, { session, state, log })
       const options = chat.mention ? { mention: chat.mention } : {}
-      await sendImage?.(chat, file, options)
-      sent.push(file)
+      await sendImage?.(chat, archived, options)
+      sent.push(archived)
     } catch (error) {
       log?.('warn', `could not forward generated image ${file}: ${error?.message ?? error}`)
     }

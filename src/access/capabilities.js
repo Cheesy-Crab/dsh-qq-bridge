@@ -29,7 +29,7 @@ export function toolAllowed(toolName, capabilities) {
   const name = String(toolName ?? '')
   const caps = new Set(capabilities)
   if (caps.has('exec')) return true
-  if (caps.has('image') && /^(generate_image|generate_images|edit_image|present|read_image|find_inspiration|canvas_state|view_canvas|skill)$/i.test(name)) return true
+  if (caps.has('image') && /^(generate_image|generate_images|edit_image|estimate_image_cost|enhance_prompt|present|read_image|find_inspiration|canvas_state|view_canvas|skill)$/i.test(name)) return true
   if (caps.has('write') && /^(write|edit|apply_patch|read|glob|grep|working_directory|list|find)/i.test(name)) return true
   if (caps.has('read') && /^(read|glob|grep|working_directory|list|find)/i.test(name)) return true
   return false

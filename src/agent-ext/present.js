@@ -1,3 +1,5 @@
+import { archiveSessionImage } from './session-images.js'
+
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 
 /**
@@ -24,19 +26,22 @@ export function presentedImages(session, fromSeq, log) {
 
 /**
  * Send this turn's presented images to the QQ chat.
- * @param {{ sendImage?: Function, chat: any, session: any, fromSeq: number,
+ * @param {{ sendImage?: Function, chat: any, session: any, state?: any, fromSeq: number,
  *           log: (level: string, message: string) => void }} options
  * @returns {Promise<string[]>}
  */
-export async function forwardPresentedImages({ sendImage, chat, session, fromSeq, log }) {
+export async function forwardPresentedImages({ sendImage, chat, session, state, fromSeq, log }) {
   const files = presentedImages(session, fromSeq, log)
+  const sent = []
   for (const file of files) {
     try {
+      const archived = await archiveSessionImage(file, { session, state, log })
       const options = chat.mention ? { mention: chat.mention } : {}
-      await sendImage?.(chat, file, options)
+      await sendImage?.(chat, archived, options)
+      sent.push(archived)
     } catch (error) {
       log?.('warn', `could not forward presented image ${file}: ${error?.message ?? error}`)
     }
   }
-  return files
+  return sent
 }

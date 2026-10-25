@@ -43,6 +43,9 @@ test('config accepts a custom prefix list', () => {
 test('config validates the capability whitelist', () => {
   const config = normalizeConfig({ access: { whitelist: { '42': ['workspace', 'write'] } } })
   assert.deepEqual(config.access.whitelist['42'], ['workspace', 'write'])
+  // `image` gates the dsh-image-gen tools, so it must be grantable on its own.
+  const withImage = normalizeConfig({ access: { whitelist: { '43': ['image'] } } })
+  assert.deepEqual(withImage.access.whitelist['43'], ['image'])
   assert.throws(
     () => normalizeConfig({ access: { whitelist: { '42': ['root'] } } }),
     /unknown capability/,
