@@ -184,14 +184,22 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 
 ## DSH Desktop 设置页
 
-重启 profile 后，DSH Desktop 的「设置」里会出现 **QQ Bridge** 分区：
+有两种方式：
 
-- 查看 NapCat 运行状态、PID、目录；
-- 启动 / 停止 / 重启；
-- 显示登录二维码。
+1. **qqweb 的 Web UI**（含 Host 端设置页）：重启 profile 后，3080 页面的
+   「设置」里会出现 **QQ Bridge** 分区。
+2. **DSH Desktop 应用内**：把 `packages/qq-bridge-ui` 作为第三方组合包安装进
+   Desktop profile。它只有客户端 UI，不启动第二个 bot，按钮通过
+   `http://127.0.0.1:3080/qq-bridge/*` 控制 qqweb 的 NapCat。
 
-按钮调用同源的 `/qq-bridge/napcat/*` 接口，不需要再发 QQ 指令。客户端 bundle 在
-`lib/client.js`，随插件一起安装；打包脚本会把它带上。
+Desktop 安装步骤：
+
+- 侧边栏 **插件 → 添加插件 → 安装第三方插件**；
+- 输入本地绝对路径 `E:\dsh\工作区对接QQ\packages\qq-bridge-ui`；
+- 安装后启用 `dsh-qq-bridge-ui`；
+- 重启/刷新 Desktop，设置里出现 **QQ Bridge**。
+
+按钮功能：查看 NapCat 状态、PID、目录；启动 / 停止 / 重启；显示登录二维码。
 
 ## 配置
 

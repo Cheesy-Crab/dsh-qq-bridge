@@ -12,7 +12,7 @@ if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
 $items = @(
-  'src', 'lib', 'docs', 'scripts', 'systemd', 'test',
+  'src', 'lib', 'packages', 'docs', 'scripts', 'systemd', 'test',
   'README.md', 'CHANGELOG.md', 'TODO.md', 'PLAN.md',
   'package.json', 'pnpm-lock.yaml', 'cordis.patch.yml', '.gitattributes', '.gitignore'
 )

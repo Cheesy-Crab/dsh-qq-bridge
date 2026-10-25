@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.19.3
+
+- 新增 `packages/qq-bridge-ui`：只含客户端 UI 的第三方组合包，可从 DSH Desktop
+  的插件管理器安装，为 Desktop 添加「QQ Bridge」设置页。
+- 该包不启动 Host/NapCat，按钮通过 `http://127.0.0.1:3080/qq-bridge/*` 控制
+  qqweb 里的实例，避免第二个 bot 抢登录。
+- `scripts/bundle.ps1` 带上 `packages/`。
+
 ## 0.19.2
 
 - 客户端插件补上 Cordis `inject = ["slots"]`，修复 `dsh-qq-bridge: failed` /

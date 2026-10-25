@@ -122,6 +122,11 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 
 改完必须重启 NapCat，它不热加载。重启后可能要重新扫码。
 
+如果要在 **DSH Desktop 应用内**看到控制按钮，而不是在 3080 网页里：用 Desktop
+侧边栏 **插件 → 添加插件 → 安装第三方插件**，安装本地目录
+`packages/qq-bridge-ui`。它只含客户端 UI，不会启动第二个 bot；按钮控制
+`http://127.0.0.1:3080` 的 qqweb 实例。
+
 ## 4. 用户与权限管理
 
 在 QQ 里发给机器人（L3）：
