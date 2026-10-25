@@ -103,6 +103,11 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
           sendJson(res, 200, await setup.setAdmin(String(body.openid ?? '')))
           return
         }
+        if (route === '/napcat/qr/refresh' && req.method === 'POST') {
+          await napcat.stop()
+          sendJson(res, 200, await napcat.start(true))
+          return
+        }
         if (route === '/bridge/status' && req.method === 'GET') {
           if (!setup?.bridgeStatus) throw new Error('部署接口不可用')
           sendJson(res, 200, await setup.bridgeStatus())

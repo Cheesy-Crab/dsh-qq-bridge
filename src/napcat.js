@@ -142,7 +142,7 @@ export class NapCatSupervisor {
     }
   }
 
-  async start() {
+  async start(forceQr = false) {
     if (this.child) return this.status()
     if (this.isConnected()) {
       this.external = true
@@ -161,8 +161,13 @@ export class NapCatSupervisor {
     this.external = false
     const isBatch = /\.(bat|cmd)$/i.test(command)
     const file = isBatch ? process.env.ComSpec ?? 'cmd.exe' : command
-    const args = isBatch ? ['/c', command, ...(this.config.args ?? [])] : [...(this.config.args ?? [])]
-    this.log('info', `napcat: starting ${command} (cwd=${cwd})`)
+    const configured = [...(this.config.args ?? [])]
+    if (forceQr) {
+      const at = configured.indexOf('-q')
+      if (at >= 0) configured.splice(at, 2)
+    }
+    const args = isBatch ? ['/c', command, ...configured] : configured
+    this.log('info', `napcat: starting ${command} (cwd=${cwd}${forceQr ? ', force QR' : ''})`)
 
     const child = spawn(file, args, { cwd, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
     this.child = child
