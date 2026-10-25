@@ -119,6 +119,11 @@ export class NapCatSupervisor {
 
   async status() {
     const connected = this.isConnected()
+    const qrFile = this.qrFile()
+    let qrMtime
+    try {
+      qrMtime = fs.statSync(qrFile).mtimeMs
+    } catch {}
     return {
       enabled: this.config.enabled,
       autoStart: this.config.autoStart,
@@ -132,7 +137,8 @@ export class NapCatSupervisor {
       installed: Boolean(findNapcatDir(this.cwd())),
       command: this.command(),
       lastExit: this.lastExit,
-      qrFile: fs.existsSync(this.qrFile()) ? this.qrFile() : undefined,
+      qrFile: fs.existsSync(qrFile) ? qrFile : undefined,
+      qrMtime,
     }
   }
 
@@ -143,6 +149,9 @@ export class NapCatSupervisor {
       this.log('info', 'napcat: an external OneBot client is already connected; leaving it alone')
       return this.status()
     }
+    try {
+      fs.rmSync(this.qrFile(), { force: true })
+    } catch {}
     const cwd = this.cwd()
     if (!fs.existsSync(cwd)) throw new Error(`NapCat 目录不存在：${cwd}`)
     const command = this.command()
