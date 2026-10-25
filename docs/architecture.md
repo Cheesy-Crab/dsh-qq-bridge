@@ -150,6 +150,27 @@ qq:present  → agent-ext/present.js
 
 它不依赖 workspace/agent-ext，只被 `index.js` 组合。
 
+## 工具提供方：dsh-image-gen
+
+AI 画图不是 QQ Bridge 的一部分，而是 DSH 的全局工具提供方：
+
+```text
+dsh-image-gen
+  → ctx.tools.register(generate_image / generate_images / edit_image)
+  → 输出 attachment + savedTo
+```
+
+QQ agent 的 `preset: standard` 能看到这些全局工具，因此生成不需要本插件注册新工具。
+当前只差输出回传：
+
+- `generate_image` 不产生 `deliverables/presented` 事件；
+- 所以需要 agent 再调用 `present(savedTo)`；
+- 或者由 `agent-ext` 的 `onTurnEnd` 识别 `generate_image` 的 tool result / `savedTo`
+  直接 `sendImage`。
+
+QQ 非 L3 用户还会被工具 guard 拦截，后续需要 `image` 能力或把
+`generate_image` 纳入白名单。
+
 ## 关键依赖规则
 
 1. `workspace/` 不 import `qq/`；
