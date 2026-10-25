@@ -68,3 +68,54 @@ test('napcat http reports a missing QR file', async () => {
   await server.route().handler({ url: '/qq-bridge/napcat/qr', method: 'GET' }, response)
   assert.equal(response.status, 404)
 })
+
+function setupRequest(url, method = 'GET', body) {
+  return {
+    url,
+    method,
+    async *[Symbol.asyncIterator]() {
+      if (body !== undefined) yield Buffer.from(JSON.stringify(body))
+    },
+  }
+}
+
+test('setup routes expose status and run install/API key/admin actions', async () => {
+  const server = fakeServer()
+  const calls = []
+  const setup = {
+    status: async () => ({ installed: true }),
+    install: async (source) => {
+      calls.push(['install', source])
+      return { cwd: '/napcat', source }
+    },
+    setApiKey: async (key) => {
+      calls.push(['key', key])
+      return { configured: true }
+    },
+    setAdmin: async (openid) => {
+      calls.push(['admin', openid])
+      return { openid }
+    },
+    bridgeStatus: async () => ({ connected: true }),
+  }
+  registerNapCatHttp(server, { status: async () => ({}) }, () => {}, setup)
+  const route = server.route()
+
+  const status = fakeResponse()
+  await route.handler(setupRequest('/qq-bridge/setup/status'), status)
+  assert.equal(status.status, 200)
+  assert.equal(JSON.parse(status.body).installed, true)
+
+  const install = fakeResponse()
+  await route.handler(setupRequest('/qq-bridge/setup/install', 'POST', { source: '' }), install)
+  assert.equal(install.status, 200)
+
+  const key = fakeResponse()
+  await route.handler(setupRequest('/qq-bridge/setup/api-key', 'POST', { key: 'sk-test' }), key)
+  assert.equal(key.status, 200)
+
+  const admin = fakeResponse()
+  await route.handler(setupRequest('/qq-bridge/setup/admin', 'POST', { openid: '12345' }), admin)
+  assert.equal(admin.status, 200)
+  assert.deepEqual(calls, [['install', ''], ['key', 'sk-test'], ['admin', '12345']])
+})

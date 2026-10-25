@@ -26,17 +26,31 @@ function sendPng(res, file) {
   res.end(data)
 }
 
+async function readJson(req) {
+  const chunks = []
+  let size = 0
+  for await (const chunk of req) {
+    size += chunk.length
+    if (size > 1024 * 1024) throw new Error('请求体过大')
+    chunks.push(chunk)
+  }
+  const text = Buffer.concat(chunks).toString('utf8')
+  return text === '' ? {} : JSON.parse(text)
+}
+
 /**
- * Expose the NapCat supervisor to the DSH settings page over HTTP.
- * The listener is loopback-only, and the actions are limited to start/stop.
+ * Expose the NapCat supervisor and one-time setup over HTTP.
+ * `setup` is optional; without it only the NapCat controls are available.
  * @param {{ register?: Function } | undefined} webServer
  * @param {any} napcat
  * @param {(level: string, message: string) => void} log
+ * @param {{ status?: Function, install?: Function, setApiKey?: Function, setAdmin?: Function,
+ *           bridgeStatus?: Function } | undefined} [setup]
  * @returns {() => void}
  */
-export function registerNapCatHttp(webServer, napcat, log) {
+export function registerNapCatHttp(webServer, napcat, log, setup) {
   if (!webServer?.register) {
-    log?.('warn', 'webServer unavailable; NapCat settings buttons will not work')
+    log?.('warn', 'webServer unavailable; QQ Bridge settings buttons will not work')
     return () => {}
   }
   return webServer.register({
@@ -55,6 +69,34 @@ export function registerNapCatHttp(webServer, napcat, log) {
         return
       }
       try {
+        if (route === '/setup/status' && req.method === 'GET') {
+          if (!setup?.status) throw new Error('部署接口不可用')
+          sendJson(res, 200, await setup.status())
+          return
+        }
+        if (route === '/setup/install' && req.method === 'POST') {
+          if (!setup?.install) throw new Error('部署接口不可用')
+          const body = await readJson(req)
+          sendJson(res, 200, await setup.install(String(body.source ?? '')))
+          return
+        }
+        if (route === '/setup/api-key' && req.method === 'POST') {
+          if (!setup?.setApiKey) throw new Error('部署接口不可用')
+          const body = await readJson(req)
+          sendJson(res, 200, await setup.setApiKey(String(body.key ?? '')))
+          return
+        }
+        if (route === '/setup/admin' && req.method === 'POST') {
+          if (!setup?.setAdmin) throw new Error('部署接口不可用')
+          const body = await readJson(req)
+          sendJson(res, 200, await setup.setAdmin(String(body.openid ?? '')))
+          return
+        }
+        if (route === '/bridge/status' && req.method === 'GET') {
+          if (!setup?.bridgeStatus) throw new Error('部署接口不可用')
+          sendJson(res, 200, await setup.bridgeStatus())
+          return
+        }
         if (route === '/napcat/status' && req.method === 'GET') {
           sendJson(res, 200, await napcat.status())
           return

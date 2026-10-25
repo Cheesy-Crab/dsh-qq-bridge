@@ -182,24 +182,25 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 - QQ 指令：`/napcat status|start|stop|restart|qr`；
 - `scripts/bundle.ps1` 可把源码 + `vendor/napcat` 打成一个发布 zip。
 
-## DSH Desktop 设置页
+## DSH Desktop 一键部署
 
-有两种方式：
+推荐把**完整插件**装进 DSH Desktop，让 Desktop 自己跑 bridge + NapCat，不再需要
+qqweb 或浏览器页面。安装前先停掉 qqweb，避免同一个 QQ 号/6700 端口冲突。
 
-1. **qqweb 的 Web UI**（含 Host 端设置页）：重启 profile 后，3080 页面的
-   「设置」里会出现 **QQ Bridge** 分区。
-2. **DSH Desktop 应用内**：把 `packages/qq-bridge-ui` 作为第三方组合包安装进
-   Desktop profile。它只有客户端 UI，不启动第二个 bot，按钮通过
-   `http://127.0.0.1:3080/qq-bridge/*` 控制 qqweb 的 NapCat。
+1. Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**；
+2. 输入本地绝对路径 `E:\dsh\工作区对接QQ`；
+3. 安装并启用 `dsh-qq-bridge`，重启/刷新 Desktop；
+4. 打开 **设置 → QQ Bridge**，按页面顺序操作：
+   - **下载并安装 NapCat**（默认下载官方 Shell；也可填本地 zip 或 NapCat 目录）；
+   - **保存 API Key**；
+   - **设置管理员 QQ**；
+   - **启动**，点 **显示二维码** 扫码登录。
 
-Desktop 安装步骤：
+NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓库分发，所以
+插件包本身很小。所有步骤都在 Desktop 设置页完成，不会再打开前台网页。
 
-- 侧边栏 **插件 → 添加插件 → 安装第三方插件**；
-- 输入本地绝对路径 `E:\dsh\工作区对接QQ\packages\qq-bridge-ui`；
-- 安装后启用 `dsh-qq-bridge-ui`；
-- 重启/刷新 Desktop，设置里出现 **QQ Bridge**。
-
-按钮功能：查看 NapCat 状态、PID、目录；启动 / 停止 / 重启；显示登录二维码。
+如果仍想保留 qqweb 后台 bot，只把 `packages/qq-bridge-ui` 装进 Desktop 作为遥控器；
+它只含客户端 UI，通过 `http://127.0.0.1:3080/qq-bridge/*` 控制 qqweb。
 
 ## 配置
 

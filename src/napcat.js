@@ -1,10 +1,29 @@
 import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import net from 'node:net'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const PLUGIN_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+
+/**
+ * Locate a NapCat shell directory (the one containing napcat.bat/sh), including
+ * archives that unpack into a single top-level folder.
+ * @param {string} root
+ * @returns {string | undefined}
+ */
+export function findNapcatDir(root) {
+  if (!root || !fs.existsSync(root)) return undefined
+  const script = process.platform === 'win32' ? 'napcat.bat' : 'napcat.sh'
+  if (fs.existsSync(path.join(root, script))) return root
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const candidate = path.join(root, entry.name)
+    if (fs.existsSync(path.join(candidate, script))) return candidate
+  }
+  return undefined
+}
 
 /**
  * Probe whether something already listens on the OneBot port.
@@ -44,10 +63,30 @@ export class NapCatSupervisor {
     this.external = false
     this.lastExit = undefined
     this.restartTimer = undefined
+    this.installedCwd = undefined
+  }
+
+  dataDir() {
+    return path.join(os.homedir(), '.dsh', 'qq-bridge', 'napcat')
+  }
+
+  /** Remember a directory produced by the setup installer. */
+  setCwd(dir) {
+    this.installedCwd = dir
   }
 
   cwd() {
-    return this.config.cwd || path.join(PLUGIN_DIR, 'vendor', 'napcat')
+    if (this.config.cwd) return this.config.cwd
+    const candidates = [
+      this.installedCwd,
+      path.join(PLUGIN_DIR, 'vendor', 'napcat'),
+      this.dataDir(),
+    ]
+    for (const candidate of candidates) {
+      const found = findNapcatDir(candidate)
+      if (found) return found
+    }
+    return this.dataDir()
   }
 
   command() {
@@ -70,6 +109,8 @@ export class NapCatSupervisor {
       pid: this.child?.pid,
       port: this.port,
       cwd: this.cwd(),
+      dataDir: this.dataDir(),
+      installed: Boolean(findNapcatDir(this.cwd())),
       command: this.command(),
       lastExit: this.lastExit,
       qrFile: fs.existsSync(this.qrFile()) ? this.qrFile() : undefined,
