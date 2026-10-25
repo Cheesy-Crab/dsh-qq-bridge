@@ -1,8 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { toolAllowed } from '../auth/capabilities.js'
-import { groupDir, isInside, uniquenessKey, userDir, validateName, workspacePath } from '../paths.js'
+import { groupDir, isInside, uniquenessKey, userDir, validateName, workspacePath } from '../core/paths.js'
 import { extractReplyText, splitText, turnError } from './reply.js'
 
 const clip = (value, limit = 300) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
@@ -24,7 +23,7 @@ export class ChatAgentManager {
    *           send: (chat: { type: string, id: string }, text: string) => Promise<unknown>,
    *           store: import('../store.js').JsonStore }} options
    */
-  constructor({ ctx, config, root, log, send, sendImage, store, approval }) {
+  constructor({ ctx, config, root, log, send, sendImage, store, approval, bindSession, resolveChat, behavior }) {
     this.ctx = ctx
     this.config = config
     this.root = root
@@ -33,6 +32,9 @@ export class ChatAgentManager {
     this.sendImage = sendImage
     this.store = store
     this.approval = approval
+    this.bindSession = bindSession
+    this.resolveChat = resolveChat
+    this.behavior = behavior ?? {}
     this.chats = new Map()
   }
 
@@ -112,25 +114,11 @@ export class ChatAgentManager {
    * Without this, models often write a file path in prose and believe it was sent.
    */
   ensureQqPrompt(agent, state) {
-    if (state.promptInstalled) return
-    try {
-      agent.ctx.systemPrompt.section({
-        name: 'qq-bridge:images',
-        order: 150,
-        text: [
-          '本会话通过 QQ 桥接与用户交流。',
-          '当用户要求“截图 / 发图 / 给我看效果 / 发到 QQ”时，先实际生成图片文件，然后调用 present 展示该图片。',
-          '桥接器会在本轮结束时自动把 present 中的 png/jpg/jpeg/gif/webp 发到当前 QQ；只在文字里写文件路径不会发图。',
-          '非图片文件不会自动发送。用户也可以直接发 /screenshot 抓整屏。',
-        ].join(''),
-      })
-      state.promptInstalled = true
-    } catch (error) {
-      this.log('warn', `could not add QQ prompt section: ${error?.message ?? error}`)
-    }
+    this.behavior.installPrompt?.(agent, state)
   }
 
-  async ensurePreset(agent) {    const preset = this.config.agent.preset
+  async ensurePreset(agent) {
+    const preset = this.config.agent.preset
     const presets = this.ctx.get('agentPresets')
     if (!preset || !presets) return
     try {
@@ -275,43 +263,12 @@ export class ChatAgentManager {
   }
 
   applyPolicy(handle, level, state) {
-    const { approval } = this.services()
-    const capabilities = state.capabilities ?? []
-    const policy = level === 'L3' || capabilities.length > 0 ? 'ask' : 'never'
-    if (state.approvalPolicy !== policy) {
-      try {
-        approval?.setPolicy?.(handle.agent, policy)
-        state.approvalPolicy = policy
-      } catch (error) {
-        this.log('warn', `approval policy was not set: ${error?.message ?? error}`)
-      }
-    }
-    if (!state.guarded) {
-      this.guardTools(handle.agent, state)
-      state.guarded = true
-    }
-  }
-
-  /**
-   * Non-L3 sessions are chat-only unless the admin whitelists capabilities.
-   * Preset tools are scoped registrations, so a guard is the enforcement seam
-   * that survives them; `tools.restrict` only masks host-global tools. The
-   * guard reads live state, so whitelist and level changes apply next turn.
-   */
-  guardTools(agent, state) {
-    try {
-      agent.ctx.tools.guard((exec) => {
-        if (state.level === 'L3') return undefined
-        const name = exec?.toolName ?? exec?.tool?.name ?? exec?.name
-        return toolAllowed(name, state.capabilities ?? []) ? undefined : '当前账号仅允许聊天；该工具需要管理员加入白名单'
-      })
-    } catch (error) {
-      this.log('warn', `tool guard was not installed: ${error?.message ?? error}`)
-    }
+    this.behavior.applyPolicy?.(handle, level, state)
   }
 
   track(state, sessionId, requester = state.chat.id) {
     if (!sessionId) return
+    this.bindSession?.(sessionId, state.chat)
     this.approval?.track(sessionId, {
       chat: state.chat,
       level: state.level ?? 'L1',
@@ -604,6 +561,7 @@ export class ChatAgentManager {
    * @param {string} sessionId
    */
   chatForSession(sessionId) {
+    if (this.resolveChat) return this.resolveChat(sessionId)
     for (const state of this.chats.values()) {
       if (state.sessionId === sessionId) return state.chat
     }
@@ -706,7 +664,13 @@ export class ChatAgentManager {
       return
     }
 
-    await this.forwardPresentedImages(state, session, fromSeq)
+    await this.behavior.forwardImages?.({
+      sendImage: this.sendImage,
+      chat: state.chat,
+      session,
+      fromSeq,
+      log: this.log,
+    })
 
     const reply = extractReplyText(session.deriveMessages())
     if (reply === '') {
@@ -716,41 +680,6 @@ export class ChatAgentManager {
     for (const chunk of splitText(reply, this.config.limits.maxChars)) {
       await this.reply(state.chat, chunk)
     }
-  }
-
-  /**
-   * Images the agent declared via `present` during this turn. They only reach
-   * the DSH UI otherwise, so QQ sessions forward them explicitly.
-   * @param {any} session
-   * @param {number} fromSeq
-   * @returns {string[]}
-   */
-  presentedImages(session, fromSeq) {
-    const files = []
-    try {
-      for (const event of session.snapshotEvents(fromSeq)) {
-        if (event?.type !== 'deliverables/presented') continue
-        for (const file of event.data?.files ?? []) {
-          if (typeof file?.path === 'string' && /\.(png|jpe?g|gif|webp)$/i.test(file.path)) files.push(file.path)
-        }
-      }
-    } catch (error) {
-      this.log('warn', `could not read presented deliverables: ${error?.message ?? error}`)
-    }
-    return [...new Set(files)]
-  }
-
-  async forwardPresentedImages(state, session, fromSeq) {
-    const files = this.presentedImages(session, fromSeq)
-    for (const file of files) {
-      try {
-        const options = state.chat.mention ? { mention: state.chat.mention } : {}
-        await this.sendImage?.(state.chat, file, options)
-      } catch (error) {
-        this.log('warn', `could not forward presented image ${file}: ${error?.message ?? error}`)
-      }
-    }
-    return files
   }
 
   withTimeout(promise, timeoutMs) {

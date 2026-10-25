@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { normalizeConfig } from '../src/config.js'
+import { normalizeConfig } from '../src/core/config.js'
 
 test('config fills nested onebot defaults', () => {
   const config = normalizeConfig({ transport: { onebot: { port: 0 } } })

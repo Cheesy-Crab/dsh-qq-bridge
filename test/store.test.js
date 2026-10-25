@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { JsonStore, resolveStateFile } from '../src/store.js'
+import { JsonStore, resolveStateFile } from '../src/core/store.js'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-store-'))
 

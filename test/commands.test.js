@@ -4,9 +4,9 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { CommandDispatcher, parseCommand } from '../src/commands.js'
-import { normalizeConfig } from '../src/config.js'
-import { validateName } from '../src/paths.js'
+import { CommandDispatcher, parseCommand } from '../src/qq/commands.js'
+import { normalizeConfig } from '../src/core/config.js'
+import { validateName } from '../src/core/paths.js'
 
 function dispatcher(overrides = {}) {
   const sent = []

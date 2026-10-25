@@ -5,7 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { isPortOpen, NapCatSupervisor } from '../src/napcat.js'
+import { isPortOpen, NapCatSupervisor } from '../src/runtime/napcat.js'
 
 const config = (overrides = {}) => ({
   enabled: true,

@@ -227,7 +227,7 @@ agent 的 `ask_user_question` 现在会转成 QQ 文字：
         accessTokenEnv: QQ_ONEBOT_TOKEN
 ```
 
-完整默认值见仓库 [src/config.js](../src/config.js) 与 [README](../README.md)。
+完整默认值见仓库 [src/core/config.js](../src/core/config.js) 与 [README](../README.md)。
 
 ## 6. 状态与数据
 

@@ -1,15 +1,19 @@
 import path from 'node:path'
 
-import { ChatAgentManager } from './agent/chat.js'
-import { ApprovalBridge } from './approval.js'
-import { UserStore } from './auth/users.js'
+import { ChatAgentManager } from '../workspace/chat.js'
+import { ApprovalBridge } from '../agent-ext/approval.js'
+import { UserStore } from '../access/users.js'
 import { CommandDispatcher } from './commands.js'
-import { saveIncomingImage } from './images.js'
-import { UserQuestionBridge } from './questions.js'
-import { JsonStore, resolveStateFile } from './store.js'
-import { DedupeStore } from './transport/dedupe.js'
-import { FakeTransport } from './transport/fake.js'
-import { OneBotTransport } from './transport/onebot.js'
+import { saveIncomingImage } from '../agent-ext/images.js'
+import { applyAgentPolicy } from '../agent-ext/policy.js'
+import { forwardPresentedImages } from '../agent-ext/present.js'
+import { installQqPrompt } from '../agent-ext/prompt.js'
+import { UserQuestionBridge } from '../agent-ext/questions.js'
+import { JsonStore, resolveStateFile } from '../core/store.js'
+import { ConversationRouter } from './router.js'
+import { DedupeStore } from '../transport/dedupe.js'
+import { FakeTransport } from '../transport/fake.js'
+import { OneBotTransport } from '../transport/onebot.js'
 
 /**
  * Lifecycle owner for the QQ bridge: owns the transport, deduplicates inbound
@@ -68,6 +72,19 @@ export class QqBridge {
       timeoutMs: this.config.approval.timeoutSec * 1000,
     })
     this.approval.register()
+    this.router = new ConversationRouter()
+
+    const behavior = {
+      installPrompt: (agent, state) => installQqPrompt(agent, state, this.log),
+      applyPolicy: (handle, level, state) => applyAgentPolicy({
+        approval: this.approval,
+        agent: handle.agent,
+        level,
+        state,
+        log: this.log,
+      }),
+      forwardImages: (options) => forwardPresentedImages(options),
+    }
 
     this.chat = new ChatAgentManager({
       ctx: this.ctx,
@@ -78,6 +95,9 @@ export class QqBridge {
       sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       store: new JsonStore({ file: stateFile, log: this.log }),
       approval: this.approval,
+      bindSession: (sessionId, chat) => this.router.bind(sessionId, chat),
+      resolveChat: (sessionId) => this.router.chatForSession(sessionId),
+      behavior,
     })
     this.chat.init()
 
@@ -85,7 +105,7 @@ export class QqBridge {
       ctx: this.ctx,
       log: this.log,
       send,
-      resolveChat: (sessionId) => this.chat.chatForSession(sessionId),
+      resolveChat: (sessionId) => this.router.chatForSession(sessionId),
       timeoutMs: this.config.questions.timeoutSec * 1000,
     })
     this.questions.register()

@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { loadApiKey, parseApiKey, resolveApiKeyFile } from '../src/secrets.js'
+import { loadApiKey, parseApiKey, resolveApiKeyFile } from '../src/core/secrets.js'
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-secrets-'))
 const keyFile = path.join(tmp, 'key.txt')

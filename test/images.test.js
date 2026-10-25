@@ -4,7 +4,8 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { imagesOf, saveIncomingImage } from '../src/images.js'
+import { saveIncomingImage } from '../src/agent-ext/images.js'
+import { imagesOf } from '../src/transport/onebot.js'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-images-'))
 

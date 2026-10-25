@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { UserQuestionBridge } from '../src/questions.js'
+import { UserQuestionBridge } from '../src/agent-ext/questions.js'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 

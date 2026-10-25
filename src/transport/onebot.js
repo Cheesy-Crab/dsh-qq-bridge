@@ -2,7 +2,22 @@ import fs from 'node:fs'
 import http from 'node:http'
 import { WebSocket, WebSocketServer } from 'ws'
 
-import { imagesOf } from '../images.js'
+/**
+ * Extract OneBot image segments into a flat shape.
+ * @param {unknown} message
+ * @returns {{ file?: string, url?: string, fileId?: string, summary?: string }[]}
+ */
+export function imagesOf(message) {
+  if (!Array.isArray(message)) return []
+  return message
+    .filter((segment) => segment?.type === 'image')
+    .map((segment) => ({
+      file: segment.data?.file,
+      url: segment.data?.url,
+      fileId: segment.data?.file_id ?? segment.data?.fileId,
+      summary: segment.data?.summary,
+    }))
+}
 
 const MAX_PAYLOAD = 2 * 1024 * 1024
 

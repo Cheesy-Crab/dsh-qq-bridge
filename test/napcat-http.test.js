@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { registerNapCatHttp } from '../src/napcat-http.js'
+import { registerNapCatHttp } from '../src/runtime/napcat-http.js'
 
 function fakeServer() {
   let route

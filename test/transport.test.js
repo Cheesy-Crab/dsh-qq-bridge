@@ -4,8 +4,8 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { QqBridge } from '../src/bridge.js'
-import { normalizeConfig } from '../src/config.js'
+import { QqBridge } from '../src/qq/bridge.js'
+import { normalizeConfig } from '../src/core/config.js'
 import { OneBotTransport } from '../src/transport/onebot.js'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))

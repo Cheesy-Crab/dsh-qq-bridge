@@ -4,6 +4,8 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 当前进度：**M0–M6 已完成**；图片收发、内置 NapCat、会话归档、能力白名单均已实现。官方 QQ 机器人适配仍需开放平台凭据。
 
+架构说明见 [docs/architecture.md](docs/architecture.md)：工作区对接域、agent 行为扩展域、QQ 适配层与运行支撑层。
+
 ## 安装（DSH Desktop 推荐）
 
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
@@ -226,7 +228,7 @@ NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓�
     workspacesRoot: E:\QQdsh
 ```
 
-完整配置项见 [`src/config.js`](src/config.js)：
+完整配置项见 [`src/core/config.js`](src/core/config.js)：
 
 | 键 | 默认 | 说明 |
 |---|---|---|

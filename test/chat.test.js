@@ -4,8 +4,9 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { ChatAgentManager } from '../src/agent/chat.js'
-import { normalizeConfig } from '../src/config.js'
+import { ChatAgentManager } from '../src/workspace/chat.js'
+import { normalizeConfig } from '../src/core/config.js'
+import { forwardPresentedImages } from '../src/agent-ext/present.js'
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-chat-'))
 
@@ -93,6 +94,9 @@ function fakeEnvironment({ reply = 'pong', error, hang = false, presented = [] }
       images.push({ chat, file, options })
     },
     store: { load: () => {}, get: () => undefined, set: () => {} },
+    behavior: {
+      forwardImages: (options) => forwardPresentedImages(options),
+    },
   })
   return { manager, created, sent, images, session, followups, events, idleCalls: () => idleCalls }
 }

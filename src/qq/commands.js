@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { normalizeCapabilities } from './auth/capabilities.js'
-import { atLeast, normalizeLevel } from './auth/levels.js'
-import { captureScreen } from './screenshot.js'
+import { normalizeCapabilities } from '../access/capabilities.js'
+import { atLeast, normalizeLevel } from '../access/levels.js'
+import { captureScreen } from '../agent-ext/screenshot.js'
 
 const clip = (value, limit = 200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
 const shortId = (id) => {

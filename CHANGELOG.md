@@ -1,5 +1,15 @@
 # 变更记录
 
+## 0.25.0
+
+- 架构重构：按 `core / access / transport / workspace / agent-ext / qq / runtime`
+  分层，依赖方向固定。
+- `agent-ext` 抽出 `present`、`prompt`、`policy`；`ChatAgentManager` 不再 import
+  agent 行为，通过 `behavior` 注入。
+- 新增 `qq/router.js`：sessionId ↔ chat 唯一索引，审批/提问/媒体不再回查 manager。
+- `imagesOf` 下沉到 transport，transport 不再依赖 agent-ext。
+- 新增 `docs/architecture.md`。
+
 ## 0.24.0
 
 - 给每个 QQ agent 注入一条系统提示：用户要截图/发图/看效果时，必须先生成图片并

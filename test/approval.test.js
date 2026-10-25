@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { ApprovalBridge } from '../src/approval.js'
+import { ApprovalBridge } from '../src/agent-ext/approval.js'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
