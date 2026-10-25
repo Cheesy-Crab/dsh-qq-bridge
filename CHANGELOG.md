@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.22.0
+
+- 默认模型路由改为 `deepseek-account`：直接使用 DSH Desktop 当前登录账号，
+  部署时不再需要配置 API Key。
+- 设置页在账号模式下隐藏 API Key 输入，只显示「模型：DSH 当前登录账号」。
+- 需要 API Key 的部署仍可把 `agent.provider` 设为 `deepseek-official`。
+
 ## 0.21.0
 
 - NapCat 部署改成路径输入栏：已有 NapCat 只需选择目录或粘贴路径，右侧提供

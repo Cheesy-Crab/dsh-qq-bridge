@@ -19,7 +19,7 @@ E:\dsh\工作区对接QQ
 ```
 
 安装并启用 `dsh-qq-bridge`，重启 Desktop，然后在 **设置 → QQ Bridge** 按向导完成：
-安装 NapCat、保存 API Key、设置管理员、启动、扫码。
+安装 NapCat、设置管理员、启动、扫码。默认直接使用 DSH 当前登录账号，不需要 API Key。
 
 不需要 qqweb，也不用手写 profile 配置。完整步骤见
 [docs/deploy-windows.md](docs/deploy-windows.md)。
@@ -235,7 +235,7 @@ NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓�
 | `defaultWorkspaceName` | `default` | 每个 QQ 的默认工作区名 |
 | `stateFile` | `${DSH_HOME}/storages/qq-bridge/state.json` | 聊天/工作区/会话映射 |
 | `commandPrefix` | `['/', '!', '#']` | 指令前缀，可配置字符串或数组；多字符前缀按最长匹配 |
-| `agent.provider` / `agent.model` | `deepseek-official` / `deepseek-flash` | 会话使用的模型路由 |
+| `agent.provider` / `agent.model` | `deepseek-account` / `deepseek-flash` | 默认使用 DSH 当前登录账号；API Key 模式设 `deepseek-official` |
 | `agent.preset` | `standard` | agent preset（决定工具集，缺省会导致只有全局工具） |
 | `agent.turnTimeoutMs` | `300000` | 单轮超时（毫秒） |
 | `agent.maxQueue` | `3` | 每个聊天最多排队的消息数 |

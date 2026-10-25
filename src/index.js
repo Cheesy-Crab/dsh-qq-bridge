@@ -37,9 +37,11 @@ export function apply(ctx, rawConfig) {
   }
 
   log('info', `loaded platform=${process.platform} node=${process.version} root=${root}`)
-  ensureCredential(ctx, { file: config.apiKeyFile, envName: config.apiKeyEnv, log }).catch((error) => {
-    log('warn', `credential import failed: ${error?.stack ?? error}`)
-  })
+  if (config.agent.provider !== 'deepseek-account') {
+    ensureCredential(ctx, { file: config.apiKeyFile, envName: config.apiKeyEnv, log }).catch((error) => {
+      log('warn', `credential import failed: ${error?.stack ?? error}`)
+    })
+  }
 
   const napcat = new NapCatSupervisor({
     config: config.napcat,
@@ -64,6 +66,7 @@ export function apply(ctx, rawConfig) {
       return {
         napcat: await napcat.status(),
         bridge: bridge.status?.() ?? {},
+        provider: config.agent.provider,
         apiKey: { file: keyFile, configured: fs.existsSync(keyFile) },
         admins: (bridge.users?.list?.() ?? []).filter((user) => user.level === 'L3').map((user) => user.openid),
         setupDir: napcat.dataDir(),

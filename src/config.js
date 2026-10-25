@@ -14,7 +14,7 @@ export const DEFAULTS = Object.freeze({
   selfTest: false,
   selfTestModel: Object.freeze({ provider: 'deepseek-official', model: 'deepseek-flash' }),
   agent: Object.freeze({
-    provider: 'deepseek-official',
+    provider: 'deepseek-account',
     model: 'deepseek-flash',
     preset: 'standard',
     turnTimeoutMs: 300000,

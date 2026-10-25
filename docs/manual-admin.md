@@ -202,15 +202,15 @@ agent 的 `ask_user_question` 现在会转成 QQ 文字：
     workspacesRoot: E:\QQdsh
     commandPrefix: ['/', '!', '#']
     agent:
-      provider: deepseek-official
+      provider: deepseek-account
       model: deepseek-flash
       preset: standard
       turnTimeoutMs: 300000
     sandbox:
       modeByLevel:
         L0: read-only
-        L1: workspace-write
-        L2: workspace-write
+        L1: read-only
+        L2: read-only
         L3: danger-full-access
     limits:
       maxChars: 1800

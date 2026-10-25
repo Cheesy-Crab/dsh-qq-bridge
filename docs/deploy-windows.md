@@ -72,9 +72,21 @@ D:\dsh-qq-bridge
 - 路径会保存到 `%USERPROFILE%\.dsh\qq-bridge\settings.json`，重启后继续使用；
 - 只接受包含 `napcat.bat` 的 NapCat Shell 目录。
 
-### 4.2 保存 API Key
+### 4.2 模型账号
 
-填入 `sk-...`，点 **保存 Key**。插件会写入 DSH 的 key 文件并导入凭据，不需要命令行。
+默认直接使用 **DSH Desktop 当前登录的 DeepSeek 账号**（`deepseek-account`），不需要
+配置 API Key，设置页也不会显示 Key 输入框。
+
+只有想改用 API Key 时，才需要在 profile patch 里覆盖：
+
+```yaml
+- id: qq-bridge
+  config:
+    agent:
+      provider: deepseek-official
+```
+
+然后在设置页填写 `sk-...` 并保存。
 
 ### 4.3 设置管理员
 

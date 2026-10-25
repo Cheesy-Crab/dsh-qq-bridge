@@ -106,7 +106,7 @@ test('first message provisions a workspace and session, later messages reuse it'
   assert.equal(created.workspaces.length, 1)
   assert.match(created.workspaces[0].dir, /u-[0-9a-f]{8}[\\/]default-[0-9a-f]{6}$/)
   assert.equal(created.agents.length, 1)
-  assert.equal(created.agents[0].agentOptions.provider, 'deepseek-official')
+  assert.equal(created.agents[0].agentOptions.provider, 'deepseek-account')
   assert.equal(followups[0].role, 'user')
   assert.equal(followups[0].id, 'qq-private-42-m1')
   assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['read-only'])
