@@ -1,6 +1,7 @@
 import { applyAgentPolicy } from './policy.js'
 import { forwardPresentedImages } from './present.js'
 import { installQqPrompt } from './prompt.js'
+import { installVisualDesignPrompt } from './visual-design.js'
 
 /**
  * QQ's built-in behavior extensions. They are registered into the shared
@@ -13,6 +14,10 @@ export function qqBuiltinExtensions({ approval, log }) {
     {
       name: 'qq:prompt',
       onSession: ({ agent, state }) => installQqPrompt(agent, state, log),
+    },
+    {
+      name: 'qq:visual-design',
+      onSession: ({ agent, state }) => installVisualDesignPrompt(agent, state, log),
     },
     {
       name: 'qq:policy',

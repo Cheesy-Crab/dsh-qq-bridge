@@ -244,7 +244,7 @@ NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓�
 | `sandbox.modeByLevel` | `L0/L1/L2 read-only`；`L3 danger-full-access` | 会话文件沙箱模式；非 L3 获得 write/exec 后升为 workspace-write |
 | `access.admins` | `[]` | 管理员 openid 列表（L3） |
 | `access.bindCodeTtlMinutes` | `5` | 配对码有效期 |
-| `access.whitelist` | `{}` | 非 L3 的能力白名单，如 `{'123': ['workspace','read','write','exec']}` |
+| `access.whitelist` | `{}` | 非 L3 的能力白名单，如 `{'123': ['workspace','read','write','exec','image']}` |
 | `limits.maxWorkspaces` | `{L1:3, L2:10, L3:0}` | 每人工作区数，0 为不限 |
 | `limits.dailyTurns` | `{L0:20, L1:200, L2:1000, L3:0}` | 每日模型轮次，0 为不限 |
 | `approval.timeoutSec` | `120` | QQ 审批等待时间 |

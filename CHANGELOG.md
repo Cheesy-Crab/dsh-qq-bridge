@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.27.0
+
+- 新增 `image` 能力：非 L3 用户可被授予 `generate_image` / `edit_image` /
+  `present` / `read_image` 等工具权限。
+- 新增 `qq:visual-design` 行为扩展：先讨论视觉锚点，在合适节点主动出图，
+  生成后 present 到 QQ，迭代时用 `edit_image` 保持角色一致。
+- 更新能力文档与白名单示例。
+
 ## 0.26.0
 
 - agent 行为改成可扩展注册表：其他插件可通过 Cordis 服务

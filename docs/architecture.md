@@ -168,8 +168,8 @@ QQ agent 的 `preset: standard` 能看到这些全局工具，因此生成不需
 - 或者由 `agent-ext` 的 `onTurnEnd` 识别 `generate_image` 的 tool result / `savedTo`
   直接 `sendImage`。
 
-QQ 非 L3 用户还会被工具 guard 拦截，后续需要 `image` 能力或把
-`generate_image` 纳入白名单。
+QQ 非 L3 用户需要管理员授予 `image` 能力，才能使用
+`generate_image` / `edit_image` / `present` 等工具；L3 默认可全用。
 
 ## 关键依赖规则
 

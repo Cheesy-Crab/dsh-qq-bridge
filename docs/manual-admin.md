@@ -155,6 +155,7 @@ L3 以外默认仅聊天。按账号授予：
 | `read` | read/glob/grep 等读取工具 |
 | `write` | 写文件（隐含 read） |
 | `exec` | 执行命令（隐含 read/write，工具集全开） |
+| `image` | `generate_image` / `edit_image` / `present` 等生图与发图工具 |
 
 ```text
 /admin allow <openid> workspace write

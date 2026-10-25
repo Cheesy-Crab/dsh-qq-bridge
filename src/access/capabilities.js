@@ -1,4 +1,4 @@
-export const CAPABILITIES = Object.freeze(['workspace', 'read', 'write', 'exec'])
+export const CAPABILITIES = Object.freeze(['workspace', 'read', 'write', 'exec', 'image'])
 
 /**
  * @param {unknown} input
@@ -29,6 +29,7 @@ export function toolAllowed(toolName, capabilities) {
   const name = String(toolName ?? '')
   const caps = new Set(capabilities)
   if (caps.has('exec')) return true
+  if (caps.has('image') && /^(generate_image|generate_images|edit_image|present|read_image|find_inspiration|canvas_state|view_canvas)$/i.test(name)) return true
   if (caps.has('write') && /^(write|edit|apply_patch|read|glob|grep|working_directory|list|find)/i.test(name)) return true
   if (caps.has('read') && /^(read|glob|grep|working_directory|list|find)/i.test(name)) return true
   return false

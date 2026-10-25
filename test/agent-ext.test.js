@@ -56,5 +56,5 @@ test('disposer removes an extension', async () => {
 
 test('QQ built-ins are ordinary registrations', () => {
   const extensions = qqBuiltinExtensions({ approval: {}, log: () => {} })
-  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:policy', 'qq:present'])
+  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present'])
 })
