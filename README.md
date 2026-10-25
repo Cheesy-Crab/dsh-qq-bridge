@@ -4,19 +4,33 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 当前进度：**M0–M6 已完成**；图片收发、内置 NapCat、会话归档、能力白名单均已实现。官方 QQ 机器人适配仍需开放平台凭据。
 
-## 安装（本地开发）
+## 安装（DSH Desktop 推荐）
+
+DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
+
+```
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.20.0
+```
+
+仓库是 private；未配置 GitHub 凭据时改用本地目录：
+
+```
+E:\dsh\工作区对接QQ
+```
+
+安装并启用 `dsh-qq-bridge`，重启 Desktop，然后在 **设置 → QQ Bridge** 按向导完成：
+安装 NapCat、保存 API Key、设置管理员、启动、扫码。
+
+不需要 qqweb，也不用手写 profile 配置。完整步骤见
+[docs/deploy-windows.md](docs/deploy-windows.md)。
+
+## 安装（旧版 qqweb / 开发模式）
 
 ```powershell
 dsh plugin --profile qqweb add E:\dsh\工作区对接QQ
 ```
 
-或用 npm 包名（发布后）：
-
-```powershell
-dsh plugin --profile qqweb add dsh-qq-bridge
-```
-
-安装后重启目标 profile。`dsh --profile qqweb --dump-config` 应能看到：
+安装后重启目标 profile，`dsh --profile qqweb --dump-config` 应能看到：
 
 ```yaml
 - id: qq-bridge
