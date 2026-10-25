@@ -1,5 +1,14 @@
 # 变更记录
 
+## 0.20.0
+
+- DSH Desktop 一键部署：设置页新增安装 NapCat、保存 API Key、设置管理员、
+  启动/二维码，全部通过按钮完成，不再需要前台网页或命令行。
+- NapCat 不再要求随包分发：默认下载官方 Shell 到 `~/.dsh/qq-bridge/napcat`；
+  也支持本地 zip 或本地目录。
+- 新增 `/qq-bridge/setup/*` 与 `/qq-bridge/bridge/status` 接口。
+- NapCat 目录自动探测：配置目录、`vendor/napcat`、数据目录，以及解压后的子目录。
+
 ## 0.19.3
 
 - 新增 `packages/qq-bridge-ui`：只含客户端 UI 的第三方组合包，可从 DSH Desktop

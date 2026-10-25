@@ -1,6 +1,6 @@
 {
   "name": "dsh-qq-bridge",
-  "version": "0.19.3",
+  "version": "0.20.0",
   "private": true,
   "type": "module",
   "description": "QQ <-> DSH workspace bridge: per-user workspaces, permission tiers, and a command layer.",
