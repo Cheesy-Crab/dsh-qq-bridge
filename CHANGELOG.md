@@ -1,5 +1,10 @@
 # 变更记录
 
+## 0.19.1
+
+- 设置页请求改为 `credentials: omit`，避免 Desktop 的 file:// 页面在
+  `Access-Control-Allow-Origin: *` 下被浏览器拒绝。
+
 ## 0.19.0
 
 - DSH Desktop 设置页新增「QQ Bridge」分区：状态、启动、停止、重启、显示二维码。
