@@ -2,6 +2,7 @@ import { QqBridge } from './bridge.js'
 import { normalizeConfig } from './config.js'
 import { ensureCredential } from './credentials.js'
 import { NapCatSupervisor } from './napcat.js'
+import { registerNapCatHttp } from './napcat-http.js'
 import { resolveWorkspacesRoot } from './paths.js'
 import { runSelfTest } from './selftest.js'
 
@@ -42,6 +43,10 @@ export function apply(ctx, rawConfig) {
   })
 
   const bridge = new QqBridge({ ctx, config, root, log, napcat })
+  ctx.inject(['webServer'], (webCtx) => {
+    const dispose = registerNapCatHttp(webCtx.get('webServer'), napcat, log)
+    return () => dispose?.()
+  })
   bridge.start().then(async () => {
     if (config.napcat.enabled && config.napcat.autoStart) {
       await napcat.start()

@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.19.0
+
+- DSH Desktop 设置页新增「QQ Bridge」分区：状态、启动、停止、重启、显示二维码。
+- Host 暴露同源 `/qq-bridge/napcat/*` 控制接口；只操作插件管理的 NapCat。
+- 客户端 bundle `lib/client.js` 使用 DSH 的 `__ModuleLoader__` 工厂，无需额外构建工具。
+- `scripts/bundle.ps1` 现在会带上 `lib/`。
+
 ## 0.18.0
 
 - 内置 NapCat：把 NapCat Shell 放进 `vendor/napcat`（git 忽略），由插件启动和守护。

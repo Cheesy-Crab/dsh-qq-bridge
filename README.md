@@ -182,6 +182,17 @@ CI 在 `ubuntu-latest` 和 `windows-latest` 上跑同一套单测：[.github/wor
 - QQ 指令：`/napcat status|start|stop|restart|qr`；
 - `scripts/bundle.ps1` 可把源码 + `vendor/napcat` 打成一个发布 zip。
 
+## DSH Desktop 设置页
+
+重启 profile 后，DSH Desktop 的「设置」里会出现 **QQ Bridge** 分区：
+
+- 查看 NapCat 运行状态、PID、目录；
+- 启动 / 停止 / 重启；
+- 显示登录二维码。
+
+按钮调用同源的 `/qq-bridge/napcat/*` 接口，不需要再发 QQ 指令。客户端 bundle 在
+`lib/client.js`，随插件一起安装；打包脚本会把它带上。
+
 ## 配置
 
 默认工作区根目录：Windows 是 `E:\QQdsh`，其他平台是 `${DSH_HOME}/qq-workspaces`。想改，在 profile 的 `cordis.patch.yml` 里按 id 覆盖：

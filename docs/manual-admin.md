@@ -89,6 +89,8 @@ napcat:
   登录过一次后 `-q <QQ>` 可快速登录；
 - 已有外部 OneBot 客户端连接时，插件不会重复启动 NapCat，也不会结束外部进程；
 - `/napcat status` 查看状态，`/napcat qr` 重发二维码，`/napcat restart` 重启。
+- DSH Desktop 的「设置 → QQ Bridge」也提供状态、启动、停止、重启和二维码按钮；
+  这些按钮通过同源 `/qq-bridge/napcat/*` 接口工作。
 
 如果继续使用外部 NapCat，反向 WS 配置在：
 
