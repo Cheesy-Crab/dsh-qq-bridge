@@ -1,5 +1,11 @@
 # 变更记录
 
+## 0.31.0
+
+- 新增 `/admin image-balance`：读取 Civitai `buzz.getBuzzAccount`，
+  显示账户 blue / green / yellow / total Buzz，仅 L3 可用。
+- 管理员额度命令与账户总额分离，普通 QQ 用户只看到已分配额度。
+
 ## 0.30.0
 
 - image-gen 生成结果新增 `cost`（Civitai Buzz），并随 `meta` 返回。

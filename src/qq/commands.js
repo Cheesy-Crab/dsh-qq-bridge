@@ -4,6 +4,7 @@ import path from 'node:path'
 import { normalizeCapabilities } from '../access/capabilities.js'
 import { atLeast, normalizeLevel } from '../access/levels.js'
 import { captureScreen } from '../agent-ext/screenshot.js'
+import { fetchCivitaiBalance } from '../core/civitai-account.js'
 
 const clip = (value, limit = 200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
 const shortId = (id) => {
@@ -41,7 +42,7 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials }) {
     this.manager = manager
     this.users = users
     this.config = config
@@ -52,6 +53,7 @@ export class CommandDispatcher {
     this.status = status
     this.screenshot = screenshot
     this.napcat = napcat
+    this.credentials = credentials
     this.commands = new Map()
     this.registerBuiltins()
   }
@@ -430,6 +432,15 @@ export class CommandDispatcher {
       if (!Number.isFinite(amount) || amount < 0) throw new Error('额度必须是非负数字')
       return `已把 ${args[1]} 的生图额度设为 ${this.users.setImageQuota(args[1], amount)} Buzz。`
     }
+    if (sub === 'image-balance') {
+      const credentials = this.credentials?.()
+      if (!credentials) throw new Error('DSH credentials 服务尚未就绪')
+      const balance = await fetchCivitaiBalance(credentials)
+      return [
+        `Civitai 账户总额：${balance.total} Buzz`,
+        `blue=${balance.blue}  green=${balance.green}  yellow=${balance.yellow}`,
+      ]
+    }
     if (sub === 'invite') {
       const level = normalizeLevel(args[1] ?? 'L1')
       const minutes = this.config.access.bindCodeTtlMinutes
@@ -451,7 +462,7 @@ export class CommandDispatcher {
       if (workspaces.length === 0) return ['还没有工作区。']
       return ['全部工作区：', ...workspaces.map((workspace) => `${workspace.title}  ${workspace.path}`)]
     }
-    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|allow|deny|perms|quota|ws list')
+    throw new Error('用法：/admin users|invite|level|freeze|unfreeze|allow|deny|perms|quota|image-balance|ws list')
   }
 
   async handleWorkspace(message, args, level = 'L1') {

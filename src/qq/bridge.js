@@ -29,6 +29,7 @@ export class QqBridge {
     this.napcat = napcat
     this.agentExtensions = agentExtensions
     this.extensionsRegistered = false
+    this.credentials = undefined
     this.transport = undefined
     this.dedupe = new DedupeStore()
     this.chat = undefined
@@ -118,6 +119,11 @@ export class QqBridge {
       timeoutMs: this.config.questions.timeoutSec * 1000,
     })
     this.questions.register()
+    if (typeof this.ctx.inject === 'function') {
+      this.ctx.inject(['credentials'], (scoped) => {
+        this.credentials = scoped.credentials
+      })
+    }
     this.commands = new CommandDispatcher({
       manager: this.chat,
       users: this.users,
@@ -128,6 +134,7 @@ export class QqBridge {
       sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       status: () => this.status(),
       napcat: this.napcat,
+      credentials: () => this.credentials,
     })
     try {
       await this.transport.start()

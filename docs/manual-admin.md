@@ -174,6 +174,15 @@ L3 以外默认仅聊天。按账号授予：
 - 余额大于 0 但不足以支付一次生成时，允许生成，扣到 0 为止；
 - 每次生成后，QQ 会收到“本次消耗 / 剩余额度”的提示，不显示账户总额。
 
+管理员可查看 Civitai 账户总额（仅 L3，不下发给普通用户）：
+
+```text
+/admin image-balance
+```
+
+返回 `blue / green / yellow / total`，数据来自
+`https://civitai.com/api/trpc/buzz.getBuzzAccount`。
+
 也可以写在 profile 配置里（启动时合并进用户记录）：
 
 ```yaml
