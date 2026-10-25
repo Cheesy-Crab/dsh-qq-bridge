@@ -1,4 +1,5 @@
 import { applyAgentPolicy } from './policy.js'
+import { forwardGeneratedImages } from './generated-images.js'
 import { forwardPresentedImages } from './present.js'
 import { installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
 
@@ -21,6 +22,16 @@ export function qqBuiltinExtensions({ approval, log }) {
     {
       name: 'qq:policy',
       onSession: ({ agent, level, state }) => applyAgentPolicy({ approval, agent, level, state, log }),
+    },
+    {
+      name: 'qq:generated-images',
+      onTurnEnd: ({ sendImage, chat, session, fromSeq }) => forwardGeneratedImages({
+        sendImage,
+        chat,
+        session,
+        fromSeq,
+        log,
+      }),
     },
     {
       name: 'qq:present',

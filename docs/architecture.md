@@ -56,6 +56,7 @@ src/
     images.js               入站图片落盘
     screenshot.js           全屏截图
     present.js              present 图片自动转发
+    generated-images.js     image-gen 结果按 savedTo 自动转发
     policy.js               审批策略 + 工具 guard
     prompts/                所有系统提示词（*.prompt.js）
       qq-images.prompt.js   QQ 图片发送约定
@@ -165,15 +166,14 @@ dsh-image-gen
 ```
 
 QQ agent 的 `preset: standard` 能看到这些全局工具，因此生成不需要本插件注册新工具。
-当前只差输出回传：
+输出回传由 `qq:generated-images` 处理：
 
-- `generate_image` 不产生 `deliverables/presented` 事件；
-- 所以需要 agent 再调用 `present(savedTo)`；
-- 或者由 `agent-ext` 的 `onTurnEnd` 识别 `generate_image` 的 tool result / `savedTo`
-  直接 `sendImage`。
+- 读取本轮 `tool/result` 的 `meta.savedTo`，覆盖 `generate_image`、`generate_images`、`edit_image`；
+- agent 若也调用了 `present`，`qq:present` 会发送，`qq:generated-images` 按路径去重，不会重复发图；
+- 生成提示词与引擎方言交给 `image-gen` skill，QQ agent 在生图前按需加载。
 
 QQ 非 L3 用户需要管理员授予 `image` 能力，才能使用
-`generate_image` / `edit_image` / `present` 等工具；L3 默认可全用。
+`generate_image` / `edit_image` / `present` / `skill` 等工具；L3 默认可全用。
 
 ## 关键依赖规则
 

@@ -1,5 +1,14 @@
 # 变更记录
 
+## 0.28.0
+
+- 对接新版 dsh-image-gen：新增 `qq:generated-images`，识别
+  `generate_image` / `generate_images` / `edit_image` 的 `meta.savedTo` 并自动发到 QQ，
+  同时与 `present` 去重。
+- `qq:visual-design` 改为生图前加载 `image-gen` skill，按 provider/model 方言编译 prompt；
+  QQ 会话禁止派 subagent 生图，支持 seed / negative_prompt / loras / source_paths。
+- `image` 能力放开 `skill` 工具，便于加载 image-gen 手册。
+
 ## 0.27.1
 
 - 系统提示词统一收进 `src/agent-ext/prompts/`，文件名统一为 `*.prompt.js`。

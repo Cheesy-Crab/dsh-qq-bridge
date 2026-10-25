@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { qqBuiltinExtensions } from '../src/agent-ext/builtins.js'
+import { forwardGeneratedImages } from '../src/agent-ext/generated-images.js'
 import { AgentExtensionRegistry } from '../src/agent-ext/registry.js'
 
 test('extensions run in registration order for session and turn hooks', async () => {
@@ -56,5 +57,24 @@ test('disposer removes an extension', async () => {
 
 test('QQ built-ins are ordinary registrations', () => {
   const extensions = qqBuiltinExtensions({ approval: {}, log: () => {} })
-  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present'])
+  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:generated-images', 'qq:present'])
+})
+
+test('image-gen results are forwarded once and skipped when already presented', async () => {
+  const events = [
+    { type: 'tool/result', data: { meta: { kind: 'dsh-image-gen', savedTo: '/ws/a.png' } } },
+    { type: 'deliverables/presented', data: { files: [{ path: '/ws/b.png' }] } },
+    { type: 'tool/result', data: { meta: { kind: 'dsh-image-gen', savedTo: '/ws/b.png' } } },
+    { type: 'tool/result', data: { meta: { kind: 'dsh-image-gen-batch', images: [{ savedTo: '/ws/c.jpg' }] } } },
+  ]
+  const session = { snapshotEvents: () => events }
+  const sent = []
+  await forwardGeneratedImages({
+    sendImage: async (_chat, file) => sent.push(file),
+    chat: {},
+    session,
+    fromSeq: 0,
+    log: () => {},
+  })
+  assert.deepEqual(sent, ['/ws/a.png', '/ws/c.jpg'])
 })
