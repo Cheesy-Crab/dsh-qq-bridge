@@ -71,6 +71,10 @@ test('napcat http exposes status and actions', async () => {
   await route.handler({ url: '/qq-bridge/napcat/status', method: 'GET', headers: { origin: 'http://localhost:5173' } }, localCors)
   assert.equal(localCors.headers['access-control-allow-origin'], 'http://localhost:5173')
 
+  const desktopCors = fakeResponse()
+  await route.handler({ url: '/qq-bridge/napcat/status', method: 'GET', headers: { origin: 'dsh-app://app' } }, desktopCors)
+  assert.equal(desktopCors.headers['access-control-allow-origin'], 'dsh-app://app')
+
   const remoteCors = fakeResponse()
   await route.handler({ url: '/qq-bridge/napcat/status', method: 'GET', headers: { origin: 'https://evil.example' } }, remoteCors)
   assert.equal(remoteCors.headers['access-control-allow-origin'], undefined)

@@ -1,5 +1,10 @@
 # 变更记录
 
+## 0.36.5
+
+- 允许 DSH Desktop 设置页的 `dsh-app://app` origin，修复设置页
+  “无法连接 QQ Bridge 服务 / Failed to fetch”。
+
 ## 0.36.4
 
 - 设置页请求可能带 `Origin: null`；现在允许该本地桌面场景，并继续记录被拒绝的 origin 到

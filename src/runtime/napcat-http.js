@@ -5,11 +5,13 @@ import path from 'node:path'
 const PREFIX = '/qq-bridge'
 const CONTROL_HEADER = 'x-qq-bridge-control'
 const LOCAL_ORIGIN = /^https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/
+const DESKTOP_ORIGIN = 'dsh-app://app'
 const CORS_LOG = path.join(os.tmpdir(), 'dsh-qq-cors.log')
 
 function applyCors(req, res) {
   const origin = req.headers?.origin
-  const allowed = origin === 'null' || (typeof origin === 'string' && LOCAL_ORIGIN.test(origin))
+  const allowed = origin === 'null' || origin === DESKTOP_ORIGIN
+    || (typeof origin === 'string' && LOCAL_ORIGIN.test(origin))
   if (!allowed) {
     if (typeof origin === 'string' && origin !== '') {
       try {
