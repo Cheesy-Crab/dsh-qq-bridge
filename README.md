@@ -11,7 +11,7 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.0
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.5
 ```
 
 仓库是 public。也可以填本地小包目录：

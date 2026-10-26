@@ -23,13 +23,13 @@ DSH Desktop 侧边栏：**插件 → 添加插件 → 安装第三方插件**，
 ### 方式 A：GitHub 地址（推荐）
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.0
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.5
 ```
 
 或：
 
 ```
-github:Cheesy-Crab/dsh-qq-bridge#v0.36.0
+github:Cheesy-Crab/dsh-qq-bridge#v0.36.5
 ```
 
 仓库是 **public**，不需要 GitHub 凭据。
