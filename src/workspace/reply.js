@@ -21,6 +21,35 @@ export function extractReplyText(messages) {
 }
 
 /**
+ * Last assistant text among the events recorded after `fromSeq`. Delivering per
+ * event range keeps an autonomous follow-up turn from re-sending an earlier
+ * reply, which `extractReplyText` (whole history) cannot tell apart.
+ * @param {{ snapshotEvents?: (from: number) => Array<any> }} session
+ * @param {number} fromSeq
+ * @returns {string}
+ */
+export function replyTextSince(session, fromSeq) {
+  try {
+    const events = session.snapshotEvents(fromSeq)
+    let text = ''
+    for (const event of events) {
+      if (event?.type !== 'assistant/message') continue
+      const parts = event.data?.message?.content
+      if (!Array.isArray(parts)) continue
+      const joined = parts
+        .filter((part) => part?.type === 'text')
+        .map((part) => part.text ?? '')
+        .join('')
+        .trim()
+      if (joined !== '') text = joined
+    }
+    return text
+  } catch {
+    return ''
+  }
+}
+
+/**
  * Split one long reply into QQ-sized chunks. Prefers paragraph breaks, then
  * line breaks, then a hard cut; never splits a surrogate pair.
  * @param {string} text

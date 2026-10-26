@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
@@ -9,6 +10,7 @@ import {
   groupDir,
   isInside,
   ownerHash,
+  ownsDir,
   realpathOrSelf,
   resolveWorkspacesRoot,
   slugify,
@@ -103,4 +105,26 @@ test('assertInside rejects escapes with a typed error', () => {
 test('realpathOrSelf tolerates missing paths', () => {
   const missing = path.join(os.tmpdir(), 'definitely-missing-' + Date.now())
   assert.equal(realpathOrSelf(missing), missing)
+})
+
+test('ownsDir follows a junction inside the owner directory', () => {
+  const stamp = `${Date.now()}-${process.pid}`
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), `qq-base-${stamp}-`))
+  const target = fs.mkdtempSync(path.join(os.tmpdir(), `qq-target-${stamp}-`))
+  const link = path.join(base, 'linked-workspace')
+  try {
+    fs.symlinkSync(target, link, 'junction')
+    const canonical = realpathOrSelf(target)
+    assert.equal(ownsDir(base, canonical), true)
+    assert.equal(ownsDir(base, path.join(base, 'inside')), true)
+    assert.equal(ownsDir(base, fs.mkdtempSync(path.join(os.tmpdir(), `qq-other-${stamp}-`))), false)
+  } finally {
+    try {
+      fs.rmdirSync(link)
+    } catch {
+      fs.rmSync(link, { recursive: true, force: true })
+    }
+    fs.rmSync(base, { recursive: true, force: true })
+    fs.rmSync(target, { recursive: true, force: true })
+  }
 })

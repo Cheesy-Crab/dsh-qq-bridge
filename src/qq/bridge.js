@@ -14,6 +14,38 @@ import { FakeTransport } from '../transport/fake.js'
 import { OneBotTransport } from '../transport/onebot.js'
 
 /**
+ * Prefix group messages with the sender's QQ id so a shared group session can
+ * tell members apart. Private messages are returned unchanged.
+ * @param {{ chat: { type: string, id: string }, userId: string, text?: string }} message
+ * @returns {string}
+ */
+export function groupMessageText(message) {
+  const text = String(message.text ?? '')
+  if (message.chat?.type !== 'group') return text
+  return `[QQ:${message.userId}] ${text}`
+}
+
+/**
+ * A group is one permission subject: group:<id> owns the level, capabilities
+ * and image quota. Private chats use the sender id directly.
+ * @param {{ type: string, id: string }} chat
+ * @returns {string}
+ */
+export function groupPrincipal(chat) {
+  if (chat?.type === 'group') return `group:${chat.id}`
+  return String(chat?.id ?? '')
+}
+
+/**
+ * Image quota belongs to the group principal, not to individual members.
+ * @param {{ type: string, id: string }} chat
+ * @returns {string}
+ */
+export function quotaOwner(chat) {
+  return groupPrincipal(chat)
+}
+
+/**
  * Lifecycle owner for the QQ bridge: owns the transport, deduplicates inbound
  * messages, and (for M1) echoes each text message back to its chat.
  */
@@ -77,7 +109,9 @@ export class QqBridge {
 
     if (this.agentExtensions && !this.extensionsRegistered) {
       const chargeImage = ({ chat, state, cost }) => {
-        const billing = this.users.chargeImageQuota(chat.id, cost)
+        const openid = quotaOwner(chat)
+        if (!openid) throw new Error('群聊缺少发送者 QQ 号，无法扣除生图额度')
+        const billing = this.users.chargeImageQuota(openid, cost)
         if (state) state.imageQuota = billing.remaining
         return billing
       }
@@ -162,14 +196,19 @@ export class QqBridge {
     }
     if (!message.text && !(message.images?.length)) return
 
-    const record = this.users.user(message.userId)
+    const principal = groupPrincipal(message.chat)
+    const record = this.users.user(principal)
     if (record.status === 'frozen') {
       await this.transport.sendText(message.chat, '[qq-bridge] 该账号已被冻结。')
       return
     }
-    const level = this.users.levelOf(message.userId)
-    const capabilities = this.users.capabilitiesOf(message.userId, level)
-    const imageQuota = this.users.imageQuotaOf(message.userId)
+    const senderLevel = this.users.levelOf(message.userId)
+    const senderCapabilities = this.users.capabilitiesOf(message.userId, senderLevel)
+    const level = message.chat.type === 'group' ? this.users.levelOf(principal) : senderLevel
+    const capabilities = message.chat.type === 'group'
+      ? this.users.capabilitiesOf(principal, level)
+      : senderCapabilities
+    const imageQuota = this.users.imageQuotaOf(principal)
 
     if (this.approval.tryAnswer(message)) return
     if (this.questions.tryAnswer(message)) return
@@ -195,14 +234,13 @@ export class QqBridge {
       message.text = [message.text, '[图片下载失败]'].filter(Boolean).join('\n')
     }
 
-    if (await this.commands.execute(message, { level, capabilities })) return
+    if (await this.commands.execute(message, { level: senderLevel, capabilities: senderCapabilities })) return
 
-    if (message.chat.type === 'group' && level === 'L0') {
-      await this.transport.sendText(message.chat, '[qq-bridge] 群聊里需要先 /bind 绑定账号。', { mention: message.userId })
-      return
+    if (message.chat.type === 'group') {
+      message.text = groupMessageText(message)
     }
 
-    const quota = this.users.recordTurn(message.userId, this.config.limits.dailyTurns[level] ?? 0)
+    const quota = this.users.recordTurn(principal, this.config.limits.dailyTurns[level] ?? 0)
     if (!quota.allowed) {
       await this.transport.sendText(message.chat, `[qq-bridge] 今日额度已用完（${quota.used}/${quota.limit}）。`)
       return

@@ -16,26 +16,43 @@ function fakeEnvironment({ reply = 'pong', error, hang = false, presented = [] }
   const created = { workspaces: [], agents: [] }
   const followups = []
   const events = []
+  const sessionEvents = []
   const images = []
   let idleCalls = 0
-  const presentedEvents = presented.map((file) => ({
-    type: 'deliverables/presented',
-    data: { files: [{ path: file, description: 'test' }] },
-  }))
+  let seq = 3
+  const emit = (type, data) => {
+    seq += 1
+    const event = { seq, type, data }
+    sessionEvents.push(event)
+    return event
+  }
   const session = {
-    seq: 3,
+    get seq() {
+      return seq
+    },
+    set seq(value) {
+      seq = value
+    },
     header: { id: 'sess-test' },
     append: (type, data) => events.push({ type, data }),
     deriveMessages: () => (reply === '' ? [] : [{ role: 'assistant', content: [{ type: 'text', text: reply }] }]),
-    snapshotEvents: () => [
-      ...(error ? [{ type: 'turn/end', data: { reason: { kind: 'error', error: { message: error } } } }] : []),
-      ...presentedEvents,
-    ],
+    snapshotEvents: (from = 0) => sessionEvents.filter((event) => event.seq > from),
   }
   const agent = {
     session,
     status: 'idle',
-    followup: (message) => followups.push(message),
+    followup: (message) => {
+      followups.push(message)
+      for (const file of presented) emit('deliverables/presented', { files: [{ path: file, description: 'test' }] })
+      if (error) {
+        emit('turn/end', { reason: { kind: 'error', error: { message: error } } })
+        return
+      }
+      if (reply !== '') {
+        emit('assistant/message', { message: { role: 'assistant', content: [{ type: 'text', text: reply }] } })
+      }
+      emit('turn/end', { reason: { kind: 'completed' } })
+    },
     whenIdle: () => {
       idleCalls += 1
       return hang ? new Promise(() => {}) : Promise.resolve()
@@ -98,7 +115,7 @@ function fakeEnvironment({ reply = 'pong', error, hang = false, presented = [] }
       turnEnd: (options) => forwardPresentedImages(options),
     },
   })
-  return { manager, created, sent, images, session, followups, events, idleCalls: () => idleCalls }
+  return { manager, created, sent, images, session, followups, events, emit, idleCalls: () => idleCalls }
 }
 
 test('first message provisions a workspace and session, later messages reuse it', async () => {
@@ -113,7 +130,7 @@ test('first message provisions a workspace and session, later messages reuse it'
   assert.equal(created.agents[0].agentOptions.provider, 'deepseek-account')
   assert.equal(followups[0].role, 'user')
   assert.equal(followups[0].id, 'qq-private-42-m1')
-  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['read-only'])
+  assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['workspace-write'])
   assert.deepEqual(sent, [
     { chat: { type: 'private', id: '42' }, text: 'pong' },
     { chat: { type: 'private', id: '42' }, text: 'pong' },
@@ -197,6 +214,13 @@ test('deleting a workspace removes the registration but keeps the path', async (
   assert.equal((await manager.listWorkspaces(chat)).length, 0)
 })
 
+test('group replies mention the current sender, not the first session sender', async () => {
+  const { manager, sent } = fakeEnvironment()
+  await manager.handle({ id: 'g1', chat: { type: 'group', id: '99', mention: '111' }, text: 'hello' })
+  await manager.handle({ id: 'g2', chat: { type: 'group', id: '99', mention: '222' }, text: 'hello' })
+  assert.deepEqual(sent.map((item) => item.chat.mention), ['111', '222'])
+})
+
 test('presented images are forwarded to the QQ chat', async () => {
   const { manager, images } = fakeEnvironment({ presented: ['E:\\ws\\a.png', 'E:\\ws\\b.jpg'] })
   await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'show me' })
@@ -210,8 +234,7 @@ test('presented non-image files are ignored', async () => {
   assert.equal(images.length, 0)
 })
 
-test('archiving hides a session and unarchive restores it', async () => {
-  const { manager } = fakeEnvironment()
+test('archiving hides a session and unarchive restores it', async () => {  const { manager } = fakeEnvironment()
   const chat = { type: 'private', id: '42' }
 
   await manager.newSession(chat, 'L1', 'test')
@@ -224,4 +247,109 @@ test('archiving hides a session and unarchive restores it', async () => {
   list = await manager.listSessions(chat, 'L1')
   assert.equal(list.sessionIds.length, 1)
   assert.equal(list.archived.length, 0)
+})
+
+test('a resumed session does not replay its history on the first message', async () => {
+  const { manager, sent, session } = fakeEnvironment({ reply: 'pong' })
+  // Old turns already on disk, but nothing has been delivered by this process.
+  session.seq = 7
+
+  const state = manager.stateFor({ type: 'private', id: '42' })
+  await manager.flushFollowUps(state, session)
+
+  assert.deepEqual(sent, [])
+})
+
+test('sessions fall back to the DSH title when no label is set', async () => {
+  const { manager, emit } = fakeEnvironment({ reply: 'ok' })
+  const chat = { type: 'private', id: '42' }
+  emit('session/title', { title: 'QQ图片附件处理' })
+
+  await manager.handle({ id: 'm1', chat, text: 'hi' })
+  const list = await manager.listSessions(chat, 'L1')
+
+  assert.equal(list.labels[list.activeSessionId], undefined)
+  assert.equal(list.titles[list.activeSessionId], 'QQ图片附件处理')
+  assert.equal(await manager.resolveSession(chat, 'QQ图片附件处理'), list.activeSessionId)
+})
+
+test('an autonomous follow-up turn is still delivered to QQ', async () => {
+  const { manager, sent, emit } = fakeEnvironment({ reply: 'first' })
+  manager.config.agent.followUp = { enabled: true, pollMs: 5, idleMs: 200 }
+
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'draw it' })
+  assert.deepEqual(sent.map((item) => item.text), ['first'])
+
+  // A subagent completion or background job wakes the agent after the QQ turn ended.
+  emit('assistant/message', { message: { role: 'assistant', content: [{ type: 'text', text: 'later' }] } })
+  emit('turn/end', { reason: { kind: 'completed' } })
+  await new Promise((resolve) => setTimeout(resolve, 60))
+
+  assert.deepEqual(sent.map((item) => item.text), ['first', 'later'])
+})
+
+test('follow-up turns without text stay quiet', async () => {
+  const { manager, sent, emit } = fakeEnvironment({ reply: 'first' })
+  manager.config.agent.followUp = { enabled: true, pollMs: 5, idleMs: 200 }
+
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'go' })
+  emit('turn/end', { reason: { kind: 'completed' } })
+  await new Promise((resolve) => setTimeout(resolve, 60))
+
+  assert.deepEqual(sent.map((item) => item.text), ['first'])
+})
+
+test('a new QQ message flushes a pending follow-up turn first', async () => {
+  const { manager, sent, emit } = fakeEnvironment({ reply: 'next' })
+  manager.config.agent.followUp = { enabled: true, pollMs: 500, idleMs: 1000 }
+
+  await manager.handle({ id: 'm1', chat: { type: 'private', id: '42' }, text: 'one' })
+  emit('assistant/message', { message: { role: 'assistant', content: [{ type: 'text', text: 'late' }] } })
+  emit('turn/end', { reason: { kind: 'completed' } })
+
+  await manager.handle({ id: 'm2', chat: { type: 'private', id: '42' }, text: 'two' })
+
+  assert.deepEqual(sent.map((item) => item.text), ['next', 'late', 'next'])
+})
+
+test('a workspace registered through a junction moves to its canonical path', async () => {
+  const { manager } = fakeEnvironment()
+  const real = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-real-'))
+  const link = path.join(os.tmpdir(), `qq-link-${Date.now()}`)
+  fs.symlinkSync(real, link, 'junction')
+  const deleted = []
+  try {
+    const registry = {
+      list: () => [],
+      create: async (dir, title) => {
+        const workspace = {
+          id: 'canonical-id',
+          path: dir,
+          title,
+          sessionIds: [],
+          attachSession: async (sessionId) => {
+            if (!workspace.sessionIds.includes(sessionId)) workspace.sessionIds.push(sessionId)
+          },
+        }
+        return workspace
+      },
+      delete: async (id) => {
+        deleted.push(id)
+      },
+    }
+    const legacy = { id: 'legacy-id', path: link, title: '工作区对接QQ', sessionIds: ['sess-old'], attachSession: async () => {} }
+
+    const result = await manager.normalizeWorkspace(registry, legacy)
+
+    assert.equal(result.path, fs.realpathSync(real))
+    assert.deepEqual(result.sessionIds, ['sess-old'])
+    assert.deepEqual(deleted, ['legacy-id'])
+  } finally {
+    try {
+      fs.rmdirSync(link)
+    } catch {
+      fs.rmSync(link, { recursive: true, force: true })
+    }
+    fs.rmSync(real, { recursive: true, force: true })
+  }
 })

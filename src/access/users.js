@@ -70,39 +70,58 @@ export class UserStore {
       this.state.users[openid] = user
     }
     user.capabilities ??= []
+    user.denied = normalizeCapabilities(user.denied ?? [])
     user.daily ??= { date: today(), turns: 0 }
     return user
   }
 
   /**
    * @param {string} openid
-   * @returns {{ level: string, status: string, daily: { date: string, turns: number } }}
+   * @returns {{ level: string, status: string, capabilities: string[], denied: string[], daily: { date: string, turns: number } }}
    */
   user(openid) {
-    return this.state.users[openid] ?? { level: 'L0', status: 'active', capabilities: [], daily: { date: today(), turns: 0 } }
+    return this.state.users[openid] ?? {
+      level: 'L0',
+      status: 'active',
+      capabilities: [],
+      denied: [],
+      daily: { date: today(), turns: 0 },
+    }
   }
 
   /**
-   * Capabilities that take effect for this user. L3 is implicitly everything.
+   * Capabilities that take effect for this user. L3 is implicitly everything;
+   * L1/L2 get image generation by default; L0 gets only what is explicitly
+   * granted. `denied` can revoke a level default such as image.
    * @param {string} openid
    * @param {string} level
    * @returns {string[]}
    */
   capabilitiesOf(openid, level) {
-    if (level === 'L3') return ['workspace', 'read', 'write', 'exec', 'image']
-    return normalizeCapabilities(this.user(openid).capabilities ?? [])
+    const user = this.user(openid)
+    const defaults = level === 'L3'
+      ? ['workspace', 'read', 'write', 'exec', 'image']
+      : level === 'L1' || level === 'L2'
+        ? ['image']
+        : []
+    const denied = new Set(normalizeCapabilities(user.denied ?? []))
+    return normalizeCapabilities([...defaults, ...(user.capabilities ?? [])])
+      .filter((capability) => !denied.has(capability))
   }
 
   setCapabilities(openid, capabilities) {
     const user = this.ensure(openid)
     user.capabilities = normalizeCapabilities(capabilities)
+    user.denied = []
     this.save()
     return user.capabilities
   }
 
   addCapabilities(openid, capabilities) {
     const user = this.ensure(openid)
-    user.capabilities = normalizeCapabilities([...(user.capabilities ?? []), ...capabilities])
+    const add = normalizeCapabilities(capabilities)
+    user.capabilities = normalizeCapabilities([...(user.capabilities ?? []), ...add])
+    user.denied = normalizeCapabilities((user.denied ?? []).filter((capability) => !add.includes(capability)))
     this.save()
     return user.capabilities
   }
@@ -111,6 +130,7 @@ export class UserStore {
     const user = this.ensure(openid)
     const remove = new Set(normalizeCapabilities(capabilities))
     user.capabilities = normalizeCapabilities((user.capabilities ?? []).filter((capability) => !remove.has(capability)))
+    user.denied = normalizeCapabilities([...(user.denied ?? []), ...remove])
     this.save()
     return user.capabilities
   }
@@ -123,9 +143,12 @@ export class UserStore {
     let changed = false
     for (const [openid, capabilities] of Object.entries(whitelist)) {
       const user = this.ensure(openid)
-      const merged = normalizeCapabilities([...(user.capabilities ?? []), ...capabilities])
-      if (merged.length !== user.capabilities.length) {
+      const add = normalizeCapabilities(capabilities)
+      const merged = normalizeCapabilities([...(user.capabilities ?? []), ...add])
+      const denied = normalizeCapabilities((user.denied ?? []).filter((capability) => !add.includes(capability)))
+      if (merged.length !== user.capabilities.length || denied.length !== (user.denied ?? []).length) {
         user.capabilities = merged
+        user.denied = denied
         changed = true
       }
     }
@@ -245,7 +268,7 @@ export class UserStore {
       openid,
       level: normalizeLevel(user.level),
       status: user.status ?? 'active',
-      capabilities: normalizeCapabilities(user.capabilities ?? []),
+      capabilities: this.capabilitiesOf(openid, normalizeLevel(user.level)),
       turns: user.daily?.date === today() ? user.daily.turns : 0,
       imageQuota: Math.max(0, Number(user.imageQuota ?? 0) || 0),
     }))

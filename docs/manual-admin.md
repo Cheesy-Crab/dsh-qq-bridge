@@ -141,13 +141,13 @@ E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
 | `/admin ws list` | 所有工作区（跨用户） |
 | `/napcat status\|start\|stop\|restart\|qr` | 管理内置 NapCat |
 
-绑定流程：管理员 `/admin invite L1` → 把六位码给用户 → 用户 `/bind 123456`。
+绑定流程（仅私聊需要；群聊不需要 `/bind`）：管理员 `/admin invite L1` → 把六位码给用户 → 用户 `/bind 123456`。
 
 等级与配额含义见 [使用手册](manual-user.md#7-权限等级与白名单)。
 
 ### 4.1 能力白名单
 
-L3 以外默认仅聊天。按账号授予：
+L3 以外默认仅聊天；L1/L2 额外默认拥有 `image`（额度仍为 0）。按账号授予其他能力：
 
 | 能力 | 作用 |
 |---|---|
@@ -226,12 +226,12 @@ agent 的 `ask_user_question` 现在会转成 QQ 文字：
       provider: deepseek-account
       model: deepseek-flash
       preset: standard
-      turnTimeoutMs: 300000
+      turnTimeoutMs: 1800000
     sandbox:
       modeByLevel:
         L0: read-only
-        L1: read-only
-        L2: read-only
+        L1: workspace-write
+        L2: workspace-write
         L3: danger-full-access
     limits:
       maxChars: 1800

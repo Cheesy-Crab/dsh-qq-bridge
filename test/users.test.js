@@ -72,14 +72,17 @@ test('users persist across store instances', () => {
   assert.equal(second.levelOf('user-9'), 'L3')
 })
 
-test('capabilities default to chat-only and can be granted or revoked', () => {
+test('L1/L2 get image by default and capabilities can be granted or revoked', () => {
   const store = new UserStore({ file: path.join(dir, 'caps.json') })
   store.load()
   store.setLevel('user-1', 'L1')
-  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), [])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), ['image'])
   assert.deepEqual(store.addCapabilities('user-1', ['read', 'write']), ['read', 'write'])
-  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), ['read', 'write'])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1').sort(), ['image', 'read', 'write'])
   assert.deepEqual(store.removeCapabilities('user-1', ['write']), ['read'])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1').sort(), ['image', 'read'])
+  store.removeCapabilities('user-1', ['image'])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1'), ['read'])
 })
 
 test('image quota is allocated and overdraw floors at zero', () => {
@@ -100,5 +103,5 @@ test('capability whitelist merges into stored users', () => {
   store.setLevel('user-1', 'L1')
   store.addCapabilities('user-1', ['read'])
   store.applyWhitelist({ 'user-1': ['workspace', 'exec'] })
-  assert.deepEqual(store.capabilitiesOf('user-1', 'L1').sort(), ['exec', 'read', 'workspace'])
+  assert.deepEqual(store.capabilitiesOf('user-1', 'L1').sort(), ['exec', 'image', 'read', 'workspace'])
 })

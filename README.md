@@ -87,7 +87,8 @@ dsh plugin --profile qqweb add E:\dsh\工作区对接QQ
 | 指令 | 说明 |
 |---|---|
 | `/help` | 可用指令 |
-| `/whoami` | QQ、工作区、路径、会话、排队 |
+| `/whoami` | QQ、工作区、路径、会话、额度、排队 |
+| `/quota` | 查看个人额度；群里显示本群共享额度 |
 | `/status` | 连接、聊天数、去重表、根目录 |
 | `/ws list` | 我的工作区 |
 | `/ws new <名称>` | 新建工作区并切过去 |
@@ -141,7 +142,14 @@ dsh plugin --profile qqweb add E:\dsh\工作区对接QQ
 - 群里必须 @机器人 才响应；不 @ 的消息直接忽略。
 - 回复自动带 `@发送者`，只回复最近一条消息的发送者。
 - 群内指令限制：`/ws info` 可用；`/new`、`/reset` 仅 L3；`/sessions`、`/use`、`/ws list|new|use` 不可用。
-- 未绑定（L0）用户在群里发普通消息会收到「先 /bind」提示；指令仍可用。
+- 群聊不需要 `/bind`；加进群即可使用，每条消息带 `[QQ:<QQ号>]` 前缀供 agent 区分成员。
+- 每个群使用一个主体 `group:<群号>`，共享一份等级、能力和生图额度；成员个人等级不参与群权限。
+- 群主体配置示例（私聊管理员执行）：
+  ```text
+  /admin level group:987654321 L3
+  /admin allow group:987654321 image
+  /admin quota group:987654321 100
+  ```
 - 审批请求会 @ 发起人，只有发起人能回 1/2。
 
 ## 手册
@@ -239,9 +247,12 @@ NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓�
 | `commandPrefix` | `['/', '!', '#']` | 指令前缀，可配置字符串或数组；多字符前缀按最长匹配 |
 | `agent.provider` / `agent.model` | `deepseek-account` / `deepseek-flash` | 默认使用 DSH 当前登录账号；API Key 模式设 `deepseek-official` |
 | `agent.preset` | `standard` | agent preset（决定工具集，缺省会导致只有全局工具） |
-| `agent.turnTimeoutMs` | `300000` | 单轮超时（毫秒） |
+| `agent.turnTimeoutMs` | `1800000` | 单轮超时（毫秒）；默认 30 分钟 |
 | `agent.maxQueue` | `3` | 每个聊天最多排队的消息数 |
-| `sandbox.modeByLevel` | `L0/L1/L2 read-only`；`L3 danger-full-access` | 会话文件沙箱模式；非 L3 获得 write/exec 后升为 workspace-write |
+| `agent.followUp.enabled` | `true` | 是否投递“自动续跑轮”（子代理完成、后台任务回报触发的轮次） |
+| `agent.followUp.pollMs` | `2000` | 续跑轮检测间隔（毫秒） |
+| `agent.followUp.idleMs` | `1800000` | 轮次结束后继续等“自动续跑轮”的窗口（毫秒）；默认 30 分钟，与单轮超时对齐 |
+| `sandbox.modeByLevel` | `L0 read-only`；`L1/L2 workspace-write`；`L3 danger-full-access` | 会话文件沙箱模式；L1/L2 有 write/exec 时保持 workspace-write |
 | `access.admins` | `[]` | 管理员 openid 列表（L3） |
 | `access.bindCodeTtlMinutes` | `5` | 配对码有效期 |
 | `access.whitelist` | `{}` | 非 L3 的能力白名单，如 `{'123': ['workspace','read','write','exec','image']}` |
@@ -359,9 +370,27 @@ docs/
   api-notes.md        已实测的 DSH 宿主 API 与坑
 ```
 
+## 更新与重启
+
+改完 `src/` 后要做两件事：刷新分发包、重启 DSH。DSH 实际加载的是分发包，
+profile 里的 `node_modules\dsh-qq-bridge` 是指向 `dist\dsh-qq-bridge-<版本>-package` 的 junction，
+不是本仓库的 `src/`：
+
+```powershell
+# 1. 刷新分发包（先自己备份或保留旧目录做回滚）
+robocopy src dist\dsh-qq-bridge-0.31.0-package\src /MIR
+# 2. 重启 DSH / QQ 桥 / NapCat
+powershell -ExecutionPolicy Bypass -File scripts\restart-dsh.ps1
+```
+
+`restart-dsh.ps1` 会优雅关闭 DSH 进程树、重新拉起，并轮询 `/qq-bridge/bridge/status`
+直到 OneBot 重连；日志在 `%USERPROFILE%\.dsh\logs\restart-*.log`。远端没有 GUI 也能跑。
+常用参数：`-SkipStart` 只停机、`-TimeoutSec 180` 放宽等待、`-Port` 换端口。
+若在 DSH 会话内部执行（例如让 agent 调它），会连调用方一起杀掉，默认拒绝，需加 `-Force`。
+
 ## 已知限制
 
-- 图片/文件收发还没实现（当前只处理文本）。
+- 出站只支持图片（`present` 自动转发、`/sendimage`）；pdf/zip 等还没有出口。
 - 官方 QQ 机器人适配还没做，需要开放平台的 appid/secret 与回调域名。
 - 去重表在内存里，进程重启后同一 `message_id` 会被再次处理；持久化还没做。
 - 会话恢复失败（例如旧会话缺消息 id）会回退新建会话，历史仍留在磁盘上，可用 `/use` 切回已存在的会话。

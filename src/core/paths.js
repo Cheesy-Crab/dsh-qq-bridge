@@ -179,6 +179,31 @@ export function isInside(root, target) {
 }
 
 /**
+ * Whether a directory belongs to `base`: either it sits inside it, or it is the
+ * resolved target of an entry inside it. DSH stores workspace paths canonical
+ * (links resolved), so a workspace reached through a junction such as
+ * `<base>\工作区对接QQ -> E:\dsh\工作区对接QQ` would otherwise stop belonging to
+ * the QQ user who owns that junction.
+ * @param {string} base
+ * @param {string} target
+ * @returns {boolean}
+ */
+export function ownsDir(base, target) {
+  if (isInside(base, target)) return true
+  const realTarget = realpathOrSelf(target)
+  if (isInside(base, realTarget)) return true
+  try {
+    for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+      if (!entry.isDirectory() && !entry.isSymbolicLink()) continue
+      if (realpathOrSelf(path.join(base, entry.name)) === realTarget) return true
+    }
+  } catch {
+    return false
+  }
+  return false
+}
+
+/**
  * Enforce that a path stays inside the workspace root, after resolving links.
  * @param {string} root
  * @param {string} target

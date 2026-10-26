@@ -141,12 +141,26 @@ export class CommandDispatcher {
           `QQ：${message.chat.id}`,
           `等级：${level}`,
           `能力：${level === 'L3' ? '全部' : (capabilities.length > 0 ? capabilities.join(', ') : '仅聊天')}`,
+          `生图额度：${this.users.imageQuotaOf?.(this.quotaOwner(message)) ?? 0} Buzz`,
           `工作区：${workspaceName ?? '（未创建）'}`,
           `路径：${workspacePath ?? '（无）'}`,
           `会话：${summary.sessionLabel ?? (summary.sessionShort || '（未创建）')}`,
           `文件策略：${summary.sandboxMode ?? '默认'}`,
           `排队：${summary.pending}`,
         ]
+      },
+    })
+
+    this.register('quota', {
+      usage: 'quota',
+      description: '查看生图额度',
+      handler: ({ message }) => {
+        const owner = this.quotaOwner(message)
+        const quota = this.users.imageQuotaOf?.(owner) ?? 0
+        if (message.chat.type === 'group') {
+          return `本群共享生图额度：${quota} Buzz${quota > 0 ? '' : '（需管理员分配）'}`
+        }
+        return `你的生图额度：${quota} Buzz${quota > 0 ? '' : '（需管理员分配）'}`
       },
     })
 
@@ -211,12 +225,13 @@ export class CommandDispatcher {
       capability: 'workspace',
       handler: async ({ message, level }) => {
         if (message.chat.type === 'group') throw new Error('群聊使用共享会话，没有会话列表')
-        const { workspace, sessionIds, activeSessionId, labels } = await this.manager.listSessions(message.chat, level)
+        const { workspace, sessionIds, activeSessionId, labels, titles } = await this.manager.listSessions(message.chat, level)
         if (sessionIds.length === 0) return [`工作区 ${workspace.title} 还没有会话。`]
         const lines = [`工作区 ${workspace.title} 的会话：`]
         sessionIds.forEach((id, index) => {
-          const name = labels[id] ? `${labels[id]}  ` : ''
-          lines.push(`${index + 1}. ${name}${shortId(id)}${id === activeSessionId ? '  ← 当前' : ''}`)
+          const name = labels[id] ?? titles?.[id]
+          const shown = name ? name : shortId(id)
+          lines.push(`${index + 1}. ${shown}${id === activeSessionId ? '  ← 当前' : ''}`)
         })
         return lines
       },
@@ -301,11 +316,11 @@ export class CommandDispatcher {
       minLevel: 'L1',
       capability: 'workspace',
       handler: async ({ message, level }) => {
-        const { archived, labels } = await this.manager.listSessions(message.chat, level)
+        const { archived, labels, titles } = await this.manager.listSessions(message.chat, level)
         if (archived.length === 0) return ['没有已归档的会话。']
         return [
           '已归档会话：',
-          ...archived.map((id, index) => `${index + 1}. ${labels[id] ? labels[id] + '  ' : ''}${shortId(id)}`),
+          ...archived.map((id, index) => `${index + 1}. ${labels[id] ?? titles?.[id] ?? shortId(id)}`),
         ]
       },
     })
@@ -400,6 +415,11 @@ export class CommandDispatcher {
     })
   }
 
+  quotaOwner(message) {
+    if (message.chat.type === 'group') return `group:${message.chat.id}`
+    return String(message.chat.id)
+  }
+
   async handleAdmin(args) {
     const sub = args[0]
     if (sub === 'users' || sub === undefined) {
@@ -422,7 +442,7 @@ export class CommandDispatcher {
     if (sub === 'perms') {
       if (args.length < 2) throw new Error('用法：/admin perms <openid>')
       const user = this.users.user(args[1])
-      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec', 'image'] : normalizeCapabilities(user.capabilities ?? [])
+      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec', 'image'] : (this.users.capabilitiesOf?.(args[1], user.level) ?? normalizeCapabilities(user.capabilities ?? []))
       return `${args[1]}（${user.level}）：${caps.length > 0 ? caps.join(', ') : '仅聊天'}；生图额度=${this.users.imageQuotaOf?.(args[1]) ?? 0} Buzz`
     }
     if (sub === 'quota') {

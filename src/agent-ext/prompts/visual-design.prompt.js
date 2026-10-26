@@ -19,7 +19,7 @@ export function installVisualDesignPrompt(agent, state, log) {
         '3. 不要每轮都画。用户明确要求出图，或已经确认至少三个视觉锚点并进入自然节点时，再调用 generate_image；仍在探索、比较方向或澄清需求时只讨论。',
         '4. generate_image 成功后，必须在同一轮调用 present 展示返回的 savedTo 路径，让图片发到当前 QQ；配一句“概念示意图，非最终定稿”，不要贴大段 prompt。',
         '5. 用户提出修改时，用 edit_image 并引用上一版 savedTo，明确保留哪些特征、只改哪些部分；不要重新随机生成一个相似角色。',
-        '6. 在 QQ 会话中直接调用 generate_image，不要派 subagent 生图；子会话的图不会回到当前 QQ。需要复现时传 seed；provider 支持时用 negative_prompt 表达禁区，风格/角色 LoRA 用 loras；改图优先 source_path / source_paths。',
+        '6. 在 QQ 会话中直接调用 generate_image，不要派 subagent 生图；子会话的图不会回到当前 QQ，这条覆盖 image-gen 手册里“派 subagent 生图”的建议。需要复现时传 seed；provider 支持时用 negative_prompt 表达禁区，风格/角色 LoRA 用 loras；改图优先 source_path / source_paths。',
         '7. 用户说先文字讨论、不要图，或已经明确拒绝某个方向时，停止主动生成。',
       ].join(''),
     })

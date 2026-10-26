@@ -1,8 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { groupDir, isInside, uniquenessKey, userDir, validateName, workspacePath } from '../core/paths.js'
-import { extractReplyText, splitText, turnError } from './reply.js'
+import { groupDir, ownsDir, uniquenessKey, userDir, validateName, workspacePath } from '../core/paths.js'
+import { extractReplyText, replyTextSince, splitText, turnError } from './reply.js'
+import { liveSessionTitle, titleFromEvents } from './titles.js'
 
 const clip = (value, limit = 300) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
 const shortId = (id) => {
@@ -10,6 +11,36 @@ const shortId = (id) => {
   return text.length <= 10 ? text : `…${text.slice(-10)}`
 }
 const normalizeLabel = (label) => String(label ?? '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 32)
+/**
+ * DSH stores workspace paths canonicalized (`fs.realpath`: symlinks and
+ * junctions resolved) and only keeps a session in a workspace when
+ * `realpath(session.cwd) === workspace.path`. A workspace registered through a
+ * junction keeps its stale path forever, so attach() rejects every new session
+ * and the workspace view loses the old ones.
+ * @param {string} dir
+ * @returns {string}
+ */
+const canonicalDir = (dir) => {
+  try {
+    return fs.realpathSync(dir)
+  } catch {
+    return dir
+  }
+}
+const mkdirp = (dir) => {
+  fs.mkdirSync(dir, { recursive: true })
+  return dir
+}
+const derivedShape = (session) => {
+  try {
+    return session.deriveMessages().map((item) => ({
+      role: item.role ?? null,
+      parts: (item.content ?? []).map((part) => part.type),
+    }))
+  } catch {
+    return []
+  }
+}
 
 /**
  * One agent Session per QQ chat, persisted across restarts. The first message
@@ -36,6 +67,8 @@ export class ChatAgentManager {
     this.resolveChat = resolveChat
     this.behavior = behavior ?? {}
     this.chats = new Map()
+    /** Last sequence delivered to QQ, per session. */
+    this.delivered = new WeakMap()
   }
 
   init() {
@@ -59,6 +92,7 @@ export class ChatAgentManager {
         sessionId: saved?.sessionId,
         sessions: saved?.sessions ?? {},
         labels: saved?.labels ?? {},
+        titles: saved?.titles ?? {},
         archived: saved?.archived ?? [],
         guest: false,
         level: 'L1',
@@ -79,6 +113,7 @@ export class ChatAgentManager {
       sessionId: state.sessionId,
       sessions: state.sessions,
       labels: state.labels,
+      titles: state.titles ?? {},
       archived: state.archived,
       updatedAt: Date.now(),
     })
@@ -149,8 +184,7 @@ export class ChatAgentManager {
     const level = state.level ?? 'L1'
 
     if (state.chat.type === 'group') {
-      const dir = groupDir(this.root, state.chat.id)
-      fs.mkdirSync(dir, { recursive: true })
+      const dir = canonicalDir(mkdirp(groupDir(this.root, state.chat.id)))
       const workspace = await workspaceRegistry.create(dir, `QQ Group ${state.chat.id}`)
       state.guest = false
       state.workspaceId = workspace.id
@@ -160,8 +194,7 @@ export class ChatAgentManager {
     }
 
     if (level === 'L0') {
-      const dir = path.join(this.root, this.config.guestWorkspaceName)
-      fs.mkdirSync(dir, { recursive: true })
+      const dir = canonicalDir(mkdirp(path.join(this.root, this.config.guestWorkspaceName)))
       const workspace = await workspaceRegistry.create(dir, 'Guest')
       state.guest = true
       state.workspaceId = workspace.id
@@ -184,19 +217,92 @@ export class ChatAgentManager {
 
     let workspace = state.workspaceId ? workspaces.find((item) => item.id === state.workspaceId) : undefined
     if (!workspace && state.workspacePath && fs.existsSync(state.workspacePath)) {
-      workspace = await workspaceRegistry.create(state.workspacePath, state.workspaceName ?? `QQ ${state.chat.id}`)
+      workspace = await workspaceRegistry.create(canonicalDir(state.workspacePath), state.workspaceName ?? `QQ ${state.chat.id}`)
     }
     if (!workspace) {
-      const dir = workspacePath(userDir(this.root, state.chat.id), this.config.defaultWorkspaceName)
-      fs.mkdirSync(dir, { recursive: true })
+      const dir = canonicalDir(mkdirp(workspacePath(userDir(this.root, state.chat.id), this.config.defaultWorkspaceName)))
       workspace = await workspaceRegistry.create(dir, `QQ ${state.chat.id}`)
     }
+
+    workspace = await this.normalizeWorkspace(workspaceRegistry, workspace)
 
     state.workspaceId = workspace.id
     state.workspacePath = workspace.path
     state.workspaceName = workspace.title
     this.persist(state)
     return workspace
+  }
+
+  /**
+   * Re-register a workspace whose stored path is not canonical (its directory
+   * became a symlink or junction after registration) and move its sessions to
+   * the canonical record. Without this, `attachSession` throws
+   * "its cwd ... cannot be validated" and the GUI loses the session grouping.
+   * @param {any} registry
+   * @param {any} workspace
+   */
+  async normalizeWorkspace(registry, workspace) {
+    const canonical = canonicalDir(workspace.path)
+    if (canonical === workspace.path) return workspace
+
+    let target = registry.list().find((item) => item.path === canonical)
+    if (!target) {
+      try {
+        target = await registry.create(canonical, workspace.title)
+      } catch (error) {
+        this.log('warn', `could not re-register workspace ${canonical}: ${error?.message ?? error}`)
+        return workspace
+      }
+    }
+
+    const candidates = new Set(workspace.sessionIds ?? [])
+    for (const sessionId of await this.sessionIdsUnder(canonical)) candidates.add(sessionId)
+    let moved = 0
+    for (const sessionId of candidates) {
+      try {
+        await target.attachSession(sessionId)
+        moved += 1
+      } catch (error) {
+        this.log('warn', `could not move session ${sessionId} to ${canonical}: ${error?.message ?? error}`)
+      }
+    }
+
+    if (target.id !== workspace.id) {
+      try {
+        await registry.delete(workspace.id)
+      } catch (error) {
+        this.log('warn', `could not drop legacy workspace ${workspace.id}: ${error?.message ?? error}`)
+      }
+    }
+    this.log('info', `workspace path canonicalized ${workspace.path} -> ${canonical} (moved ${moved} sessions)`)
+    return target
+  }
+
+  /**
+   * Session ids whose stored cwd resolves to `canonical`, live or only on disk.
+   * @param {string} canonical
+   * @returns {Promise<string[]>}
+   */
+  async sessionIdsUnder(canonical) {
+    const ids = []
+    const matches = (header) => Boolean(header?.id && header?.cwd && canonicalDir(header.cwd) === canonical)
+    try {
+      const live = this.ctx.get('sessions')
+      for (const session of live?.list?.() ?? []) {
+        if (matches(session?.header)) ids.push(session.header.id)
+      }
+    } catch {
+      // live sessions are optional here
+    }
+    try {
+      const persistence = this.ctx.get('sessionPersistence')
+      for (const snapshot of (await persistence?.list?.()) ?? []) {
+        if (matches(snapshot?.header) && !ids.includes(snapshot.header.id)) ids.push(snapshot.header.id)
+      }
+    } catch {
+      // stored snapshots are optional too
+    }
+    return ids
   }
 
   async ensureSession(state) {
@@ -288,15 +394,12 @@ export class ChatAgentManager {
    * @param {any} state
    */
   applySandboxMode(session, level, capabilities, state) {
-    let mode
+    const configured = this.config.sandbox?.modeByLevel ?? {}
+    let mode = configured[level] ?? 'read-only'
     if (level === 'L3') {
-      mode = this.config.sandbox?.modeByLevel?.L3 ?? 'danger-full-access'
-    } else if (level === 'L0') {
-      mode = 'read-only'
-    } else if (capabilities.includes('write') || capabilities.includes('exec')) {
+      mode = configured.L3 ?? 'danger-full-access'
+    } else if (level !== 'L0' && (capabilities.includes('write') || capabilities.includes('exec'))) {
       mode = 'workspace-write'
-    } else {
-      mode = 'read-only'
     }
     if (state.sandboxMode === mode) return mode
     try {
@@ -330,7 +433,7 @@ export class ChatAgentManager {
     const base = userDir(this.root, chat.id)
     return workspaceRegistry
       .list()
-      .filter((workspace) => isInside(base, workspace.path))
+      .filter((workspace) => ownsDir(base, workspace.path))
       .sort((left, right) => (left.createdAt ?? 0) - (right.createdAt ?? 0))
   }
 
@@ -443,6 +546,51 @@ export class ChatAgentManager {
     return clean
   }
 
+  /**
+   * Cache the DSH-generated title of the session so `/sessions` can show a
+   * readable name when the user never renamed it.
+   * @param {any} state
+   * @param {any} session
+   */
+  rememberTitle(state, session) {
+    const id = state?.sessionId ?? session?.header?.id
+    if (!id) return
+    const title = liveSessionTitle(session)
+    if (title === '' || state.titles[id] === title) return
+    state.titles[id] = title
+    this.persist(state)
+  }
+
+  /**
+   * Title stored in the session log, for sessions that are not live anymore.
+   * Reads at most the first 200 events: `session/title` is written up front.
+   * @param {any} state
+   * @param {string} sessionId
+   * @returns {Promise<string>}
+   */
+  async storedTitle(state, sessionId) {
+    if (state.titles[sessionId]) return state.titles[sessionId]
+    try {
+      const persistence = this.ctx.get('sessionPersistence')
+      const handle = await persistence?.open?.(sessionId, 'read')
+      if (!handle) return ''
+      try {
+        const { events } = await handle.read(0, 200)
+        const title = titleFromEvents(events ?? [])
+        if (title !== '') {
+          state.titles[sessionId] = title
+          this.persist(state)
+        }
+        return title
+      } finally {
+        await handle.close?.()
+      }
+    } catch (error) {
+      this.log('warn', `could not read the title of ${sessionId}: ${error?.message ?? error}`)
+      return ''
+    }
+  }
+
   async renameSession(chat, label) {
     const state = this.stateFor(chat)
     await this.ensureSession(state)
@@ -454,12 +602,28 @@ export class ChatAgentManager {
     state.level = level
     const workspace = await this.ensureWorkspace(state)
     const archived = new Set(state.archived ?? [])
+    const sessionIds = [...workspace.sessionIds].filter((id) => !archived.has(id))
+
+    const titles = {}
+    const live = state.handle?.agent?.session
+    if (live && state.sessionId) {
+      this.rememberTitle(state, live)
+      const liveTitle = liveSessionTitle(live)
+      if (liveTitle !== '') titles[state.sessionId] = liveTitle
+    }
+    for (const id of [...sessionIds, ...archived]) {
+      if (titles[id] || state.labels[id]) continue
+      const title = state.titles[id] ?? (await this.storedTitle(state, id))
+      if (title !== '') titles[id] = title
+    }
+
     return {
       workspace,
       activeSessionId: state.sessionId,
-      sessionIds: [...workspace.sessionIds].filter((id) => !archived.has(id)),
+      sessionIds,
       archived: [...archived],
       labels: { ...state.labels },
+      titles,
     }
   }
 
@@ -470,11 +634,13 @@ export class ChatAgentManager {
    * @param {{ includeArchived?: boolean }} [options]
    */
   async resolveSession(chat, token, { includeArchived = false } = {}) {
-    const { sessionIds, archived, labels } = await this.listSessions(chat)
+    const { sessionIds, archived, labels, titles } = await this.listSessions(chat)
     const pool = includeArchived ? [...sessionIds, ...archived] : sessionIds
     const index = Number(token)
     if (Number.isInteger(index) && index >= 1 && index <= pool.length) return pool[index - 1]
+    const wanted = uniquenessKey(token)
     return pool.find((id) => labels[id] === token)
+      ?? pool.find((id) => titles[id] && uniquenessKey(titles[id]) === wanted)
       ?? pool.find((id) => id.startsWith(String(token)))
   }
 
@@ -621,12 +787,17 @@ export class ChatAgentManager {
   }
 
   async run(state, message) {
+    // A group shares one state, but each turn must reply to its own sender.
+    // `state.chat` is otherwise the first chat object that created the state.
+    if (message?.chat) state.chat = message.chat
     const handle = await this.ensureSession(state)
     const session = handle.agent.session
     await this.applySessionExtensions(handle, state)
     this.track(state, session?.header?.id, message.userId)
     this.applySandboxMode(session, state.level ?? 'L1', state.capabilities ?? [], state)
-    const fromSeq = session.seq
+    await this.flushFollowUps(state, session)
+
+    this.delivered.set(session, session.seq)
 
     handle.agent.followup({
       id: `qq-${state.chat.type}-${state.chat.id}-${message.id}`,
@@ -648,25 +819,36 @@ export class ChatAgentManager {
     }
 
     if (timedOut) {
+      this.delivered.set(session, session.seq)
       await this.reply(state.chat, '[qq-bridge] 处理超时，已中断本次任务。')
       return
     }
 
+    await this.deliver(state, session, { derivedFallback: true })
+    this.rememberTitle(state, session)
+    this.watchFollowUps(state, session)
+  }
+
+  /**
+   * Send what the agent produced since the last delivered sequence: media
+   * forwarded by the turnEnd behavior, then the reply text.
+   * @param {any} state
+   * @param {any} session
+   * @param {{ quiet?: boolean, derivedFallback?: boolean }} [options]
+   * @returns {Promise<string>} the text that was sent, '' when nothing was
+   */
+  async deliver(state, session, { quiet = false, derivedFallback = false } = {}) {
+    const fromSeq = this.delivered.get(session) ?? 0
+    if (!(session.seq > fromSeq)) return ''
+    this.delivered.set(session, session.seq)
+
     const error = turnError(session, fromSeq)
     if (error) {
       if (process.env.DSH_QQ_BRIDGE_DEBUG === '1') {
-        try {
-          const derived = session.deriveMessages().map((item) => ({
-            role: item.role ?? null,
-            parts: (item.content ?? []).map((part) => part.type),
-          }))
-          this.log('debug', `derived=${JSON.stringify(derived)}`)
-        } catch (diagnosticError) {
-          this.log('warn', `diagnostics failed: ${diagnosticError?.message ?? diagnosticError}`)
-        }
+        this.log('debug', `derived=${JSON.stringify(derivedShape(session))}`)
       }
       await this.reply(state.chat, `[qq-bridge] 处理失败：${clip(error)}`)
-      return
+      return ''
     }
 
     await this.behavior.turnEnd?.({
@@ -680,14 +862,84 @@ export class ChatAgentManager {
       log: this.log,
     })
 
-    const reply = extractReplyText(session.deriveMessages())
+    const reply = replyTextSince(session, fromSeq) || (derivedFallback ? extractReplyText(session.deriveMessages()) : '')
     if (reply === '') {
-      await this.reply(state.chat, '[qq-bridge] 模型没有返回文本。')
-      return
+      if (!quiet) await this.reply(state.chat, '[qq-bridge] 模型没有返回文本。')
+      return ''
     }
     for (const chunk of splitText(reply, this.config.limits.maxChars)) {
       await this.reply(state.chat, chunk)
     }
+    return reply
+  }
+
+  /**
+   * A QQ turn can schedule later work (subagent completion, background job,
+   * question answer). The agent then runs another turn on its own, which never
+   * comes back through `handle()`. Watch the session for quiet turn boundaries
+   * and deliver those turns too, otherwise their text and images are lost.
+   * @param {any} state
+   * @param {any} session
+   */
+  watchFollowUps(state, session) {
+    const options = this.config.agent?.followUp
+    this.stopFollowUps(state)
+    if (!options?.enabled) return
+    const token = Symbol('qq-follow-up')
+    state.followUp = token
+    let lastActivity = Date.now()
+    const stop = () => {
+      if (state.followUp === token) this.stopFollowUps(state)
+    }
+    const timer = setInterval(() => {
+      if (state.followUp !== token) return
+      if (Date.now() - lastActivity > options.idleMs) return stop()
+      let pending
+      try {
+        pending = session.snapshotEvents(this.delivered.get(session) ?? 0)
+      } catch (error) {
+        this.log('warn', `follow-up watch stopped: ${error?.message ?? error}`)
+        return stop()
+      }
+      if (pending.length === 0) return
+      lastActivity = Date.now()
+      if (pending[pending.length - 1]?.type !== 'turn/end') return
+      state.chain = state.chain
+        .then(() => this.deliver(state, session, { quiet: true }))
+        .catch((error) => this.log('warn', `follow-up delivery failed: ${error?.stack ?? error}`))
+    }, options.pollMs)
+    timer.unref?.()
+    state.followUpTimer = timer
+  }
+
+  stopFollowUps(state) {
+    if (state.followUpTimer) clearInterval(state.followUpTimer)
+    state.followUpTimer = undefined
+    state.followUp = undefined
+  }
+
+  /**
+   * Deliver a finished follow-up turn that is still pending when the next QQ
+   * message arrives, so the new turn never swallows it.
+   * @param {any} state
+   * @param {any} session
+   */
+  async flushFollowUps(state, session) {
+    this.stopFollowUps(state)
+    // Nothing was delivered for this session yet (fresh resume): the events on
+    // disk are history, not a pending follow-up, so never replay them.
+    if (!this.delivered.has(session)) return
+    const from = this.delivered.get(session)
+    if (!(session.seq > from)) return
+    let pending
+    try {
+      pending = session.snapshotEvents(from)
+    } catch {
+      return
+    }
+    if (pending.length === 0) return
+    if (pending[pending.length - 1]?.type !== 'turn/end') return
+    await this.deliver(state, session, { quiet: true })
   }
 
   withTimeout(promise, timeoutMs) {

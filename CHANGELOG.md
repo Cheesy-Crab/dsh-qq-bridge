@@ -1,5 +1,87 @@
 # 变更记录
 
+## 0.36.0
+
+- 安全加固 `/qq-bridge` 控制接口：移除 CORS 通配符，所有 POST 必须带
+  `x-qq-bridge-control: 1`，防止任意网页跨站修改管理员、API Key、NapCat 路径或启停 NapCat。
+- 客户端请求自动带控制头；OPTIONS 不再返回 CORS 许可。
+- 新增 `SECURITY.md`，说明信任边界、已实施保护和已知风险。
+
+## 0.35.1
+
+- 新增 `/quota`：私聊显示个人生图额度；群聊显示本群共享额度。
+- `/whoami` 增加生图额度行。
+
+## 0.35.0
+
+- L1/L2 默认拥有 `image` 能力；L0 仍没有，L3 仍是全部能力。
+- 生图仍需分配 `imageQuota`；能力默认不代表有额度。
+- `/admin deny image` 现在会写入 denied 列表，可以撤销 L1/L2 默认生图能力。
+- 私聊和群主体（`group:<群号>`）都适用。
+
+## 0.34.0
+
+- 默认沙箱调整：L1/L2 从 `read-only` 改为 `workspace-write`；L0 仍 `read-only`，L3 仍 `danger-full-access`。
+- `applySandboxMode` 现在按 `sandbox.modeByLevel` 读取所有等级，不再只对 L3 使用配置。
+- 因此 L1/L2 只要授予 `image` 和额度即可生图，不再额外需要 `write` 能力来落盘。
+
+## 0.33.1
+
+- 修复群聊回复 @ 错人：群状态会复用最早创建时的 chat 对象，后续发言人只更新了新消息的
+  `mention`，回复仍用旧对象。现在每轮开始时把 `state.chat` 切到当前消息的 chat。
+- 群权限/额度仍按 `group:<群号>` 单主体计算。
+
+## 0.33.0
+
+- 群聊简化为单主体 `group:<群号>`：全群共用一份等级、能力集和生图额度池。
+- 群消息仍带 `[QQ:<QQ号>]` 前缀，回复仍 @ 发送者，但权限/扣费不再按成员计算。
+- 群主体默认 L0；管理员用 `/admin level|allow|quota group:<群号>` 配置。
+- 私聊权限、额度、提示词和行为不变。
+
+## 0.32.1
+
+- 修复群聊生图额度扣错对象：群聊现在扣发送者 QQ 的额度，而不是群号。
+- 群聊绘图仍共用一个会话/工作区，但额度、权限和回复 @ 都按发送者计算。
+- 群成员生图默认额度为 0，需管理员 `/admin quota <QQ号> <Buzz>` 分配。
+
+## 0.32.0
+
+- 群聊不再要求 `/bind`：只要在群里 @机器人 即可使用，成员等级/能力仍按各自账号计算。
+- 群消息会带 `[QQ:<QQ号>]` 前缀，群会话能区分不同成员。
+- 新增 `qq:group` 提示词，仅群聊注入，说明共享群会话、无需 bind、按 QQ 号区分成员；私聊不注入。
+- 群聊仍要求 @机器人；私聊行为不变。
+
+- `/sessions` 不再只显示会话 id 哈希：优先用 `/new`/`/rename` 起的名字，其次用 DSH 生成的
+  会话标题（`session/title` 事件），都没有才退回短 id。标题在轮次结束时缓存，
+  老会话第一次 `/sessions` 时从会话日志前 200 个事件补读。`/use <标题>` 也能匹配，
+  `/archived` 同样显示标题。
+- `agent.turnTimeoutMs` 默认值从 5 分钟改成 **30 分钟**（1800000 ms）：生图、长任务不再
+  5 分钟就被判超时中断。`agent.followUp.idleMs` 同步从 5 分钟改成 30 分钟，子代理跑完得晚
+  也能自动投递。代价是卡死的一轮会占住该聊天的队列更久（`maxQueue` 仍为 3）。
+- 修复“自动续跑轮”不投递：子代理完成、后台任务回报、提问作答触发的轮次不再经过
+  桥接器的 `run()`，此前这些轮次的文字和图片会全部丢掉。现在会话安静后按事件区间补投，
+  由 `agent.followUp.*` 控制（`enabled` / `pollMs` / `idleMs`）。
+- 回复文本改为按事件区间提取（`replyTextSince`），续跑轮不会重发上一轮回复；
+  下一条 QQ 消息到来时会先把待投递的续跑轮发完再开始新轮。
+- 提示词明确：QQ 会话禁止派 subagent 生图（子会话的图回不到 QQ），
+  该条覆盖 image-gen 手册里“主对话里派 subagent 生图”的建议。
+- 修复 `present` 的图片从不转发：`deliverables/presented` 属于宿主记账事件，
+  `snapshotEvents()` 不一定暴露，转发改读会话原始事件（`sessionEventsFrom`），
+  读不到时回退到 `snapshotEvents()`。
+- 新增诊断开关 `DSH_QQ_AGENT_LOG=1`（或 `restart-dsh.ps1 -AgentLog`），
+  每次轮次结束把投递细节写到 `~/.dsh/logs/agent-ext.log`。
+- 新增 `scripts/restart-dsh.ps1`：无需 GUI 重启 DSH（优雅关闭 → 拉起 → 轮询 OneBot 重连），
+  日志写入 `~/.dsh/logs/restart-*.log`。
+- 修复工作区归类丢失：DSH 用 `realpath(会话 cwd) === workspace.path` 判定归属，
+  而工作区目录登记后变成 junction（本机 `E:\QQdsh\u-b577ae62\工作区对接QQ` →
+  `E:\dsh\工作区对接QQ`）时记录里仍是旧路径，`attachSession` 抛错、会话被过滤出工作区。
+  桥接器现在创建时统一取 `realpath`，并对旧记录做一次性迁移（重新登记到真实路径、
+  搬走旧会话、删除旧登记）。
+- 修复工作区列表归属：`/ws list` 等按“路径是否在用户目录下”过滤，工作区迁移到真实路径
+  （junction 目标）后会从该 QQ 用户的列表里消失。新增 `ownsDir()`：除前缀匹配外，
+  用户目录里的链接/junction 指向该目录也算自己的，10001 因此能继续管理
+  `工作区对接QQ`。
+
 ## 0.31.0
 
 - 新增 `/admin image-balance`：读取 Civitai `buzz.getBuzzAccount`，

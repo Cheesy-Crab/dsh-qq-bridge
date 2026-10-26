@@ -1,7 +1,7 @@
 import { applyAgentPolicy } from './policy.js'
 import { forwardGeneratedImages } from './generated-images.js'
 import { forwardPresentedImages } from './present.js'
-import { installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
+import { installGroupPrompt, installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
 
 /**
  * QQ's built-in behavior extensions. They are registered into the shared
@@ -11,6 +11,10 @@ import { installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
  */
 export function qqBuiltinExtensions({ approval, chargeImage, log }) {
   return [
+    {
+      name: 'qq:group',
+      onSession: ({ agent, chat, state }) => installGroupPrompt(agent, chat, state, log),
+    },
     {
       name: 'qq:prompt',
       onSession: ({ agent, state }) => installQqPrompt(agent, state, log),

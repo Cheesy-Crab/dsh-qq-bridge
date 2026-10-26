@@ -16,7 +16,10 @@ export function normalizeCapabilities(input) {
  */
 export function effectiveCapabilities(user) {
   if (user.level === 'L3') return [...CAPABILITIES]
-  return normalizeCapabilities(user.capabilities ?? [])
+  const defaults = user.level === 'L1' || user.level === 'L2' ? ['image'] : []
+  const denied = new Set(normalizeCapabilities(user.denied ?? []))
+  return normalizeCapabilities([...defaults, ...(user.capabilities ?? [])])
+    .filter((capability) => !denied.has(capability))
 }
 
 /**

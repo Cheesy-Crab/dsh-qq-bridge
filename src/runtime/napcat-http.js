@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 
 const PREFIX = '/qq-bridge'
+const CONTROL_HEADER = 'x-qq-bridge-control'
 
 function sendJson(res, status, value) {
   const body = JSON.stringify(value)
@@ -8,9 +9,6 @@ function sendJson(res, status, value) {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(body),
     'cache-control': 'no-store',
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET,POST,OPTIONS',
-    'access-control-allow-headers': 'content-type',
   })
   res.end(body)
 }
@@ -21,7 +19,6 @@ function sendPng(res, file) {
     'content-type': 'image/png',
     'content-length': data.length,
     'cache-control': 'no-store',
-    'access-control-allow-origin': '*',
   })
   res.end(data)
 }
@@ -60,12 +57,14 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
       const url = new URL(req.url ?? '/', 'http://localhost')
       const route = url.pathname.slice(PREFIX.length) || '/'
       if (req.method === 'OPTIONS') {
-        res.writeHead(204, {
-          'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'GET,POST,OPTIONS',
-          'access-control-allow-headers': 'content-type',
-        })
+        res.writeHead(204)
         res.end()
+        return
+      }
+      // Mutations must carry a custom header. A cross-origin page cannot set
+      // it without a CORS preflight, and this route no longer grants CORS.
+      if (req.method !== 'GET' && req.headers?.[CONTROL_HEADER] !== '1') {
+        sendJson(res, 403, { error: 'missing control header' })
         return
       }
       try {

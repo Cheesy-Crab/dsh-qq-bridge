@@ -1,3 +1,4 @@
+import { sessionEventsFrom, trace } from './events.js'
 import { archiveSessionImage } from './session-images.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
@@ -12,12 +13,20 @@ const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 export function presentedImages(session, fromSeq, log) {
   const files = []
   try {
-    for (const event of session.snapshotEvents(fromSeq)) {
+    const events = sessionEventsFrom(session, fromSeq)
+    for (const event of events) {
       if (event?.type !== 'deliverables/presented') continue
       for (const file of event.data?.files ?? []) {
         if (typeof file?.path === 'string' && IMAGE_RE.test(file.path)) files.push(file.path)
       }
     }
+    trace('present', {
+      sessionId: session?.header?.id,
+      fromSeq,
+      events: events.length,
+      types: [...new Set(events.map((event) => event?.type))].slice(0, 40),
+      files,
+    })
   } catch (error) {
     log?.('warn', `could not read presented deliverables: ${error?.message ?? error}`)
   }

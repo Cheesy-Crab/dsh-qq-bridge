@@ -1,3 +1,4 @@
+import { sessionEventsFrom } from './events.js'
 import { presentedImages } from './present.js'
 import { archiveSessionImage } from './session-images.js'
 
@@ -38,7 +39,7 @@ function collectRecords(value, records) {
 export function generatedImageRecords(session, fromSeq, log) {
   const records = new Map()
   try {
-    for (const event of session.snapshotEvents(fromSeq)) {
+    for (const event of sessionEventsFrom(session, fromSeq)) {
       if (event?.type !== 'tool/result') continue
       collectRecords(event.data?.meta, records)
     }

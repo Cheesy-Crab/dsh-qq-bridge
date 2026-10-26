@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import { qqBuiltinExtensions } from '../src/agent-ext/builtins.js'
 import { forwardGeneratedImages } from '../src/agent-ext/generated-images.js'
+import { forwardPresentedImages } from '../src/agent-ext/present.js'
 import { AgentExtensionRegistry } from '../src/agent-ext/registry.js'
 
 test('extensions run in registration order for session and turn hooks', async () => {
@@ -57,7 +58,28 @@ test('disposer removes an extension', async () => {
 
 test('QQ built-ins are ordinary registrations', () => {
   const extensions = qqBuiltinExtensions({ approval: {}, log: () => {} })
-  assert.deepEqual(extensions.map((item) => item.name), ['qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present', 'qq:generated-images'])
+  assert.deepEqual(extensions.map((item) => item.name), ['qq:group', 'qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present', 'qq:generated-images'])
+})
+
+test('presented images are read from the raw event log, not just the surface', async () => {
+  // `deliverables/presented` is host bookkeeping: snapshotEvents() may hide it.
+  const section = { type: 'deliverables/presented', seq: 7, data: { files: [{ path: '/ws/shot.png' }] } }
+  const session = {
+    header: { id: 'sess-test' },
+    seq: 9,
+    ownEvents: () => [{ type: 'turn/start', seq: 5 }, section, { type: 'turn/end', seq: 8 }],
+    snapshotEvents: () => [{ type: 'turn/start', seq: 5 }, { type: 'turn/end', seq: 8 }],
+  }
+  const sent = []
+  await forwardPresentedImages({
+    sendImage: async (_chat, file) => sent.push(file),
+    chat: {},
+    session,
+    state: {},
+    fromSeq: 5,
+    log: () => {},
+  })
+  assert.deepEqual(sent, [section.data.files[0].path])
 })
 
 test('image-gen results are forwarded once and skipped when already presented', async () => {

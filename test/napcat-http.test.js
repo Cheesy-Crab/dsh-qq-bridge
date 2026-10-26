@@ -52,9 +52,13 @@ test('napcat http exposes status and actions', async () => {
   assert.equal(JSON.parse(status.body).running, true)
 
   const started = fakeResponse()
-  await route.handler({ url: '/qq-bridge/napcat/start', method: 'POST' }, started)
+  await route.handler({ url: '/qq-bridge/napcat/start', method: 'POST', headers: { 'x-qq-bridge-control': '1' } }, started)
   assert.deepEqual(JSON.parse(started.body), { managed: true })
   assert.deepEqual(calls, ['start'])
+
+  const blocked = fakeResponse()
+  await route.handler({ url: '/qq-bridge/napcat/stop', method: 'POST' }, blocked)
+  assert.equal(blocked.status, 403)
 
   const missing = fakeResponse()
   await route.handler({ url: '/qq-bridge/nope', method: 'GET' }, missing)
@@ -73,6 +77,7 @@ function setupRequest(url, method = 'GET', body) {
   return {
     url,
     method,
+    headers: method === 'GET' ? undefined : { 'x-qq-bridge-control': '1' },
     async *[Symbol.asyncIterator]() {
       if (body !== undefined) yield Buffer.from(JSON.stringify(body))
     },

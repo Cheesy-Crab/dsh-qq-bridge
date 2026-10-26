@@ -17,8 +17,13 @@ export const DEFAULTS = Object.freeze({
     provider: 'deepseek-account',
     model: 'deepseek-flash',
     preset: 'standard',
-    turnTimeoutMs: 300000,
+    turnTimeoutMs: 1800000,
     maxQueue: 3,
+    followUp: Object.freeze({
+      enabled: true,
+      pollMs: 2000,
+      idleMs: 1800000,
+    }),
   }),
   access: Object.freeze({
     admins: Object.freeze([]),
@@ -31,8 +36,8 @@ export const DEFAULTS = Object.freeze({
   sandbox: Object.freeze({
     modeByLevel: Object.freeze({
       L0: 'read-only',
-      L1: 'read-only',
-      L2: 'read-only',
+      L1: 'workspace-write',
+      L2: 'workspace-write',
       L3: 'danger-full-access',
     }),
   }),
@@ -222,12 +227,19 @@ export function normalizeConfig(raw) {
   if (!Number.isInteger(napcat.restartDelayMs) || napcat.restartDelayMs < 0) {
     fail('napcat.restartDelayMs must be a non-negative integer')
   }
-  const agent = { ...DEFAULTS.agent, ...(input.agent ?? {}) }
+  const agent = {
+    ...DEFAULTS.agent,
+    ...(input.agent ?? {}),
+    followUp: { ...DEFAULTS.agent.followUp, ...(input.agent?.followUp ?? {}) },
+  }
   if (typeof agent.provider !== 'string' || agent.provider === '') fail('agent.provider must be a non-empty string')
   if (typeof agent.model !== 'string' || agent.model === '') fail('agent.model must be a non-empty string')
   if (typeof agent.preset !== 'string' || agent.preset === '') fail('agent.preset must be a non-empty string')
   if (!Number.isInteger(agent.turnTimeoutMs) || agent.turnTimeoutMs <= 0) fail('agent.turnTimeoutMs must be a positive integer')
   if (!Number.isInteger(agent.maxQueue) || agent.maxQueue <= 0) fail('agent.maxQueue must be a positive integer')
+  if (typeof agent.followUp.enabled !== 'boolean') fail('agent.followUp.enabled must be a boolean')
+  if (!Number.isInteger(agent.followUp.pollMs) || agent.followUp.pollMs <= 0) fail('agent.followUp.pollMs must be a positive integer')
+  if (!Number.isInteger(agent.followUp.idleMs) || agent.followUp.idleMs <= 0) fail('agent.followUp.idleMs must be a positive integer')
   if (input.defaultWorkspaceName !== undefined) {
     if (typeof input.defaultWorkspaceName !== 'string' || input.defaultWorkspaceName.trim() === '') {
       fail('defaultWorkspaceName must be a non-empty string')

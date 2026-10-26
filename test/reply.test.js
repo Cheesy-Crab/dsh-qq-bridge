@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { extractReplyText, splitText, turnError } from '../src/workspace/reply.js'
+import { extractReplyText, replyTextSince, splitText, turnError } from '../src/workspace/reply.js'
 
 test('extractReplyText takes the last assistant text', () => {
   const messages = [
@@ -18,6 +18,27 @@ test('extractReplyText returns empty for tool-only or missing replies', () => {
   assert.equal(extractReplyText([]), '')
   assert.equal(extractReplyText([{ role: 'assistant', content: [{ type: 'tool-call' }] }]), '')
   assert.equal(extractReplyText([{ role: 'user', content: [{ type: 'text', text: 'hi' }] }]), '')
+})
+
+test('replyTextSince only reads the events in range', () => {
+  const session = {
+    snapshotEvents: () => [
+      { seq: 4, type: 'assistant/message', data: { message: { role: 'assistant', content: [{ type: 'text', text: 'first' }] } } },
+      { seq: 5, type: 'tool/call', data: {} },
+      { seq: 6, type: 'assistant/message', data: { message: { role: 'assistant', content: [{ type: 'text', text: 'second' }] } } },
+      { seq: 7, type: 'assistant/message', data: { message: { role: 'assistant', content: [{ type: 'tool-call' }] } } },
+    ],
+  }
+  assert.equal(replyTextSince(session, 3), 'second')
+})
+
+test('replyTextSince stays empty for tool-only turns', () => {
+  assert.equal(replyTextSince({ snapshotEvents: () => [] }, 0), '')
+  assert.equal(
+    replyTextSince({ snapshotEvents: () => [{ type: 'assistant/message', data: { message: { content: [{ type: 'tool-call' }] } } }] }, 0),
+    '',
+  )
+  assert.equal(replyTextSince({ snapshotEvents: () => { throw new Error('nope') } }, 0), '')
 })
 
 test('splitText keeps short replies intact', () => {

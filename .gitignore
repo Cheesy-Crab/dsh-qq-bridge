@@ -6,3 +6,5 @@ node_modules/
 deepseek-key.txt
 vendor/napcat/
 dist/
+dsh-image-gen/
+.bridge-out/
