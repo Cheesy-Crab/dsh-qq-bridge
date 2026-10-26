@@ -10,9 +10,11 @@
 | 组件 | 说明 |
 |---|---|
 | DSH Desktop | 与开发机相同或更新版本 |
-| 网络 | 从 GitHub 安装或下载 NapCat 时需要 |
+| 网络 | 从 GitHub 安装插件或下载 NapCat 时需要 |
 | 机器人 QQ | 用于 NapCat 扫码登录 |
-| DeepSeek API Key | `sk-...`，向导里可直接保存 |
+| QQ NT | NapCat 启动所需，需安装在本机 |
+
+> 不需要预先准备 DeepSeek API Key；默认使用 DSH Desktop 已登录账号。
 
 ## 2. 安装插件
 
@@ -21,32 +23,33 @@ DSH Desktop 侧边栏：**插件 → 添加插件 → 安装第三方插件**，
 ### 方式 A：GitHub 地址（推荐）
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.20.0
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.0
 ```
 
 或：
 
 ```
-github:Cheesy-Crab/dsh-qq-bridge#v0.20.0
+github:Cheesy-Crab/dsh-qq-bridge#v0.36.0
 ```
 
-仓库目前是 **private**，需要这台机器已经登录 GitHub（Git Credential Manager 或
-带 `repo` 权限的 PAT）。如果不想处理鉴权，把仓库设为 public 后可直接用上面的 URL。
+仓库是 **public**，不需要 GitHub 凭据。
 
-仓库不包含 345MB 的 NapCat，安装包很小；NapCat 由向导下载。
+仓库不包含 NapCat，安装包只有约 0.2MB；NapCat 由设置页的 **下载** 按钮安装。
 
-### 方式 B：本地目录
+### 方式 B：本地小包
 
-把源码目录（或 `dist\dsh-qq-bridge-0.20.0-package`）复制到目标机器，安装时填：
+把 `dist\dsh-qq-bridge-0.36.0-package` 复制到目标机器，安装时填：
 
 ```
 D:\dsh-qq-bridge
 ```
 
-### 方式 C：离线完整包
+这是默认发布方式，不包含 NapCat。
 
-`dist\dsh-qq-bridge-0.20.0.zip` 约 118MB，包含 `vendor/napcat`。解压后把解压目录
-作为本地路径安装；或者按插件管理器的提示安装 zip。
+### 方式 C：离线完整包（仅离线备用）
+
+`dist\dsh-qq-bridge-0.36.0.zip` 约 118MB，包含 `vendor/napcat`。只有在目标机器
+无法联网、下载按钮不可用时才需要它；解压后把解压目录作为本地路径安装。
 
 ## 3. 启用插件
 
