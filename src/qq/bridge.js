@@ -210,15 +210,6 @@ export class QqBridge {
       : senderCapabilities
     const imageQuota = this.users.imageQuotaOf(principal)
 
-    if (this.approval.tryAnswer(message)) return
-    if (this.questions.tryAnswer(message)) return
-
-    if (this.config.transport.echo) {
-      await this.transport.sendText(message.chat, `[qq-bridge] 收到：${message.text}`)
-      this.log('info', `echoed ${message.chat.type}:${message.chat.id} (${message.id})`)
-      return
-    }
-
     if (message.chat.type === 'group') {
       if (!message.mentioned) {
         if (parseCommand(message.text, this.commands.prefixes())) {
@@ -234,14 +225,25 @@ export class QqBridge {
       message.chat.mention = message.userId
     }
 
+    // Slash commands win over a pending approval/question. Otherwise a user
+    // answering a question with /help has it consumed as a custom answer.
+    if (await this.commands.execute(message, { level: senderLevel, capabilities: senderCapabilities })) return
+
+    if (this.approval.tryAnswer(message)) return
+    if (this.questions.tryAnswer(message)) return
+
+    if (this.config.transport.echo) {
+      await this.transport.sendText(message.chat, `[qq-bridge] 收到：${message.text}`)
+      this.log('info', `echoed ${message.chat.type}:${message.chat.id} (${message.id})`)
+      return
+    }
+
     const saved = await this.saveIncomingImages(message)
     if (saved.length > 0) {
       message.text = [message.text, ...saved.map((file) => `[图片已保存] ${file}`)].filter(Boolean).join('\n')
     } else if (message.images?.length) {
       message.text = [message.text, '[图片下载失败]'].filter(Boolean).join('\n')
     }
-
-    if (await this.commands.execute(message, { level: senderLevel, capabilities: senderCapabilities })) return
 
     if (message.chat.type === 'group') {
       message.text = groupMessageText(message)

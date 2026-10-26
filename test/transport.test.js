@@ -169,10 +169,10 @@ test('bridge echoes once and deduplicates repeated ids', async () => {
   assert.match(bridge.transport.sent[0].text, /收到：hi/)
   assert.deepEqual(bridge.transport.sent[0].chat, { type: 'private', id: '42' })
 
-  bridge.transport.inject({ id: 'm-2', chat: { type: 'group', id: '99' }, text: 'hello group' })
+  bridge.transport.inject({ id: 'm-2', chat: { type: 'group', id: '99' }, userId: '42', text: 'hello group', mentioned: true })
   await wait(50)
   assert.equal(bridge.transport.sent.length, 2)
-  assert.deepEqual(bridge.transport.sent[1].chat, { type: 'group', id: '99' })
+  assert.deepEqual(bridge.transport.sent[1].chat, { type: 'group', id: '99', mention: '42' })
 
   await bridge.stop()
 })
