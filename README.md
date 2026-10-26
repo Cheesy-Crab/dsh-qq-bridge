@@ -382,10 +382,11 @@ profile 里的 `node_modules\dsh-qq-bridge` 是指向 `dist\dsh-qq-bridge-<版�
 ```powershell
 # 1. 刷新分发包（先自己备份或保留旧目录做回滚）
 robocopy src dist\dsh-qq-bridge-0.31.0-package\src /MIR
-# 2. 重启 DSH / QQ 桥 / NapCat
-powershell -ExecutionPolicy Bypass -File scripts\restart-dsh.ps1
+# 2. 重启 DSH / QQ 桥 / NapCat（无控制台窗口）
+wscript.exe //B scripts\restart-dsh-hidden.vbs
 ```
 
+`restart-dsh-hidden.vbs` 用隐藏窗口调用 `restart-dsh.ps1`，适合从 GUI/计划任务触发；
 `restart-dsh.ps1` 会优雅关闭 DSH 进程树、重新拉起，并轮询 `/qq-bridge/bridge/status`
 直到 OneBot 重连；日志在 `%USERPROFILE%\.dsh\logs\restart-*.log`。远端没有 GUI 也能跑。
 常用参数：`-SkipStart` 只停机、`-TimeoutSec 180` 放宽等待、`-Port` 换端口。
