@@ -133,15 +133,21 @@ test('group messages require a mention and replies carry an at', async () => {
   const bridge = new QqBridge({ ctx: {}, config, root: '/tmp/qq', log: () => {} })
   await bridge.start()
 
+  bridge.transport.inject({ id: 'g0', chat: { type: 'group', id: '99' }, userId: '42', text: '/help', mentioned: false })
+  await wait(20)
+  assert.equal(bridge.transport.sent.length, 1)
+  assert.match(bridge.transport.sent[0].text, /先 @机器人/)
+  assert.equal(bridge.transport.sent[0].options.mention, '42')
+
   bridge.transport.inject({ id: 'g1', chat: { type: 'group', id: '99' }, userId: '42', text: 'hello', mentioned: false })
   await wait(20)
-  assert.equal(bridge.transport.sent.length, 0)
+  assert.equal(bridge.transport.sent.length, 1)
 
   bridge.transport.inject({ id: 'g2', chat: { type: 'group', id: '99' }, userId: '42', text: '/help', mentioned: true })
   await wait(30)
-  assert.equal(bridge.transport.sent.length, 1)
-  assert.equal(bridge.transport.sent[0].options.mention, '42')
-  assert.match(bridge.transport.sent[0].text, /可用指令/)
+  assert.equal(bridge.transport.sent.length, 2)
+  assert.equal(bridge.transport.sent[1].options.mention, '42')
+  assert.match(bridge.transport.sent[1].text, /可用指令/)
 
   await bridge.stop()
 })

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { ChatAgentManager } from '../workspace/chat.js'
 import { ApprovalBridge } from '../agent-ext/approval.js'
 import { UserStore } from '../access/users.js'
-import { CommandDispatcher } from './commands.js'
+import { CommandDispatcher, parseCommand } from './commands.js'
 import { saveIncomingImage } from '../agent-ext/images.js'
 import { qqBuiltinExtensions } from '../agent-ext/builtins.js'
 import { UserQuestionBridge } from '../agent-ext/questions.js'
@@ -221,6 +221,13 @@ export class QqBridge {
 
     if (message.chat.type === 'group') {
       if (!message.mentioned) {
+        if (parseCommand(message.text, this.commands.prefixes())) {
+          await this.transport.sendText(
+            message.chat,
+            '[qq-bridge] 群里发指令请先 @机器人。',
+            { mention: message.userId },
+          )
+        }
         this.log('debug', `group message ignored (no mention): ${message.chat.id}`)
         return
       }
