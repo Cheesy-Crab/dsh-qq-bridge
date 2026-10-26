@@ -1,5 +1,11 @@
 # 变更记录
 
+## 0.36.3
+
+- 修复设置页 QQ Bridge 报错：安全加固后跨端口本地设置页的 CORS 预检被拒。
+- 现在仅对 `localhost` / `127.0.0.1` 的 origin 返回 CORS，仍保留
+  `x-qq-bridge-control` 校验；远程站点继续被拒绝。
+
 ## 0.36.2
 
 - 指令优先于待回答的审批/提问：等待 `ask_user_question` 时输入 `/help` 等指令，

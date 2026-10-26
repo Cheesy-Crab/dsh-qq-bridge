@@ -2,6 +2,16 @@ import fs from 'node:fs'
 
 const PREFIX = '/qq-bridge'
 const CONTROL_HEADER = 'x-qq-bridge-control'
+const LOCAL_ORIGIN = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/
+
+function applyCors(req, res) {
+  const origin = req.headers?.origin
+  if (typeof origin !== 'string' || !LOCAL_ORIGIN.test(origin)) return
+  res.setHeader?.('access-control-allow-origin', origin)
+  res.setHeader?.('vary', 'Origin')
+  res.setHeader?.('access-control-allow-methods', 'GET,POST,OPTIONS')
+  res.setHeader?.('access-control-allow-headers', `content-type,${CONTROL_HEADER}`)
+}
 
 function sendJson(res, status, value) {
   const body = JSON.stringify(value)
@@ -54,6 +64,7 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
     kind: 'prefix',
     path: PREFIX,
     handler: async (req, res) => {
+      applyCors(req, res)
       const url = new URL(req.url ?? '/', 'http://localhost')
       const route = url.pathname.slice(PREFIX.length) || '/'
       if (req.method === 'OPTIONS') {
@@ -61,8 +72,9 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
         res.end()
         return
       }
-      // Mutations must carry a custom header. A cross-origin page cannot set
-      // it without a CORS preflight, and this route no longer grants CORS.
+      // Mutations must carry a custom header. Cross-origin pages outside the
+      // localhost allowlist cannot pass the preflight; the header also blocks
+      // simple-form CSRF from the same browser.
       if (req.method !== 'GET' && req.headers?.[CONTROL_HEADER] !== '1') {
         sendJson(res, 403, { error: 'missing control header' })
         return

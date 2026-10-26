@@ -13,7 +13,7 @@
 - 审批失败关闭；审批只接受发起人回复，超时拒绝。
 - 工作区路径经过 `isPathInside` / `assertInside` 校验，防止目录穿越。
 - `/qq-bridge` 控制接口：
-  - 不返回 CORS 通配符；
+  - 只对 `localhost` / `127.0.0.1` 的本地 origin 返回 CORS，不再使用通配符；
   - 所有 POST 必须带 `x-qq-bridge-control: 1` 头，防止跨站表单直接修改管理员、API Key、NapCat 路径；
   - 仍只应在回环地址上暴露给本机 DSH 页面。
 - API Key、Civitai Token 通过 DSH Credentials 读取，不写入日志，不回显给普通 QQ 用户。

@@ -21,7 +21,10 @@ function fakeResponse() {
     body: '',
     writeHead(status, headers) {
       this.status = status
-      this.headers = headers
+      this.headers = { ...this.headers, ...headers }
+    },
+    setHeader(name, value) {
+      this.headers[name] = value
     },
     end(body = '') {
       this.body += String(body)
@@ -63,6 +66,14 @@ test('napcat http exposes status and actions', async () => {
   const missing = fakeResponse()
   await route.handler({ url: '/qq-bridge/nope', method: 'GET' }, missing)
   assert.equal(missing.status, 404)
+
+  const localCors = fakeResponse()
+  await route.handler({ url: '/qq-bridge/napcat/status', method: 'GET', headers: { origin: 'http://localhost:5173' } }, localCors)
+  assert.equal(localCors.headers['access-control-allow-origin'], 'http://localhost:5173')
+
+  const remoteCors = fakeResponse()
+  await route.handler({ url: '/qq-bridge/napcat/status', method: 'GET', headers: { origin: 'https://evil.example' } }, remoteCors)
+  assert.equal(remoteCors.headers['access-control-allow-origin'], undefined)
 })
 
 test('napcat http reports a missing QR file', async () => {
