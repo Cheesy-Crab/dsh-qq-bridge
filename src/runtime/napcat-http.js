@@ -1,12 +1,23 @@
 import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
 const PREFIX = '/qq-bridge'
 const CONTROL_HEADER = 'x-qq-bridge-control'
-const LOCAL_ORIGIN = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/
+const LOCAL_ORIGIN = /^https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/
+const CORS_LOG = path.join(os.tmpdir(), 'dsh-qq-cors.log')
 
 function applyCors(req, res) {
   const origin = req.headers?.origin
-  if (typeof origin !== 'string' || !LOCAL_ORIGIN.test(origin)) return
+  const allowed = origin === 'null' || (typeof origin === 'string' && LOCAL_ORIGIN.test(origin))
+  if (!allowed) {
+    if (typeof origin === 'string' && origin !== '') {
+      try {
+        fs.appendFileSync(CORS_LOG, `${new Date().toISOString()} ${origin} ${req.method} ${req.url}\n`, 'utf8')
+      } catch {}
+    }
+    return
+  }
   res.setHeader?.('access-control-allow-origin', origin)
   res.setHeader?.('vary', 'Origin')
   res.setHeader?.('access-control-allow-methods', 'GET,POST,OPTIONS')
