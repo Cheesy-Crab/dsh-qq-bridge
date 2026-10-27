@@ -4,10 +4,15 @@
 
 **https://github.com/Cheesy-Crab/dsh-platform-core**
 
+会话核心独立仓库：
+
+**https://github.com/Cheesy-Crab/dsh-session-core**
+
 安装：
 
 ```text
 https://github.com/Cheesy-Crab/dsh-platform-core.git#v0.41.0
+https://github.com/Cheesy-Crab/dsh-session-core.git#v0.43.0
 ```
 
 QQ 仓库中的 `packages/platform-core` 只保留为迁移期副本；新代码应安装独立包 `@dsh/platform-core`。
