@@ -1,6 +1,6 @@
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import path from 'node:path'
-import { realpathOrSelf } from './paths.js'
+import { realpathOrSelf } from './home.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -114,3 +114,4 @@ export async function runSelfTest(ctx, { root, config, log }) {
   log(ok ? 'info' : 'error', `selftest ${ok ? 'PASSED' : 'FAILED'} (${results.filter((r) => r.ok).length}/${results.length})`)
   return { ok, results }
 }
+
