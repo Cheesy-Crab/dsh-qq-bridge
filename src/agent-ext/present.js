@@ -1,4 +1,4 @@
-import { sessionEventsFrom, trace } from './events.js'
+import { sessionEventsFrom, trace } from '../platform/events.js'
 import { archiveSessionImage } from './session-images.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i

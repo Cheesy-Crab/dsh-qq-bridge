@@ -396,6 +396,7 @@ QQ Bridge 只保留沟通能力语义：
 - 通用媒体交付在 `src/platform/delivery.js`，QQ mention 由通信层注入。
 - image-gen 目前仍返回 `savedTo` / `cost.total`，由 `src/platform/plugin-adapter.js` 兼容。
 - 平台侧 capability 加载器/完整校验器尚未接上宿主；当前已接入结果适配与分类器。
+- 平台核心边界见 [platform-core.md](platform-core.md)：`src/platform` 已不反向依赖 QQ。
 
 ## 16. 未适配插件的运行时分类
 

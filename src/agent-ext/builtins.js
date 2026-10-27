@@ -1,6 +1,7 @@
 import { applyAgentPolicy } from './policy.js'
 import { forwardMediaOutputs } from '../platform/delivery.js'
-import { forwardPresentedImages } from './present.js'
+import { forwardPresentedImages, presentedImages } from './present.js'
+import { archiveSessionImage } from './session-images.js'
 import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
 import { installCreativePrompt, installToolFailurePrompt } from '../platform/prompts/index.js'
 
@@ -55,6 +56,8 @@ export function qqBuiltinExtensions({ approval, chargeImage, log }) {
         fromSeq,
         log,
         optionsForChat: (target) => target?.mention ? { mention: target.mention } : {},
+        presentedFor: presentedImages,
+        archive: archiveSessionImage,
       }),
     },
   ]

@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.39.0
+
+- 平台核心与 QQ 适配器彻底分离依赖方向：`src/platform` 不再 import QQ/NapCat/OneBot。
+- 会话事件读取移到 `src/platform/events.js`，`agent-ext/events.js` 保留兼容 shim。
+- 通用媒体交付改为表面无关：mention、present 去重、归档由沟通适配器注入。
+- 新增 `src/platform/index.js` 公开 API 与平台边界测试。
+- 新增 [platform-core.md](docs/platform-core.md)。
+
 ## 0.38.0
 
 - 平台解耦：通用媒体交付移到 `src/platform/delivery.js`，QQ mention 由通信层注入。

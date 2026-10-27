@@ -1,6 +1,4 @@
-import { sessionEventsFrom } from '../agent-ext/events.js'
-import { presentedImages } from '../agent-ext/present.js'
-import { archiveSessionImage } from '../agent-ext/session-images.js'
+import { sessionEventsFrom } from './events.js'
 import { adaptToolResult } from './plugin-adapter.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
@@ -68,9 +66,11 @@ export async function forwardMediaOutputs({
   fromSeq,
   log,
   optionsForChat,
+  presentedFor,
+  archive,
 }) {
   const records = generatedImageRecords(session, fromSeq, log)
-  const presented = new Set(presentedImages(session, fromSeq, log))
+  const presented = new Set(presentedFor?.(session, fromSeq, log) ?? [])
   const sent = []
   for (const record of records) {
     const options = optionsForChat?.(chat) ?? {}
@@ -85,9 +85,9 @@ export async function forwardMediaOutputs({
     }
     if (!presented.has(record.file)) {
       try {
-        const archived = await archiveSessionImage(record.file, { session, state, log })
-        await sendImage?.(chat, archived, options)
-        sent.push(archived)
+        const file = archive ? await archive(record.file, { session, state, log }) : record.file
+        await sendImage?.(chat, file, options)
+        sent.push(file)
       } catch (error) {
         log?.('warn', `could not forward generated image ${record.file}: ${error?.message ?? error}`)
       }
