@@ -2,7 +2,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { QqBridge } from './qq/bridge.js'
-import { AgentExtensionRegistry } from './agent-ext/registry.js'
 import { normalizeConfig } from './core/config.js'
 import { ensureCredential } from './core/credentials.js'
 import { pickDirectory } from './runtime/browse.js'
@@ -44,42 +43,32 @@ export function apply(ctx, rawConfig) {
     })
   }
 
-  let agentExtensions
+  let adapterHost
   try {
-    agentExtensions = ctx.get('agentExtensions')
+    adapterHost = ctx.get('adapterHost')
   } catch {
-    agentExtensions = undefined
+    adapterHost = undefined
   }
-  if (!agentExtensions) {
-    agentExtensions = new AgentExtensionRegistry({ log })
-    try {
-      ctx.provide('agentExtensions', agentExtensions)
-    } catch (error) {
-      log('warn', `agentExtensions service was not provided: ${error?.message ?? error}`)
-    }
+  if (!adapterHost?.mount) {
+    throw new Error('adapterHost is not available; load @dsh/platform-core before dsh-qq-bridge')
   }
 
-  let sessionService
-  try {
-    sessionService = ctx.get('sessionService')
-  } catch {
-    sessionService = undefined
-  }
-  let accessService
-  try {
-    accessService = ctx.get('accessService')
-  } catch {
-    accessService = undefined
-  }
-
+  let bridge
   const napcat = new NapCatSupervisor({
     config: config.napcat,
     log,
     port: config.transport.onebot.port,
-    isConnected: () => bridge.transport?.connected === true,
+    isConnected: () => bridge?.transport?.connected === true,
   })
 
-  const bridge = new QqBridge({ ctx, config, root, log, napcat, agentExtensions, sessionService, accessService })
+  const adapter = {
+    id: 'qq',
+    mount(host) {
+      bridge = new QqBridge({ ctx, config, root, log, napcat, host })
+      return bridge
+    },
+  }
+  bridge = adapterHost.mount(adapter, { config, root })
 
   let credentials
   ctx.inject(['credentials'], (credCtx) => {

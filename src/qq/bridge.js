@@ -1,8 +1,6 @@
 import path from 'node:path'
 
-import { ChatAgentManager } from '../workspace/chat.js'
 import { ApprovalBridge } from '../agent-ext/approval.js'
-import { UserStore } from '../access/users.js'
 import { qqGroupPrincipal, qqPrincipal } from '../access/identity.js'
 import { CommandDispatcher, parseCommand } from './commands.js'
 import { saveIncomingImage } from '../agent-ext/images.js'
@@ -54,15 +52,13 @@ export class QqBridge {
   /**
    * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log, napcat, agentExtensions, sessionService, accessService }) {
+  constructor({ ctx, config, root, log, napcat, host }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
     this.napcat = napcat
-    this.agentExtensions = agentExtensions
-    this.sessionService = sessionService
-    this.accessService = accessService
+    this.host = host
     this.extensionsRegistered = false
     this.credentials = undefined
     this.transport = undefined
@@ -90,10 +86,8 @@ export class QqBridge {
       })
     })
     const stateFile = resolveStateFile(this.config.stateFile)
-    const createStore = typeof this.accessService?.createStore === 'function'
-      ? (options) => this.accessService.createStore(options)
-      : (options) => new UserStore(options)
-    this.users = createStore({
+    if (!this.host?.createUserStore) throw new Error('adapter host is missing createUserStore')
+    this.users = this.host.createUserStore({
       file: path.join(path.dirname(stateFile), 'users.json'),
       admins: this.config.access.admins,
       log: this.log,
@@ -113,7 +107,7 @@ export class QqBridge {
     this.approval.register()
     this.router = new ConversationRouter()
 
-    if (this.agentExtensions && !this.extensionsRegistered) {
+    if (!this.extensionsRegistered) {
       const chargeImage = ({ chat, state, cost }) => {
         const openid = quotaOwner(chat)
         if (!openid) throw new Error('群聊缺少发送者 QQ 号，无法扣除生图额度')
@@ -121,25 +115,22 @@ export class QqBridge {
         if (state) state.imageQuota = billing.remaining
         return billing
       }
-      for (const extension of qqBuiltinExtensions({
+      this.host.registerExtensions(qqBuiltinExtensions({
         approval: this.approval,
         chargeImage,
+        forwardMedia: this.host.forwardMediaOutputs,
         log: this.log,
-      })) {
-        this.agentExtensions.register(extension)
-      }
+      }))
       this.extensionsRegistered = true
     }
 
     const behavior = {
-      sessionReady: (context) => this.agentExtensions?.sessionReady(context),
-      turnEnd: (context) => this.agentExtensions?.turnEnd(context),
+      sessionReady: (context) => this.host.extensions.sessionReady(context),
+      turnEnd: (context) => this.host.extensions.turnEnd(context),
     }
 
-    const createManager = typeof this.sessionService?.createManager === 'function'
-      ? (options) => this.sessionService.createManager(options)
-      : (options) => new ChatAgentManager(options)
-    this.chat = createManager({
+    if (!this.host?.createSessionManager) throw new Error('adapter host is missing createSessionManager')
+    this.chat = this.host.createSessionManager({
       ctx: this.ctx,
       config: this.config,
       root: this.root,

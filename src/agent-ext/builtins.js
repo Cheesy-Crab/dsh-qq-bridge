@@ -1,5 +1,4 @@
 import { applyAgentPolicy } from './policy.js'
-import { forwardMediaOutputs } from '../platform/delivery.js'
 import { forwardPresentedImages, presentedImages } from './present.js'
 import { archiveSessionImage } from './session-images.js'
 import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
@@ -10,7 +9,7 @@ import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
  * @param {{ approval: any, chargeImage?: Function, log: (level: string, message: string) => void }} options
  * @returns {{ name: string, onSession?: Function, onTurnEnd?: Function }[]}
  */
-export function qqBuiltinExtensions({ approval, chargeImage, log }) {
+export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log }) {
   return [
     {
       name: 'qq:group',
@@ -37,7 +36,7 @@ export function qqBuiltinExtensions({ approval, chargeImage, log }) {
     },
     {
       name: 'qq:generated-images',
-      onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardMediaOutputs({
+      onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardMedia({
         sendImage,
         sendText,
         charge: chargeImage,

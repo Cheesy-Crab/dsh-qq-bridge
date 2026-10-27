@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.48.0
+
+- 引入 platform-core `AdapterHost` 作为通信适配器组装根。
+- QQ 适配器只实现 `{ id, mount(host) }`，不再自己创建 `ChatAgentManager` / `UserStore`。
+- 移除 QQ 侧 `AgentExtensionRegistry` fallback。
+- 媒体交付、扩展注册、会话/用户创建都通过 host context 注入。
+- 平台核心升级到 `v0.42.0`。
+
 ## 0.47.1
 
 - session-core 依赖固定为 HTTPS tarball，避免 CI 生成 `git+ssh` lock。

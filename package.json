@@ -1,6 +1,6 @@
 {
   "name": "dsh-qq-bridge",
-  "version": "0.47.1",
+  "version": "0.48.0",
   "private": true,
   "type": "module",
   "description": "QQ <-> DSH workspace bridge: per-user workspaces, permission tiers, and a command layer.",
@@ -36,7 +36,7 @@
     }
   },
   "dependencies": {
-    "@dsh/platform-core": "github:Cheesy-Crab/dsh-platform-core#v0.41.1",
+    "@dsh/platform-core": "https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.42.0",
     "@dsh/session-core": "https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0",
     "ws": "^8.22.0"
   },

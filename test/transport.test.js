@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+﻿import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -7,8 +7,20 @@ import test from 'node:test'
 import { QqBridge } from '../src/qq/bridge.js'
 import { normalizeConfig } from '../src/core/config.js'
 import { OneBotTransport } from '../src/transport/onebot.js'
+import { ChatAgentManager } from '../src/workspace/chat.js'
+import { UserStore } from '../src/access/users.js'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function testHost() {
+  return {
+    createUserStore: (options) => new UserStore(options),
+    createSessionManager: (options) => new ChatAgentManager(options),
+    registerExtensions: () => {},
+    extensions: { sessionReady: () => {}, turnEnd: () => {} },
+    forwardMediaOutputs: () => {},
+  }
+}
 
 async function waitFor(predicate, timeoutMs = 2000) {
   const deadline = Date.now() + timeoutMs
@@ -130,7 +142,7 @@ test('group messages require a mention and replies carry an at', async () => {
     transport: { kind: 'fake' },
     stateFile: path.join(os.tmpdir(), `qq-bridge-group-${Date.now()}`, 'state.json'),
   })
-  const bridge = new QqBridge({ ctx: {}, config, root: '/tmp/qq', log: () => {} })
+  const bridge = new QqBridge({ ctx: {}, config, root: '/tmp/qq', log: () => {}, host: testHost() })
   await bridge.start()
 
   bridge.transport.inject({ id: 'g0', chat: { type: 'group', id: '99' }, userId: '42', text: '/help', mentioned: false })
@@ -157,7 +169,7 @@ test('bridge echoes once and deduplicates repeated ids', async () => {
     transport: { kind: 'fake', echo: true },
     stateFile: path.join(os.tmpdir(), `qq-bridge-test-${Date.now()}`, 'state.json'),
   })
-  const bridge = new QqBridge({ ctx: {}, config, root: '/tmp/qq', log: () => {} })
+  const bridge = new QqBridge({ ctx: {}, config, root: '/tmp/qq', log: () => {}, host: testHost() })
   await bridge.start()
 
   const message = { id: 'm-1', chat: { type: 'private', id: '42' }, text: 'hi' }
@@ -176,3 +188,4 @@ test('bridge echoes once and deduplicates repeated ids', async () => {
 
   await bridge.stop()
 })
+
