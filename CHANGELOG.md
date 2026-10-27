@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.42.0
+
+- 会话 / 工作区 / 路径 / 回复处理移到独立包 `@dsh/session-core`。
+- QQ Bridge 只提供会话 key、发送回调、审批和配额绑定。
+- 根包旧路径保留兼容 re-export；现有命令和测试无需改 import。
+- 会话层与能力插件明确区分：session-core 不提供媒体生成能力。
+- 根包 `files` 包含 session-core。
+
 ## 0.41.0
 
 - `@dsh/platform-core` 成为可独立加载的 DSH 插件，提供 `agentExtensions` 与 `pluginRegistry` 服务。

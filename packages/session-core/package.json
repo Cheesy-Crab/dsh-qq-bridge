@@ -1,0 +1,21 @@
+{
+  "name": "@dsh/session-core",
+  "version": "0.42.0",
+  "private": true,
+  "description": "Surface-neutral DSH session and workspace manager.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./manager": "./src/manager.js",
+    "./paths": "./src/paths.js",
+    "./reply": "./src/reply.js",
+    "./titles": "./src/titles.js"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}
