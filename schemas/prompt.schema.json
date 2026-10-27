@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.local/schemas/prompt.schema.json",
+  "title": "DSH prompt frontmatter",
+  "description": "Frontmatter for a plugin-owned prompt file. Prompt bodies are trusted plugin content; v1 has no template interpolation.",
+  "type": "object",
+  "required": ["id", "order"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "Plugin-local id; the platform expands it to <plugin-id>:<id>."
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "Lower numbers are injected first."
+    },
+    "when": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "surfaces": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

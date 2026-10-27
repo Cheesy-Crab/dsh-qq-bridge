@@ -6,6 +6,8 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 架构说明见 [docs/architecture.md](docs/architecture.md)：工作区对接域、agent 行为扩展域、QQ 适配层与运行支撑层。
 
+平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，机器可读 schema 在 [schemas/](schemas/)。
+
 ## 安装（DSH Desktop 推荐）
 
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：

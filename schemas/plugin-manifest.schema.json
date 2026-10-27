@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.local/schemas/plugin-manifest.schema.json",
+  "title": "DSH plugin manifest (dsh field)",
+  "description": "The manifest a DSH plugin declares under package.json's dsh field. Only pluginApi is universally required; a plugin that emits media MUST also declare tools and delivery.",
+  "type": "object",
+  "required": ["pluginApi"],
+  "properties": {
+    "pluginApi": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+(\\.[0-9]+)?$",
+      "description": "Contract version. The platform refuses an unsupported major version."
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Prompt files relative to the plugin root.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "skills": {
+      "type": "array",
+      "description": "Skill files relative to the plugin root.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools whose results follow the tool-result contract.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "capability": { "type": "string", "minLength": 1 },
+          "outputs": {
+            "type": "array",
+            "items": { "enum": ["image", "video", "audio", "file", "text"] },
+            "uniqueItems": true
+          },
+          "retry": {
+            "type": "object",
+            "properties": {
+              "maxAttempts": { "type": "integer", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "description": "Media kinds the platform may deliver automatically.",
+      "properties": {
+        "images": { "type": "boolean" },
+        "videos": { "type": "boolean" },
+        "audio": { "type": "boolean" },
+        "files": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Platform capabilities the plugin needs; least privilege.",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

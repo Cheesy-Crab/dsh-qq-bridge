@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.local/schemas/tool-result.schema.json",
+  "title": "DSH tool result contract (meta.dsh)",
+  "description": "The platform-neutral result metadata a plugin attaches to a tool result. The platform validates paths, MIME types, sizes, retry counts and delivery policy.",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "description": "Contract version for this result."
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "mime"],
+        "oneOf": [
+          { "required": ["path"] },
+          { "required": ["attachmentId"] }
+        ],
+        "properties": {
+          "kind": { "enum": ["image", "video", "audio", "file", "text"] },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workspace path. The platform resolves and rejects escapes."
+          },
+          "attachmentId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Inline attachment id. Mutually exclusive with path."
+          },
+          "mime": { "type": "string", "pattern": "^[a-z]+/[a-zA-Z0-9.+-]+$" },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "caption": { "type": "string", "maxLength": 500 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "operation": {
+      "type": "object",
+      "required": ["id", "recoverable"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "recoverable": { "type": "boolean" },
+        "resume": {
+          "type": "object",
+          "required": ["tool", "args"],
+          "properties": {
+            "tool": { "type": "string", "minLength": 1 },
+            "args": { "type": "object" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "retry": {
+      "type": "object",
+      "properties": {
+        "retryable": { "type": "boolean" },
+        "reason": {
+          "enum": [
+            "transient_network",
+            "rate_limited",
+            "upstream_error",
+            "quota_exceeded",
+            "auth",
+            "invalid_input",
+            "canceled",
+            "unknown"
+          ]
+        },
+        "maxAttempts": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "afterMs": { "type": "integer", "minimum": 0, "maximum": 60000 }
+      },
+      "additionalProperties": false
+    },
+    "cost": {
+      "type": "object",
+      "required": ["amount", "unit"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "unit": { "type": "string", "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "enum": [
+            "transient_network",
+            "rate_limited",
+            "upstream_error",
+            "quota_exceeded",
+            "auth",
+            "invalid_input",
+            "canceled",
+            "unknown"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "retryable": { "type": "boolean" },
+        "operationId": { "type": "string", "minLength": 1 },
+        "userMessage": { "type": "string", "maxLength": 500 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
