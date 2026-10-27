@@ -1,5 +1,11 @@
 # 变更记录
 
+## 0.46.0
+
+- `@dsh/session-core` 提供 `accessService`，QQ 通过它创建 UserStore。
+- 用户、等级、能力、额度生命周期归核心，QQ 只提供存储位置和管理员列表。
+- `@dsh/session-core` 升级到 `v0.46.0`。
+
 ## 0.45.0
 
 - 用户、等级、能力、额度原语移到 `@dsh/session-core`；QQ 仓库只保留 QQ 身份映射和调用。

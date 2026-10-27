@@ -53,7 +53,7 @@ export class QqBridge {
   /**
    * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log, napcat, agentExtensions, sessionService }) {
+  constructor({ ctx, config, root, log, napcat, agentExtensions, sessionService, accessService }) {
     this.ctx = ctx
     this.config = config
     this.root = root
@@ -61,6 +61,7 @@ export class QqBridge {
     this.napcat = napcat
     this.agentExtensions = agentExtensions
     this.sessionService = sessionService
+    this.accessService = accessService
     this.extensionsRegistered = false
     this.credentials = undefined
     this.transport = undefined
@@ -88,7 +89,10 @@ export class QqBridge {
       })
     })
     const stateFile = resolveStateFile(this.config.stateFile)
-    this.users = new UserStore({
+    const createStore = typeof this.accessService?.createStore === 'function'
+      ? (options) => this.accessService.createStore(options)
+      : (options) => new UserStore(options)
+    this.users = createStore({
       file: path.join(path.dirname(stateFile), 'users.json'),
       admins: this.config.access.admins,
       log: this.log,
