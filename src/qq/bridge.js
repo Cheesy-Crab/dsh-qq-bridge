@@ -169,6 +169,7 @@ export class QqBridge {
       sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       status: () => this.status(),
       access: this.host.access,
+      profiles: this.host.profiles,
       napcat: this.napcat,
       credentials: () => this.credentials,
     })
@@ -300,4 +301,6 @@ export class QqBridge {
     }
   }
 }
+
+
 

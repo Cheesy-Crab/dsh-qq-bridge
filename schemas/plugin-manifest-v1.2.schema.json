@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.local/schemas/plugin-manifest-v1.2.schema.json",
+  "title": "DSH plugin manifest v1.2",
+  "type": "object",
+  "required": ["dsh"],
+  "properties": {
+    "dsh": {
+      "type": "object",
+      "required": ["bundle"],
+      "properties": {
+        "bundle": {
+          "type": "object",
+          "required": ["patch"],
+          "properties": {
+            "patch": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "platform": { "type": "string" },
+            "immediately": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "platform": {
+          "type": "object",
+          "required": ["contract"],
+          "properties": {
+            "contract": { "type": "string", "pattern": "^1\\.[0-9]+" },
+            "capabilities": {
+              "type": "array",
+              "items": { "$ref": "https://dsh.local/schemas/capability.schema.json" }
+            },
+            "profiles": {
+              "type": "array",
+              "items": { "$ref": "https://dsh.local/schemas/conversation-profile.schema.json" }
+            },
+            "adapter": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "pluginApi": { "type": "string" },
+        "capabilities": { "type": "array" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

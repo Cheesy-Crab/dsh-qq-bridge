@@ -1,5 +1,12 @@
 ﻿# 变更记录
 
+## 0.51.0
+
+- 新增 dsh.platform manifest v1.2 支持，旧字段兼容。
+- 新增 ProfileRegistry 与 /profile 命令。
+- session-core 支持 per-conversation profile / agentPreset。
+- 平台核心升级到 v0.44.0，会话核心升级到 v0.49.0。
+
 ## 0.50.0
 
 - 移除兼容 shim，QQ 源码不再 import platform/session 实现。
@@ -504,4 +511,5 @@
 - 插件骨架：bundle patch、配置校验、生命周期。
 - 跨平台路径层（`E:\QQdsh` / `${DSH_HOME}/qq-workspaces`）。
 - 四个宿主接缝自检：工作区、会话/agent、审批策略、工具限制。
+
 

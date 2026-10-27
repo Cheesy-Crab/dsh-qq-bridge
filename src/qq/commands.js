@@ -40,10 +40,11 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials, access }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials, access, profiles }) {
     this.manager = manager
     this.users = users
     this.access = access
+    this.profiles = profiles
     this.config = config
     this.root = root
     this.log = log
@@ -117,6 +118,38 @@ export class CommandDispatcher {
   }
 
   registerBuiltins() {
+    this.register('profile', {
+      usage: 'profile [list|use <id>|reset]',
+      description: '查看或切换当前会话 profile',
+      minLevel: 'L3',
+      handler: async ({ message, args }) => {
+        const profiles = this.profiles
+        if (!profiles?.list) return '当前平台未提供 profile registry。'
+        const action = String(args[0] ?? 'list').toLowerCase()
+        if (action === 'list') {
+          const items = profiles.list()
+          if (items.length === 0) return '当前没有可用 profile。'
+          return [
+            '可用 profile：',
+            ...items.map((profile) => `- ${profile.id}${profile.title ? `（${profile.title}）` : ''}`),
+          ].join('\n')
+        }
+        if (action === 'use') {
+          const id = String(args[1] ?? '').trim()
+          if (!id) return '用法：/profile use <id>'
+          const profile = profiles.resolve?.(id)
+          if (!profile) return `未知 profile：${id}`
+          this.manager.setProfile(message.chat, profile)
+          return `已切换 profile：${id}；下一条消息使用该 profile。`
+        }
+        if (action === 'reset') {
+          this.manager.setProfile(message.chat, undefined)
+          return '已恢复默认 profile。'
+        }
+        return '用法：/profile [list|use <id>|reset]'
+      },
+    })
+
     this.register('help', {
       usage: 'help',
       description: '显示可用指令',
