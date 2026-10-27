@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.45.0
+
+- 用户、等级、能力、额度原语移到 `@dsh/session-core`；QQ 仓库只保留 QQ 身份映射和调用。
+- `@dsh/session-core` 升级到 `v0.45.0`。
+- 加入 MIT License。
+- QQ 仓库保持 164 项测试通过。
+
 ## 0.44.0
 
 - QQ 仓库删除 `packages/platform-core` 和 `packages/session-core` 迁移副本。
