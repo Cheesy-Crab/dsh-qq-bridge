@@ -21,7 +21,7 @@ export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log, 
     },
     {
       name: 'qq:policy',
-      onSession: ({ agent, level, state }) => applyAgentPolicy({ approval, agent, level, state, log, toolAllowed }),
+      onSession: ({ agent, level, state, profile }) => applyAgentPolicy({ approval, agent, level, state, profile, log, toolAllowed }),
     },
     {
       name: 'qq:present',

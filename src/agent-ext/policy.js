@@ -4,7 +4,7 @@
  * @param {{ approval?: any, agent: any, level: string, state: any,
  *           log: (level: string, message: string) => void }} options
  */
-export function applyAgentPolicy({ approval, agent, level, state, log, toolAllowed }) {
+export function applyAgentPolicy({ approval, agent, level, state, profile, log, toolAllowed }) {
   const capabilities = state.capabilities ?? []
   const policy = level === 'L3' || capabilities.length > 0 ? 'ask' : 'never'
   if (state.approvalPolicy !== policy) {
@@ -16,7 +16,7 @@ export function applyAgentPolicy({ approval, agent, level, state, log, toolAllow
     }
   }
   if (!state.guarded) {
-    guardAgentTools(agent, state, log, toolAllowed)
+    guardAgentTools(agent, state, log, toolAllowed, profile)
     state.guarded = true
   }
 }
@@ -29,11 +29,18 @@ export function applyAgentPolicy({ approval, agent, level, state, log, toolAllow
  * @param {any} state
  * @param {(level: string, message: string) => void} log
  */
-export function guardAgentTools(agent, state, log, toolAllowed) {
+export function guardAgentTools(agent, state, log, toolAllowed, profile) {
   try {
     agent.ctx.tools.guard((exec) => {
-      if (state.level === 'L3') return undefined
       const name = exec?.toolName ?? exec?.tool?.name ?? exec?.name
+      const policy = profile?.toolPolicy
+      if (Array.isArray(policy?.deny) && policy.deny.includes(name)) {
+        return `当前 profile 不允许使用工具：${String(name)}`
+      }
+      if (Array.isArray(policy?.allow) && policy.allow.length > 0 && !policy.allow.includes(name)) {
+        return `当前 profile 仅允许：${policy.allow.join(', ')}`
+      }
+      if (state.level === 'L3') return undefined
       if (!toolAllowed(name, state.capabilities ?? [])) return '当前账号仅允许聊天；该工具需要管理员加入白名单'
       if (/^(generate_image|generate_images|edit_image)$/i.test(String(name ?? ''))
         && Number.isFinite(state.imageQuota) && state.imageQuota <= 0) {

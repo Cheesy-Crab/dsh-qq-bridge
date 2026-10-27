@@ -1,5 +1,15 @@
 ﻿# 变更记录
 
+## 0.52.0
+
+- 新增 DeliveryCoordinator / InvocationLedger 服务。
+- profile promptPolicy、toolPolicy 生效。
+- /profile use 切换后下一条消息重建会话。
+- 新增系统级 platform:capabilities prompt。
+- 新增命令扩展注册表 qqCommands。
+- 平台核心 0.45.1，会话核心 0.50.0。
+
+
 ## 0.51.0
 
 - 新增 dsh.platform manifest v1.2 支持，旧字段兼容。
@@ -511,5 +521,6 @@
 - 插件骨架：bundle patch、配置校验、生命周期。
 - 跨平台路径层（`E:\QQdsh` / `${DSH_HOME}/qq-workspaces`）。
 - 四个宿主接缝自检：工作区、会话/agent、审批策略、工具限制。
+
 
 

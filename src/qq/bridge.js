@@ -1,4 +1,4 @@
-﻿import path from 'node:path'
+import path from 'node:path'
 
 import { ApprovalBridge } from '../agent-ext/approval.js'
 import { qqGroupPrincipal, qqPrincipal } from './identity.js'
@@ -52,13 +52,14 @@ export class QqBridge {
   /**
    * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log, napcat, host }) {
+  constructor({ ctx, config, root, log, napcat, host, commandRegistry }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
     this.napcat = napcat
     this.host = host
+    this.commandRegistry = commandRegistry
     this.extensionsRegistered = false
     this.credentials = undefined
     this.transport = undefined
@@ -142,6 +143,11 @@ export class QqBridge {
       approval: this.approval,
       bindSession: (sessionId, chat) => this.router.bind(sessionId, chat),
       resolveChat: (sessionId) => this.router.chatForSession(sessionId),
+      resolveProfile: ({ state }) => {
+        const id = state?.profileId ?? state?.profileOverride?.id
+        if (!id) return undefined
+        return this.host.profiles?.resolve?.(id)
+      },
       behavior,
     })
     this.chat.init()
@@ -170,6 +176,7 @@ export class QqBridge {
       status: () => this.status(),
       access: this.host.access,
       profiles: this.host.profiles,
+      commandRegistry: this.commandRegistry,
       napcat: this.napcat,
       credentials: () => this.credentials,
     })

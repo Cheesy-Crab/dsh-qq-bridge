@@ -40,11 +40,12 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials, access, profiles }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials, access, profiles, commandRegistry }) {
     this.manager = manager
     this.users = users
     this.access = access
     this.profiles = profiles
+    this.commandRegistry = commandRegistry
     this.config = config
     this.root = root
     this.log = log
@@ -81,7 +82,7 @@ export class CommandDispatcher {
     const parsed = parseCommand(message.text, this.prefixes())
     if (!parsed) return false
     this.manager?.setContext?.(message.chat, { level, capabilities })
-    const command = this.commands.get(parsed.name)
+    const command = this.commands.get(parsed.name) ?? this.commandRegistry?.get(parsed.name)
     if (!command) {
       await this.reply(message.chat, `未知指令 ${parsed.prefix}${parsed.name}，发 ${parsed.prefix}help 查看可用指令。`)
       return true
@@ -139,8 +140,16 @@ export class CommandDispatcher {
           if (!id) return '用法：/profile use <id>'
           const profile = profiles.resolve?.(id)
           if (!profile) return `未知 profile：${id}`
+          try {
+            const binding = await profiles.bind?.(id, { chat: message.chat })
+            if (binding && binding.ok === false && binding.reason !== 'provider_missing') {
+              return `profile 绑定失败：${binding.reason}`
+            }
+          } catch (error) {
+            return `profile 绑定失败：${error?.message ?? error}`
+          }
           this.manager.setProfile(message.chat, profile)
-          return `已切换 profile：${id}；下一条消息使用该 profile。`
+          return `已切换 profile：${id}；下一条消息使用新 profile。`
         }
         if (action === 'reset') {
           this.manager.setProfile(message.chat, undefined)
@@ -583,6 +592,11 @@ export class CommandDispatcher {
         lines.push(`  ${this.prefix()}ws rename <名称> — 重命名当前工作区`)
         lines.push(`  ${this.prefix()}ws delete <序号|名称> — 移除工作区登记（保留目录）`)
       }
+    }
+    for (const command of this.commandRegistry?.list() ?? []) {
+      if (!command?.usage || seen.has(command)) continue
+      seen.add(command)
+      lines.push(`${this.prefix()}${command.usage} — ${command.description ?? '插件命令'}`)
     }
     return lines
   }

@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { QqBridge } from './qq/bridge.js'
+import { CommandRegistry } from './qq/command-registry.js'
 import { normalizeConfig } from './core/config.js'
 import { ensureCredential } from './core/credentials.js'
 import { pickDirectory } from './runtime/browse.js'
@@ -54,6 +55,12 @@ export function apply(ctx, rawConfig) {
   log('info', `workspaces root=${root}`)
 
   let bridge
+  const commandRegistry = new CommandRegistry()
+  try {
+    ctx.provide('qqCommands', commandRegistry)
+  } catch (error) {
+    log('warn', `could not provide qqCommands: ${error?.message ?? error}`)
+  }
   const napcat = new NapCatSupervisor({
     config: config.napcat,
     log,
@@ -64,7 +71,7 @@ export function apply(ctx, rawConfig) {
   const adapter = {
     id: 'qq',
     mount(host) {
-      bridge = new QqBridge({ ctx, config, root, log, napcat, host })
+      bridge = new QqBridge({ ctx, config, root, log, napcat, host, commandRegistry })
       return bridge
     },
   }
