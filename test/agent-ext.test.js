@@ -58,7 +58,7 @@ test('disposer removes an extension', async () => {
 
 test('QQ built-ins are ordinary registrations', () => {
   const extensions = qqBuiltinExtensions({ approval: {}, log: () => {} })
-  assert.deepEqual(extensions.map((item) => item.name), ['qq:group', 'qq:prompt', 'qq:visual-design', 'qq:policy', 'qq:present', 'qq:generated-images'])
+  assert.deepEqual(extensions.map((item) => item.name), ['platform:tool-failures', 'platform:creative', 'qq:group', 'qq:prompt', 'qq:policy', 'qq:present', 'qq:generated-images'])
 })
 
 test('presented images are read from the raw event log, not just the surface', async () => {

@@ -4,4 +4,3 @@
  */
 export { installGroupPrompt } from './group.prompt.js'
 export { installQqPrompt } from './qq-images.prompt.js'
-export { installVisualDesignPrompt } from './visual-design.prompt.js'

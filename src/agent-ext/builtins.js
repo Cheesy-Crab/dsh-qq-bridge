@@ -1,7 +1,8 @@
 import { applyAgentPolicy } from './policy.js'
-import { forwardGeneratedImages } from './generated-images.js'
+import { forwardMediaOutputs } from '../platform/delivery.js'
 import { forwardPresentedImages } from './present.js'
-import { installGroupPrompt, installQqPrompt, installVisualDesignPrompt } from './prompts/index.js'
+import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
+import { installCreativePrompt, installToolFailurePrompt } from '../platform/prompts/index.js'
 
 /**
  * QQ's built-in behavior extensions. They are registered into the shared
@@ -12,16 +13,20 @@ import { installGroupPrompt, installQqPrompt, installVisualDesignPrompt } from '
 export function qqBuiltinExtensions({ approval, chargeImage, log }) {
   return [
     {
+      name: 'platform:tool-failures',
+      onSession: ({ agent, state }) => installToolFailurePrompt(agent, state, log),
+    },
+    {
+      name: 'platform:creative',
+      onSession: ({ agent, state }) => installCreativePrompt(agent, state, log),
+    },
+    {
       name: 'qq:group',
       onSession: ({ agent, chat, state }) => installGroupPrompt(agent, chat, state, log),
     },
     {
       name: 'qq:prompt',
       onSession: ({ agent, state }) => installQqPrompt(agent, state, log),
-    },
-    {
-      name: 'qq:visual-design',
-      onSession: ({ agent, state }) => installVisualDesignPrompt(agent, state, log),
     },
     {
       name: 'qq:policy',
@@ -40,7 +45,7 @@ export function qqBuiltinExtensions({ approval, chargeImage, log }) {
     },
     {
       name: 'qq:generated-images',
-      onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardGeneratedImages({
+      onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardMediaOutputs({
         sendImage,
         sendText,
         charge: chargeImage,
@@ -49,6 +54,7 @@ export function qqBuiltinExtensions({ approval, chargeImage, log }) {
         state,
         fromSeq,
         log,
+        optionsForChat: (target) => target?.mention ? { mention: target.mention } : {},
       }),
     },
   ]

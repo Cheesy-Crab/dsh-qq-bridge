@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.38.0
+
+- 平台解耦：通用媒体交付移到 `src/platform/delivery.js`，QQ mention 由通信层注入。
+- 新增 `src/platform/prompts/`：通用工具失败策略与创作策略。
+- 移除 QQ Bridge 的 `qq:visual-design` 和 image-gen 专属重试提示；QQ 层只保留传输语义。
+- `generated-images.js` 保留为兼容入口，实际实现走平台交付层。
+- 通用结果适配继续支持 `meta.dsh` 和旧 `savedTo`/`cost.total`。
+
 ## 0.37.0
 
 - 新增未适配插件的运行时分类器与基础适配器：`src/platform/plugin-adapter.js`。

@@ -391,9 +391,11 @@ QQ Bridge 只保留沟通能力语义：
 ## 15. 当前迁移状态
 
 - 本规范是 v1.1 目标接口。
-- QQ Bridge 现有 `qq:visual-design`、image-gen 专属重试提示仍属于旧实现，待迁移。
-- image-gen 目前仍返回 `savedTo` / `cost.total`，待迁到 `meta.dsh`。
-- 平台侧加载器、校验器、通用交付器尚未实现；本文件先定义契约。
+- QQ Bridge 已移除 `qq:visual-design` 和 image-gen 专属重试提示，只保留 QQ 传输 prompt。
+- 通用失败策略与创作策略在 `src/platform/prompts/`。
+- 通用媒体交付在 `src/platform/delivery.js`，QQ mention 由通信层注入。
+- image-gen 目前仍返回 `savedTo` / `cost.total`，由 `src/platform/plugin-adapter.js` 兼容。
+- 平台侧 capability 加载器/完整校验器尚未接上宿主；当前已接入结果适配与分类器。
 
 ## 16. 未适配插件的运行时分类
 
