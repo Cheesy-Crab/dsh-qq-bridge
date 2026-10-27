@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { extractReplyText, replyTextSince, splitText, turnError } from '../src/workspace/reply.js'
+import { extractReplyText, replyTextSince, splitText, turnError } from '@dsh/session-core/reply'
 
 test('extractReplyText takes the last assistant text', () => {
   const messages = [

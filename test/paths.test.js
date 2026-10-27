@@ -18,7 +18,7 @@ import {
   userDir,
   validateName,
   workspacePath,
-} from '../src/core/paths.js'
+} from '@dsh/session-core/paths'
 
 const tmpHome = path.join(os.tmpdir(), 'dsh-qq-test-home')
 

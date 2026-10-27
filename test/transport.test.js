@@ -7,8 +7,8 @@ import test from 'node:test'
 import { QqBridge } from '../src/qq/bridge.js'
 import { normalizeConfig } from '../src/core/config.js'
 import { OneBotTransport } from '../src/transport/onebot.js'
-import { ChatAgentManager } from '../src/workspace/chat.js'
-import { UserStore } from '../src/access/users.js'
+import { ChatAgentManager } from '@dsh/session-core/manager'
+import { UserStore } from '@dsh/session-core/access/users'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 

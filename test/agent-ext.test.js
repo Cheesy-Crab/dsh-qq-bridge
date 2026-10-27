@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { qqBuiltinExtensions } from '../src/agent-ext/builtins.js'
-import { forwardGeneratedImages } from '../src/agent-ext/generated-images.js'
+import { forwardGeneratedImages } from './helpers/generated-images.js'
 import { forwardPresentedImages } from '../src/agent-ext/present.js'
-import { AgentExtensionRegistry } from '../src/agent-ext/registry.js'
+import { AgentExtensionRegistry } from '@dsh/platform-core'
 
 test('extensions run in registration order for session and turn hooks', async () => {
   const calls = []

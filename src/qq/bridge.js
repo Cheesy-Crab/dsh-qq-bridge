@@ -1,7 +1,7 @@
-import path from 'node:path'
+﻿import path from 'node:path'
 
 import { ApprovalBridge } from '../agent-ext/approval.js'
-import { qqGroupPrincipal, qqPrincipal } from '../access/identity.js'
+import { qqGroupPrincipal, qqPrincipal } from './identity.js'
 import { CommandDispatcher, parseCommand } from './commands.js'
 import { saveIncomingImage } from '../agent-ext/images.js'
 import { qqBuiltinExtensions } from '../agent-ext/builtins.js'
@@ -300,3 +300,4 @@ export class QqBridge {
     }
   }
 }
+

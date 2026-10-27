@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { CAPABILITIES, normalizeCapabilities, toolAllowed } from '../src/access/capabilities.js'
+import { CAPABILITIES, normalizeCapabilities, toolAllowed } from '@dsh/session-core/access/capabilities'
 
 test('image capability allows generation and presentation tools only', () => {
   assert.ok(CAPABILITIES.includes('image'))

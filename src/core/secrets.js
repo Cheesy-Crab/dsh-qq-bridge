@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { defaultDshHome, expandVars } from './paths.js'
+import { defaultDshHome, expandVars } from './home.js'
 
 /**
  * Absolute path of the key file. Empty config means

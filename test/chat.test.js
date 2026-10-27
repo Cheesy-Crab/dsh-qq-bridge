@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { ChatAgentManager } from '../src/workspace/chat.js'
+import { ChatAgentManager } from '@dsh/session-core/manager'
 import { normalizeConfig } from '../src/core/config.js'
 import { forwardPresentedImages } from '../src/agent-ext/present.js'
 

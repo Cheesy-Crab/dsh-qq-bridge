@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { discoverPlugins, PluginRegistry } from '../src/platform/index.js'
+import { discoverPlugins, PluginRegistry } from '@dsh/platform-core'
 
 function tempProfile() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-platform-registry-'))

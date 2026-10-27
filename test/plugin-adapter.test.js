@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { adaptToolResult, classifyPlugin, createPluginAdapter } from '../src/platform/plugin-adapter.js'
+import { adaptToolResult, classifyPlugin, createPluginAdapter } from '@dsh/platform-core/plugin-adapter'
 
 test('native capability manifests are trusted as-is', () => {
   const classification = classifyPlugin({

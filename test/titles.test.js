@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { liveSessionTitle, titleFromEvents } from '../src/workspace/titles.js'
+import { liveSessionTitle, titleFromEvents } from '@dsh/session-core/titles'
 
 test('titleFromEvents takes the newest non-empty title', () => {
   assert.equal(titleFromEvents([]), '')

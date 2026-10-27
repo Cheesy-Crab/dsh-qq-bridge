@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { forwardGeneratedImages } from '../src/agent-ext/generated-images.js'
+import { forwardGeneratedImages } from './helpers/generated-images.js'
 import { archiveSessionImage } from '../src/agent-ext/session-images.js'
 
 test('generated images are archived under their session directory', async () => {

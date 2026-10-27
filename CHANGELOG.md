@@ -1,4 +1,11 @@
-# 变更记录
+﻿# 变更记录
+
+## 0.50.0
+
+- 移除兼容 shim，QQ 源码不再 import platform/session 实现。
+- present 事件读取和 identity 改为适配器本地实现。
+- 核心包降为 devDependencies，适配器运行时只依赖 host context。
+- 测试增加到 165 项。
 
 ## 0.49.0
 
@@ -497,3 +504,4 @@
 - 插件骨架：bundle patch、配置校验、生命周期。
 - 跨平台路径层（`E:\QQdsh` / `${DSH_HOME}/qq-workspaces`）。
 - 四个宿主接缝自检：工作区、会话/agent、审批策略、工具限制。
+

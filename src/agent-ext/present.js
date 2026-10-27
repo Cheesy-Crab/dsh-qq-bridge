@@ -1,7 +1,32 @@
-import { sessionEventsFrom, trace } from '../platform/events.js'
 import { archiveSessionImage } from './session-images.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
+
+function eventsFrom(session, fromSeq) {
+  const start = Number.isFinite(Number(fromSeq)) ? Number(fromSeq) : 0
+  try {
+    if (typeof session?.ownEvents === 'function') {
+      const events = session.ownEvents()
+      if (Array.isArray(events) && events.length > 0) {
+        return events.filter((event) => Number.isFinite(event?.seq) ? event.seq >= start : true)
+      }
+    }
+  } catch {
+    // fall through to the snapshots
+  }
+  try {
+    const events = session?.snapshotEvents?.(start)
+    return Array.isArray(events) ? events : []
+  } catch {
+    return []
+  }
+}
+
+function trace(name, data) {
+  if (process.env.DSH_PLATFORM_TRACE === '1') {
+    console.log(`[qq-trace] ${name}`, JSON.stringify(data))
+  }
+}
 
 /**
  * Images the agent declared via `present` during this turn.
@@ -13,7 +38,7 @@ const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 export function presentedImages(session, fromSeq, log) {
   const files = []
   try {
-    const events = sessionEventsFrom(session, fromSeq)
+    const events = eventsFrom(session, fromSeq)
     for (const event of events) {
       if (event?.type !== 'deliverables/presented') continue
       for (const file of event.data?.files ?? []) {

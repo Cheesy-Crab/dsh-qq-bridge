@@ -1,7 +1,7 @@
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import path from 'node:path'
 
-import { defaultDshHome, expandVars } from './paths.js'
+import { defaultDshHome, expandVars } from './home.js'
 
 /**
  * Absolute state file. Empty config means
@@ -68,3 +68,4 @@ export class JsonStore {
     }
   }
 }
+

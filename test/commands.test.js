@@ -6,7 +6,7 @@ import test from 'node:test'
 
 import { CommandDispatcher, parseCommand } from '../src/qq/commands.js'
 import { normalizeConfig } from '../src/core/config.js'
-import { validateName } from '../src/core/paths.js'
+import { validateName } from '@dsh/session-core/paths'
 
 function dispatcher(overrides = {}) {
   const sent = []
