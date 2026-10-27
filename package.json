@@ -23,7 +23,8 @@
     "dsh": ">=0.2.1-rc.2"
   },
   "scripts": {
-    "test": "node --test --test-force-exit"
+    "test": "node --test --test-force-exit",
+    "check": "node scripts/check-json.mjs"
   },
   "dsh": {
     "bundle": {

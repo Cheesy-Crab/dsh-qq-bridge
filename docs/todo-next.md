@@ -1,4 +1,4 @@
-# 下一阶段 TODO（可执行版）
+﻿# 下一阶段 TODO（可执行版）
 
 状态基线：2026-10-28 03:30  
 当前版本：
@@ -418,12 +418,12 @@ packages/platform-core/src/adapter-host.js
 
 ## P2-2 CI
 
-- [ ] JSON parse 检查
-- [ ] BOM 检查
-- [ ] manifest schema 检查
-- [ ] platform-core CI
-- [ ] session-core CI
-- [ ] QQ CI 保持 ubuntu/windows
+- [x] JSON parse 检查
+- [x] BOM 检查
+- [x] manifest schema 检查
+- [x] platform-core CI
+- [x] session-core CI
+- [x] QQ CI 保持 ubuntu/windows
 
 ## P2-3 健康状态
 
@@ -495,3 +495,4 @@ dsh-tavern-qq
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
