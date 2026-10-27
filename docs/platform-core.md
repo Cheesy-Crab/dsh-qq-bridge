@@ -1,5 +1,17 @@
 # 平台核心（Platform Core）
 
+独立仓库：
+
+**https://github.com/Cheesy-Crab/dsh-platform-core**
+
+安装：
+
+```text
+https://github.com/Cheesy-Crab/dsh-platform-core.git#v0.41.0
+```
+
+QQ 仓库中的 `packages/platform-core` 只保留为迁移期副本；新代码应安装独立包 `@dsh/platform-core`。
+
 ## 定位
 
 平台核心是“人”的运行时，不是 QQ 适配器。
