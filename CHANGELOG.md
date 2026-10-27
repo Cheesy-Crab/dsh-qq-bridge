@@ -1,5 +1,11 @@
 # 变更记录
 
+## 0.46.1
+
+- 升级 `@dsh/platform-core` 到 `v0.41.1`，包含 License 和核心包发现排除。
+- QQ 安装/部署文档更新到 `v0.46.1`。
+- 清理平台核心文档中的迁移副本描述。
+
 ## 0.46.0
 
 - `@dsh/session-core` 提供 `accessService`，QQ 通过它创建 UserStore。

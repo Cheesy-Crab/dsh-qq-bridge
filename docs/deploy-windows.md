@@ -1,4 +1,4 @@
-# Windows 部署（DSH Desktop 一键版）
+﻿# Windows 部署（DSH Desktop 一键版）
 
 适用于 Windows 10/11。目标：把 QQ Bridge 装进 **DSH Desktop 本身**，让 Desktop 同时
 跑 bridge、NapCat 和设置页；不再需要 qqweb、浏览器页面或单独启动 NapCat。
@@ -23,13 +23,13 @@ DSH Desktop 侧边栏：**插件 → 添加插件 → 安装第三方插件**，
 ### 方式 A：GitHub 地址（推荐）
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.5
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.46.1
 ```
 
 或：
 
 ```
-github:Cheesy-Crab/dsh-qq-bridge#v0.36.5
+github:Cheesy-Crab/dsh-qq-bridge#v0.46.1
 ```
 
 仓库是 **public**，不需要 GitHub 凭据。
@@ -178,3 +178,4 @@ napcat:
 ```
 
 其余 bridge/agent 行为相同，见 [deploy-linux.md](deploy-linux.md)。
+

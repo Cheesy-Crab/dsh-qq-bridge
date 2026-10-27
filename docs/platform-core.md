@@ -11,11 +11,11 @@
 安装：
 
 ```text
-https://github.com/Cheesy-Crab/dsh-platform-core.git#v0.41.0
-https://github.com/Cheesy-Crab/dsh-session-core.git#v0.43.0
+https://github.com/Cheesy-Crab/dsh-platform-core.git#v0.41.1
+https://github.com/Cheesy-Crab/dsh-session-core.git#v0.46.0
 ```
 
-QQ 仓库中的 `packages/platform-core` 只保留为迁移期副本；新代码应安装独立包 `@dsh/platform-core`。
+QQ 仓库不再保存平台核心或会话核心副本；两者通过包依赖安装。
 
 ## 定位
 
@@ -57,7 +57,7 @@ test/platform-boundary.test.js
 ## 模块
 
 ```text
-packages/platform-core/
+dsh-platform-core/
 ├─ package.json             @dsh/platform-core
 └─ src/
    ├─ index.js              公开 API

@@ -1,4 +1,4 @@
-# dsh-qq-bridge
+﻿# dsh-qq-bridge
 
 QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。每个客户端 QQ 管理自己的工作区，每个群有专属工作区，普通消息即对话，`/` 开头为指令。
 
@@ -13,7 +13,7 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.36.5
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.46.1
 ```
 
 仓库是 public。也可以填本地小包目录：
@@ -404,3 +404,4 @@ wscript.exe //B scripts\restart-dsh-hidden.vbs
 - 密钥会导入 DSH 凭据存储（`~/.dsh/.credentials.yaml`）；文本文件仍是每次启动的来源，文件存在时会覆盖存储值。
 - 通过 CLI 启动的 profile 没有 `DEEPSEEK_API_KEY`，真实对话会报 `MISSING_CREDENTIAL`。
 - Windows 控制台里中文日志可能显示为乱码，那是 `Get-Content` 的编码问题，数据本身是 UTF-8。
+
