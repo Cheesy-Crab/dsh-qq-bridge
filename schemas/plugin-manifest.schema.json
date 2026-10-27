@@ -2,18 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dsh.local/schemas/plugin-manifest.schema.json",
   "title": "DSH plugin manifest (dsh field)",
-  "description": "The manifest a DSH plugin declares under package.json's dsh field. Only pluginApi is universally required; a plugin that emits media MUST also declare tools and delivery.",
+  "description": "Capability-first manifest for a DSH plugin. The platform reads capabilities from an enabled plugin; tools are implementation bindings. Legacy prompts/tools entries are accepted for migration only.",
   "type": "object",
   "required": ["pluginApi"],
   "properties": {
     "pluginApi": {
       "type": "string",
       "pattern": "^1\\.[0-9]+(\\.[0-9]+)?$",
-      "description": "Contract version. The platform refuses an unsupported major version."
+      "description": "Contract version. 1.0 is legacy tool-first; 1.1 is capability-first. The platform refuses an unsupported major version."
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Capabilities this plugin contributes. Required by v1.1; legacy plugins may omit it temporarily.",
+      "items": {
+        "$ref": "https://dsh.local/schemas/capability.schema.json"
+      }
     },
     "prompts": {
       "type": "array",
-      "description": "Prompt files relative to the plugin root.",
+      "description": "Legacy plugin-level prompts. New plugins put prompts inside a capability.",
       "items": { "type": "string", "minLength": 1 }
     },
     "skills": {
@@ -23,7 +30,7 @@
     },
     "tools": {
       "type": "array",
-      "description": "Tools whose results follow the tool-result contract.",
+      "description": "Legacy tool declarations. New plugins use capability.bind.",
       "items": {
         "type": "object",
         "required": ["name"],
@@ -48,7 +55,7 @@
     },
     "delivery": {
       "type": "object",
-      "description": "Media kinds the platform may deliver automatically.",
+      "description": "Plugin-level delivery defaults; a capability may narrow this.",
       "properties": {
         "images": { "type": "boolean" },
         "videos": { "type": "boolean" },
@@ -59,10 +66,26 @@
     },
     "permissions": {
       "type": "array",
-      "description": "Platform capabilities the plugin needs; least privilege.",
+      "description": "Plugin-level default permissions; a capability may narrow this.",
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "pluginApi": { "pattern": "^1\\.(1|[2-9])" }
+        },
+        "required": ["pluginApi"]
+      },
+      "then": {
+        "required": ["capabilities"],
+        "properties": {
+          "capabilities": { "minItems": 1 }
+        }
+      }
+    }
+  ],
   "additionalProperties": true
 }

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.local/schemas/capability.schema.json",
+  "title": "DSH capability",
+  "description": "One capability a plugin contributes to the person-like platform. The platform selects capabilities, loads their prompts, enforces effects/permissions, and delivers declared outputs.",
+  "type": "object",
+  "required": ["id", "kind"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9-]*)+$",
+      "description": "Stable, namespaced capability id, e.g. image.generate or communication.qq."
+    },
+    "kind": {
+      "enum": ["perception", "action", "knowledge", "communication", "memory"],
+      "description": "Which part of the person this capability represents."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Model-facing description of what this capability does."
+    },
+    "input": {
+      "type": "object",
+      "description": "JSON Schema for the capability input."
+    },
+    "output": {
+      "type": "object",
+      "description": "JSON Schema for the capability result."
+    },
+    "effects": {
+      "type": "array",
+      "description": "Side effects the platform must govern.",
+      "items": {
+        "enum": ["read", "write", "network", "exec", "cost", "external_effect"]
+      },
+      "uniqueItems": true
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Platform permissions required to invoke this capability.",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Prompt files scoped to this capability.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "bind": {
+      "type": "object",
+      "description": "Implementation binding. action/communication capabilities MUST provide one.",
+      "properties": {
+        "tool": { "type": "string", "minLength": 1 },
+        "tools": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "delivery": {
+      "type": "array",
+      "description": "Media kinds this capability may ask the platform to deliver.",
+      "items": { "enum": ["image", "video", "audio", "file"] },
+      "uniqueItems": true
+    },
+    "retry": {
+      "type": "object",
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "recovery": {
+      "type": "object",
+      "description": "How the platform may recover without re-invoking the capability.",
+      "properties": {
+        "operationId": { "type": "boolean" },
+        "resumeTool": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "when": {
+      "type": "object",
+      "description": "Optional activation conditions for prompt loading.",
+      "properties": {
+        "surfaces": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

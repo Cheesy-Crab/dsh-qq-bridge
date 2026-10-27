@@ -1,129 +1,166 @@
-# DSH 插件接口规范 v1.0
+# DSH 插件接口规范 v1.1（能力优先）
 
 状态：草案  
-适用范围：DSH 平台上可被 QQ Bridge 及其他聊天/交付表面消费的插件。
+适用范围：DSH 平台上可被核心、QQ Bridge 及其他沟通表面消费的插件。
 
-## 1. 目标
+## 1. 模型：平台是人，插件是能力
 
-平台不感知具体插件的私有字段、提示词或重试逻辑。插件通过本规范声明：
+平台不是一个“工具容器”，而是一个人的运行时：
 
-- 自己提供哪些提示词；
-- 工具会产生哪些输出；
-- 输出如何交付；
-- 失败是否可重试、如何恢复；
-- 需要哪些权限；
-- 如何做安全校验。
+```text
+平台核心
+├─ 人格 / 身份
+├─ 意图 / 决策
+├─ 记忆（会话、工作区）
+├─ 能力选择与编排
+├─ 权限 / 审批 / 审计
+└─ 表达（沟通能力）
+```
 
-平台只实现通用契约，不为新插件写代码或写死提示词。
+插件提供这个人的能力：
+
+| 人的部分 | 能力类型 | 例子 |
+|---|---|---|
+| 眼睛、耳朵 | `perception` | 读文件、看图、抓网页、截图 |
+| 手、脚 | `action` | 写文件、执行命令、生图、改图 |
+| 学识 | `knowledge` | skill、领域方法、提示词 |
+| 记忆 | `memory` | 工作区、会话归档、检索 |
+| 嘴、耳朵 | `communication` | QQ、Web、邮件 |
+
+QQ Bridge 是 `communication.qq`，不是平台本身，也不应该知道 image-gen 的私有逻辑。
 
 ## 2. 规范性用语
 
-- **MUST**：不满足即视为不合规，平台可以拒绝加载或拒绝交付。
-- **SHOULD**：不满足时平台应降级并记录告警。
-- **MAY**：可选能力。
+- **MUST**：不满足即不合规，平台可以拒绝加载或拒绝交付。
+- **SHOULD**：不满足时降级并记录告警。
+- **MAY**：可选。
 
 ## 3. 合规等级
 
 | 等级 | 要求 |
 |---|---|
-| Core | 提供 `dsh.pluginApi`，声明权限，不直接访问聊天通道 |
-| Prompt | 通过文件贡献提示词，不把插件私有逻辑写进平台 |
-| Output | 工具输出使用 `meta.dsh.outputs` 声明媒体 |
-| Recovery | 可恢复操作提供 `operation.id` 与 `operation.resume` |
+| Core | 声明 `dsh.pluginApi` 与至少一个 capability |
+| Prompt | capability 自带提示词文件 |
+| Output | 工具结果使用 `meta.dsh.outputs` 声明媒体 |
+| Recovery | 可恢复操作声明 `operation` / `resume` |
 
-只有 Core 是“能被平台加载”的最低要求；产生媒体输出的工具 MUST 满足 Output。
+产生媒体或费用的能力 MUST 满足 Output；可恢复操作 SHOULD 满足 Recovery。
 
-## 4. 插件清单
+## 4. 能力清单
 
-插件在 `package.json` 的 `dsh` 字段中声明：
-
-机器可读 schema：[schemas/plugin-manifest.schema.json](../schemas/plugin-manifest.schema.json)。
+插件在 `package.json` 的 `dsh` 字段中声明能力，工具只是能力的实现绑定：
 
 ```json
 {
   "dsh": {
-    "pluginApi": "1.0",
-    "prompts": ["./prompts/image-generation.md"],
-    "skills": ["./skills/image-gen/SKILL.md"],
-    "tools": [
+    "pluginApi": "1.1",
+    "capabilities": [
       {
-        "name": "generate_image",
-        "capability": "image",
-        "outputs": ["image"],
-        "retry": { "maxAttempts": 1 }
+        "id": "image.generate",
+        "kind": "action",
+        "title": "生成图片",
+        "description": "根据文字生成图片，可产生外部费用。",
+        "effects": ["network", "cost"],
+        "permissions": ["image"],
+        "prompts": ["./prompts/image-generation.md"],
+        "bind": { "tool": "generate_image" },
+        "delivery": ["image"],
+        "retry": { "maxAttempts": 1 },
+        "recovery": {
+          "operationId": true,
+          "resumeTool": "resume_image_operation"
+        }
       }
-    ],
-    "delivery": {
-      "images": true,
-      "files": false
-    }
+    ]
   }
 }
 ```
+
+机器可读 schema：
+
+- [plugin-manifest.schema.json](../schemas/plugin-manifest.schema.json)
+- [capability.schema.json](../schemas/capability.schema.json)
 
 字段：
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| `pluginApi` | 是 | 接口版本，当前为 `1.0`；平台拒绝不兼容主版本 |
-| `prompts` | 否 | 提示词文件，相对插件根目录 |
-| `skills` | 否 | 技能文件，由 DSH skill 机制加载 |
-| `tools` | 否 | 工具声明；工具产生媒体时必填 |
-| `delivery` | 否 | 平台可自动交付的媒体类型 |
-| `permissions` | 否 | 插件需要的平台能力，如 `image`、`workspace` |
+| `pluginApi` | 是 | `1.x`；平台拒绝不兼容主版本 |
+| `capabilities` | 是 | 至少一个能力 |
+| `prompts` | 否 | 兼容旧插件；新插件应放在 capability 内 |
+| `tools` | 否 | 兼容旧清单；新插件用 `bind` |
+| `delivery` | 否 | 插件级默认交付策略 |
+| `permissions` | 否 | 插件级默认权限；能力可覆盖 |
 
 ### 4.1 版本规则
 
-- 使用语义化版本；`1.x` 向后兼容。
+- 语义化版本；`1.x` 向后兼容。
 - 平台 MUST 拒绝 `pluginApi` 主版本不匹配的插件。
-- 插件 MUST 在破坏性变更时提升主版本。
+- 破坏性变更提升主版本。
 
-## 5. 提示词贡献
+## 5. 能力类型
 
-提示词是插件自带的纯文本文件，平台按条件加载；QQ Bridge 不再为具体插件写死提示词。
+| kind | 含义 |
+|---|---|
+| `perception` | 获取信息：读、看、听、搜索 |
+| `action` | 改变状态：写、执行、生成、修改 |
+| `knowledge` | 提供方法：skill、领域规则 |
+| `communication` | 与外部沟通：QQ、Web、邮件 |
+| `memory` | 保存/检索会话和工作区信息 |
 
-### 5.1 文件格式
+## 6. 能力效果
 
-Markdown + frontmatter：
+| effect | 说明 |
+|---|---|
+| `read` | 读取工作区或外部数据 |
+| `write` | 写工作区 |
+| `network` | 访问外部网络 |
+| `exec` | 执行命令 |
+| `cost` | 产生费用 |
+| `external_effect` | 外部副作用，例如发消息 |
 
-机器可读 schema：[schemas/prompt.schema.json](../schemas/prompt.schema.json)。
+平台根据 `effects` 决定审批、沙箱和额度，不根据插件名判断。
+
+## 7. 提示词归属能力
+
+提示词属于 capability，不属于平台，也不属于某个固定插件。
+
+### 7.1 文件格式
 
 ```md
 ---
 id: image-generation
 order: 200
 when:
-  tools: [generate_image, edit_image]
-  capabilities: [image]
+  capabilities: [image.generate, image.edit]
   surfaces: [qq]
 ---
 生成或编辑图片后，使用平台输出契约交付图片。
-不要直接把图片路径当作已发送。
 ```
+
+机器可读 schema：[prompt.schema.json](../schemas/prompt.schema.json)。
 
 字段：
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| `id` | 是 | 插件内唯一，平台展开为 `<plugin-id>:<id>` |
-| `order` | 是 | 0–1000，数字小的先注入 |
-| `when.tools` | 否 | 任一工具激活时加载 |
-| `when.capabilities` | 否 | 需要的能力 |
-| `when.surfaces` | 否 | `qq`、`web` 等；省略表示全部 |
+| `id` | 是 | 能力内唯一；平台展开为 `<plugin-id>:<capability-id>:<id>` |
+| `order` | 是 | 0–1000，小的先注入 |
+| `when.capabilities` | 否 | 激活的能力 |
+| `when.surfaces` | 否 | `qq`、`web` 等 |
+| `when.tools` | 否 | 兼容旧条件 |
 | `when.modes` | 否 | `chat`、`design` 等 |
 
-### 5.2 安全约束
+### 7.2 安全约束
 
 - 提示词 MUST 来自插件包，不得包含用户输入、聊天原文或密钥。
-- v1 不支持模板变量插值；平台只追加受控的运行时上下文。
+- v1.1 不支持模板变量插值；平台只追加受控运行时上下文。
 - 提示词 MUST 不包含“直接调用 QQ/NapCat/OneBot”的指令。
 - 插件不得要求平台把用户消息拼进 system prompt。
 
-## 6. 工具结果契约
+## 8. 工具结果契约
 
-所有产生媒体、费用或可恢复操作的工具，在结果 `meta.dsh` 中声明：
-
-机器可读 schema：[schemas/tool-result.schema.json](../schemas/tool-result.schema.json)。
+产生媒体、费用或可恢复操作的工具，在 `meta.dsh` 中声明：
 
 ```json
 {
@@ -149,9 +186,9 @@ when:
         }
       },
       "retry": {
-        "retryable": false,
-        "reason": "auth",
-        "maxAttempts": 0
+        "retryable": true,
+        "reason": "transient_network",
+        "maxAttempts": 1
       },
       "cost": {
         "amount": 14,
@@ -163,12 +200,14 @@ when:
 }
 ```
 
-### 6.1 outputs
+机器可读 schema：[tool-result.schema.json](../schemas/tool-result.schema.json)。
+
+### 8.1 outputs
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `kind` | 是 | `image` / `video` / `audio` / `file` / `text` |
-| `path` | 是* | 工作区内路径，建议相对工作区根目录 |
+| `path` | 是* | 工作区路径，建议相对工作区根目录 |
 | `attachmentId` | 是* | 内联附件 id；与 `path` 二选一 |
 | `mime` | 是 | 标准 MIME |
 | `width` / `height` | 否 | 图片/视频尺寸 |
@@ -184,18 +223,18 @@ when:
 - 只自动交付 `delivery` 允许的媒体；
 - 非图片默认不自动发到 QQ。
 
-### 6.2 operation
+### 8.2 operation
 
 | 字段 | 说明 |
 |---|---|
 | `id` | 稳定操作 id；重试必须复用 |
 | `recoverable` | 是否可在不重新提交的情况下恢复 |
-| `resume.tool` | 恢复工具名；MUST 是幂等的 |
+| `resume.tool` | 恢复工具名，MUST 幂等 |
 | `resume.args` | 恢复参数，必须可序列化 |
 
-平台收到可恢复失败时 SHOULD 调用 `resume`，而不是重新执行原工具。
+平台收到可恢复失败时 SHOULD 调用 `resume`，而不是重新执行原能力。
 
-### 6.3 retry
+### 8.3 retry
 
 | 字段 | 说明 |
 |---|---|
@@ -204,9 +243,9 @@ when:
 | `maxAttempts` | 0 或 1；平台上限为 1 |
 | `afterMs` | 建议等待时间 |
 
-平台 MUST 不超过 `maxAttempts`，且 MUST 不自动重试 `auth`、`quota`、`invalid_input`。
+平台 MUST 不超过 `maxAttempts`，且 MUST 不自动重试 `auth`、`quota_exceeded`、`invalid_input`。
 
-### 6.4 cost
+### 8.4 cost
 
 | 字段 | 说明 |
 |---|---|
@@ -214,11 +253,9 @@ when:
 | `unit` | `buzz`、`usd`、`tokens` 等 |
 | `provider` | 计费来源 |
 
-平台只对已配置的计费单位扣额度；未知单位必须记录但不扣。
+平台只对已配置的单位扣额度；未知单位记录但不扣。
 
-## 7. 错误分类
-
-工具失败时返回：
+## 9. 错误分类
 
 ```json
 {
@@ -237,8 +274,6 @@ when:
 }
 ```
 
-标准 `code`：
-
 | code | 可重试 | 平台行为 |
 |---|---|---|
 | `transient_network` | 是 | 可通过 `resume` 恢复；最多一次 |
@@ -252,7 +287,7 @@ when:
 
 平台 MUST 不把 API key、token、完整上游响应写进 QQ 消息。
 
-## 8. 交付规则
+## 10. 交付
 
 插件 MUST NOT 直接调用 QQ、NapCat、OneBot 或任何聊天 API。
 
@@ -264,7 +299,7 @@ when:
 - 是否扣额度；
 - 是否展示 caption。
 
-QQ Bridge 只保留平台语义：
+QQ Bridge 只保留沟通能力语义：
 
 ```text
 群聊要 @
@@ -273,13 +308,13 @@ QQ Bridge 只保留平台语义：
 非图片不自动发
 ```
 
-## 9. 安全要求
+## 11. 安全要求
 
 插件 MUST：
 
 - 输出路径限制在工作区；
 - 不在提示词、错误、日志中放密钥；
-- 不读取工作区外的文件，除非平台显式授权；
+- 不读取工作区外文件，除非平台显式授权；
 - 不把用户输入拼进 system prompt；
 - 不自行重试或递归生成；
 - 对可恢复操作提供稳定 `operation.id`；
@@ -290,9 +325,33 @@ QQ Bridge 只保留平台语义：
 - 校验路径、MIME、大小；
 - 拒绝未知 `pluginApi` 主版本；
 - 对未知插件字段忽略而不是崩溃；
-- 对不合规插件降级为“仅聊天工具”，不自动交付媒体。
+- 对不合规插件降级为“仅聊天能力”，不自动交付媒体。
 
-## 10. 兼容旧插件
+## 12. 沟通能力示例：QQ Bridge
+
+```json
+{
+  "dsh": {
+    "pluginApi": "1.1",
+    "capabilities": [
+      {
+        "id": "communication.qq",
+        "kind": "communication",
+        "title": "QQ 沟通",
+        "effects": ["network", "external_effect"],
+        "permissions": ["communication"],
+        "prompts": ["./prompts/qq-transport.md"],
+        "bind": { "tool": "qq.send" },
+        "delivery": ["image"]
+      }
+    ]
+  }
+}
+```
+
+它不应该声明 `image.generate`，也不应该读取 image-gen 的 `savedTo`。
+
+## 13. 兼容旧插件
 
 旧插件可能只返回：
 
@@ -300,17 +359,28 @@ QQ Bridge 只保留平台语义：
 { "savedTo": "...", "cost": { "total": 14 } }
 ```
 
-平台 MAY 通过适配层读取，但该行为属于遗留兼容，不算合规。
+或旧清单：
 
-新插件 MUST 使用 `meta.dsh`，不得依赖平台识别私有字段。
+```json
+{ "dsh": { "tools": [...] } }
+```
 
-## 11. 验证清单
+平台 MAY 通过适配层读取，但属于遗留兼容，不算合规。
 
-插件发布前 MUST 通过：
+新插件 MUST：
+
+- 使用 `capabilities`；
+- 提示词放在 capability；
+- 工具结果使用 `meta.dsh`；
+- 不依赖平台识别私有字段。
+
+## 14. 验证清单
 
 - [ ] `dsh.pluginApi` 为 `1.x`
-- [ ] 提示词文件存在且 frontmatter 合法
-- [ ] 所有媒体输出在 `meta.dsh.outputs`
+- [ ] 至少一个 `capabilities`，`id` / `kind` 合法
+- [ ] `action` / `communication` 能力有 `bind`
+- [ ] prompt frontmatter 合法，且属于能力
+- [ ] 媒体输出在 `meta.dsh.outputs`
 - [ ] 路径在工作区内
 - [ ] 错误使用标准 `code`
 - [ ] 可恢复操作提供 `operation.id` / `resume`
@@ -318,32 +388,9 @@ QQ Bridge 只保留平台语义：
 - [ ] 不在提示词/错误中泄露密钥
 - [ ] 不直接调用 QQ/NapCat/OneBot
 
-## 12. 示例：image-gen
+## 15. 当前迁移状态
 
-```json
-{
-  "dsh": {
-    "pluginApi": "1.0",
-    "prompts": ["./prompts/image-generation.md", "./prompts/visual-design.md"],
-    "tools": [
-      {
-        "name": "generate_image",
-        "capability": "image",
-        "outputs": ["image"],
-        "retry": { "maxAttempts": 1 }
-      }
-    ],
-    "delivery": { "images": true, "files": false },
-    "permissions": ["image", "workspace"]
-  }
-}
-```
-
-平台据此加载提示词、发送图片、扣 `buzz`，不再需要 QQ Bridge 里写：
-
-```text
-如果是 image-gen 的 savedTo ...
-如果是 Civitai 的 ECONNRESET ...
-```
-
-这些都属于插件自己的契约与实现。
+- 本规范是 v1.1 目标接口。
+- QQ Bridge 现有 `qq:visual-design`、image-gen 专属重试提示仍属于旧实现，待迁移。
+- image-gen 目前仍返回 `savedTo` / `cost.total`，待迁到 `meta.dsh`。
+- 平台侧加载器、校验器、通用交付器尚未实现；本文件先定义契约。
