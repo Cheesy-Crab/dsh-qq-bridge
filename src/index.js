@@ -44,11 +44,19 @@ export function apply(ctx, rawConfig) {
     })
   }
 
-  const agentExtensions = new AgentExtensionRegistry({ log })
+  let agentExtensions
   try {
-    ctx.provide('agentExtensions', agentExtensions)
-  } catch (error) {
-    log('warn', `agentExtensions service was not provided: ${error?.message ?? error}`)
+    agentExtensions = ctx.get('agentExtensions')
+  } catch {
+    agentExtensions = undefined
+  }
+  if (!agentExtensions) {
+    agentExtensions = new AgentExtensionRegistry({ log })
+    try {
+      ctx.provide('agentExtensions', agentExtensions)
+    } catch (error) {
+      log('warn', `agentExtensions service was not provided: ${error?.message ?? error}`)
+    }
   }
 
   const napcat = new NapCatSupervisor({

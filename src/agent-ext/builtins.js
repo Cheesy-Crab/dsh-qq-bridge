@@ -3,7 +3,6 @@ import { forwardMediaOutputs } from '../platform/delivery.js'
 import { forwardPresentedImages, presentedImages } from './present.js'
 import { archiveSessionImage } from './session-images.js'
 import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
-import { installCreativePrompt, installToolFailurePrompt } from '../platform/prompts/index.js'
 
 /**
  * QQ's built-in behavior extensions. They are registered into the shared
@@ -13,14 +12,6 @@ import { installCreativePrompt, installToolFailurePrompt } from '../platform/pro
  */
 export function qqBuiltinExtensions({ approval, chargeImage, log }) {
   return [
-    {
-      name: 'platform:tool-failures',
-      onSession: ({ agent, state }) => installToolFailurePrompt(agent, state, log),
-    },
-    {
-      name: 'platform:creative',
-      onSession: ({ agent, state }) => installCreativePrompt(agent, state, log),
-    },
     {
       name: 'qq:group',
       onSession: ({ agent, chat, state }) => installGroupPrompt(agent, chat, state, log),

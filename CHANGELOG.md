@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.41.0
+
+- `@dsh/platform-core` 成为可独立加载的 DSH 插件，提供 `agentExtensions` 与 `pluginRegistry` 服务。
+- 通用提示词由平台插件注册；QQ 适配器只注册 QQ 扩展。
+- QQ 适配器优先消费平台提供的 `agentExtensions`，没有时才创建兼容注册表。
+- profile 的 bundle 顺序改为 `platform-core` 在 `qq-bridge` 之前。
+- 新增平台插件入口测试。
+
 ## 0.40.0
 
 - 平台核心物理拆分到 `packages/platform-core`（包名 `@dsh/platform-core`）。
