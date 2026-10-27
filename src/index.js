@@ -59,6 +59,13 @@ export function apply(ctx, rawConfig) {
     }
   }
 
+  let sessionService
+  try {
+    sessionService = ctx.get('sessionService')
+  } catch {
+    sessionService = undefined
+  }
+
   const napcat = new NapCatSupervisor({
     config: config.napcat,
     log,
@@ -66,7 +73,7 @@ export function apply(ctx, rawConfig) {
     isConnected: () => bridge.transport?.connected === true,
   })
 
-  const bridge = new QqBridge({ ctx, config, root, log, napcat, agentExtensions })
+  const bridge = new QqBridge({ ctx, config, root, log, napcat, agentExtensions, sessionService })
 
   let credentials
   ctx.inject(['credentials'], (credCtx) => {

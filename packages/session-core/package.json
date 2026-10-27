@@ -1,20 +1,37 @@
 {
   "name": "@dsh/session-core",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "private": true,
-  "description": "Surface-neutral DSH session and workspace manager.",
+  "description": "Surface-neutral DSH session service: workspace, session lifecycle, queue and reply handling.",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
     "./manager": "./src/manager.js",
     "./paths": "./src/paths.js",
     "./reply": "./src/reply.js",
     "./titles": "./src/titles.js"
   },
   "files": [
-    "src"
+    "src",
+    "cordis.patch.yml",
+    "README.md"
   ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "pluginApi": "1.1",
+    "capabilities": [
+      {
+        "id": "session.core",
+        "kind": "memory",
+        "title": "Session Core",
+        "description": "Core-owned session and workspace lifecycle for all communication surfaces."
+      }
+    ]
+  },
   "engines": {
     "node": ">=22"
   }

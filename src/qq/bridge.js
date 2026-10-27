@@ -53,13 +53,14 @@ export class QqBridge {
   /**
    * @param {{ ctx: any, config: any, root: string, log: (level: string, message: string) => void, napcat?: any }} options
    */
-  constructor({ ctx, config, root, log, napcat, agentExtensions }) {
+  constructor({ ctx, config, root, log, napcat, agentExtensions, sessionService }) {
     this.ctx = ctx
     this.config = config
     this.root = root
     this.log = log
     this.napcat = napcat
     this.agentExtensions = agentExtensions
+    this.sessionService = sessionService
     this.extensionsRegistered = false
     this.credentials = undefined
     this.transport = undefined
@@ -130,7 +131,10 @@ export class QqBridge {
       turnEnd: (context) => this.agentExtensions?.turnEnd(context),
     }
 
-    this.chat = new ChatAgentManager({
+    const createManager = typeof this.sessionService?.createManager === 'function'
+      ? (options) => this.sessionService.createManager(options)
+      : (options) => new ChatAgentManager(options)
+    this.chat = createManager({
       ctx: this.ctx,
       config: this.config,
       root: this.root,

@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.43.0
+
+- `@dsh/session-core` 成为核心服务插件，提供 `sessionService`。
+- QQ 适配器通过 `sessionService.createManager()` 创建会话管理器，不再直接 new。
+- profile 加载顺序改为：platform-core → session-core → qq-bridge。
+- 平台核心的插件发现忽略平台/会话/QQ 核心包。
+- 新增 session service 插件测试。
+
 ## 0.42.0
 
 - 会话 / 工作区 / 路径 / 回复处理移到独立包 `@dsh/session-core`。
