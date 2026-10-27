@@ -1,5 +1,11 @@
 ﻿# 变更记录
 
+## 0.53.1
+
+- 修复 platform-core async apply 导致 adapterHost 未提供、QQ 插件跳过加载。
+- 平台核心 0.46.1。
+
+
 ## 0.53.0
 
 - 新增 /platform/status、/session/status、/profile/status。
@@ -528,6 +534,7 @@
 - 插件骨架：bundle patch、配置校验、生命周期。
 - 跨平台路径层（`E:\QQdsh` / `${DSH_HOME}/qq-workspaces`）。
 - 四个宿主接缝自检：工作区、会话/agent、审批策略、工具限制。
+
 
 
 
