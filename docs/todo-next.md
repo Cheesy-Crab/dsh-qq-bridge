@@ -4,13 +4,13 @@
 当前版本：
 
 ```text
-@dsh/platform-core  0.46.0
+@dsh/platform-core  0.46.2
 @dsh/session-core   0.51.0
-dsh-qq-bridge       0.53.0
+dsh-qq-bridge       0.53.2
 dsh-tavern-qq       0.1.0
 ```
 
-> 以上版本已安装到 desktop profile；当前运行进程仍是 0.52，未自动重启。下次显式重启后启用 0.53。
+> 以上版本已安装到 desktop profile；当前运行进程是 0.53.1；0.53.2 已安装，下次重启启用。
 
 ## 执行状态
 
@@ -432,7 +432,7 @@ packages/platform-core/src/adapter-host.js
 - [x] platform-core 不再自己扫 `node_modules`
 - [x] 改为读取 DSH plugin manager inventory
 - [x] 保留 `extraDirs` 兼容测试
-- [ ] 增加 inventory 变化失效（启动快照；host 变化仍由重启/HMR 处理）
+- [x] inventory 过滤已禁用/失败的插件（启动快照；host 变化仍由重启/HMR 处理）
 
 ## P2-2 CI
 
@@ -518,6 +518,7 @@ dsh-tavern-qq
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
 
 
 

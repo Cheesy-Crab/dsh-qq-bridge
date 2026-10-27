@@ -1,5 +1,11 @@
 ﻿# 变更记录
 
+## 0.53.2
+
+- 使用 Cordis loader inventory 过滤已禁用/失败的插件。
+- 平台核心 0.46.2。
+
+
 ## 0.53.1
 
 - 修复 platform-core async apply 导致 adapterHost 未提供、QQ 插件跳过加载。
