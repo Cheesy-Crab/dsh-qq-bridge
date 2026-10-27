@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.40.0
+
+- 平台核心物理拆分到 `packages/platform-core`（包名 `@dsh/platform-core`）。
+- `src/platform/*` 改为兼容 re-export，现有 QQ 适配器无需一次性改 import。
+- 新增插件发现与注册表：`discoverPlugins` / `PluginRegistry`，从 profile 的 node_modules 读取已安装插件的 `dsh` 清单。
+- 平台边界测试改为扫描独立包，确保核心不依赖 QQ。
+- 根包 `files` 包含平台核心目录，发布包不再丢失核心。
+
 ## 0.39.0
 
 - 平台核心与 QQ 适配器彻底分离依赖方向：`src/platform` 不再 import QQ/NapCat/OneBot。

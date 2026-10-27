@@ -5,7 +5,7 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const platformDir = path.join(root, 'src', 'platform')
+const platformDir = path.join(root, 'packages', 'platform-core', 'src')
 
 function files(dir) {
   const out = []

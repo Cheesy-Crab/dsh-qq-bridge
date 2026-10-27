@@ -1,2 +1,2 @@
-export { installCreativePrompt } from './creative.prompt.js'
-export { installToolFailurePrompt } from './tool-failures.prompt.js'
+﻿export * from '../../../packages/platform-core/src/prompts/index.js'
+

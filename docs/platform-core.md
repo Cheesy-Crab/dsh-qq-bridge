@@ -40,15 +40,20 @@ test/platform-boundary.test.js
 ## 模块
 
 ```text
-src/platform/
-├─ index.js                 公开 API
-├─ plugin-adapter.js        分类 / 旧结果适配
-├─ delivery.js              通用媒体交付
-├─ events.js                会话事件读取
-└─ prompts/
-   ├─ creative.prompt.js    通用创作策略
-   └─ tool-failures.prompt.js 通用失败策略
+packages/platform-core/
+├─ package.json             @dsh/platform-core
+└─ src/
+   ├─ index.js              公开 API
+   ├─ plugin-adapter.js     分类 / 旧结果适配
+   ├─ delivery.js           通用媒体交付
+   ├─ events.js             会话事件读取
+   ├─ registry.js           插件发现 / 能力注册表
+   └─ prompts/
+      ├─ creative.prompt.js
+      └─ tool-failures.prompt.js
 ```
+
+根包的 `src/platform/*` 只保留兼容 re-export；新代码应直接依赖 `@dsh/platform-core`。
 
 ### 公开 API
 
@@ -57,12 +62,14 @@ import {
   classifyPlugin,
   createPluginAdapter,
   adaptToolResult,
+  discoverPlugins,
+  PluginRegistry,
   forwardMediaOutputs,
   generatedImageRecords,
   generatedImages,
   installCreativePrompt,
   installToolFailurePrompt,
-} from './platform/index.js'
+} from '@dsh/platform-core'
 ```
 
 ## 沟通适配器职责
@@ -94,6 +101,26 @@ QQ 适配器当前仍负责：
 - QQ 媒体发送与 mention。
 
 ## 插件进入平台
+
+### 发现
+
+平台核心从 DSH profile 的 `node_modules` 发现已安装插件，只读取 `package.json` 的 `dsh` 清单，不执行插件代码：
+
+```js
+import { discoverPlugins, PluginRegistry } from './platform/index.js'
+
+const plugins = discoverPlugins({
+  profileDir: 'C:/Users/me/.dsh/profiles/desktop',
+})
+
+const registry = new PluginRegistry(plugins)
+registry.forTool('generate_image')
+registry.capabilities()
+registry.prompts({ surfaces: ['qq'] })
+registry.describe()
+```
+
+### 分类
 
 ```text
 有 capabilities        → native

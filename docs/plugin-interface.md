@@ -400,6 +400,8 @@ QQ Bridge 只保留沟通能力语义：
 
 ## 16. 未适配插件的运行时分类
 
+平台从 profile 的 `node_modules` 发现已安装插件，只读取 `dsh` 清单，不执行插件代码；实现见 `src/platform/registry.js`。
+
 平台不能要求所有现存插件立即改代码，因此运行时先做保守分类。
 
 参考实现：[src/platform/plugin-adapter.js](../src/platform/plugin-adapter.js)。
