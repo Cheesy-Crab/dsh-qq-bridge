@@ -394,3 +394,103 @@ QQ Bridge 只保留沟通能力语义：
 - QQ Bridge 现有 `qq:visual-design`、image-gen 专属重试提示仍属于旧实现，待迁移。
 - image-gen 目前仍返回 `savedTo` / `cost.total`，待迁到 `meta.dsh`。
 - 平台侧加载器、校验器、通用交付器尚未实现；本文件先定义契约。
+
+## 16. 未适配插件的运行时分类
+
+平台不能要求所有现存插件立即改代码，因此运行时先做保守分类。
+
+参考实现：[src/platform/plugin-adapter.js](../src/platform/plugin-adapter.js)。
+
+### 16.1 分类结果
+
+| level | 条件 | 平台行为 |
+|---|---|---|
+| `native` | 有 `capabilities` | 信任声明，正常加载 |
+| `legacy-tools` | 只有 `tools` | 推断能力，按需人工复核 |
+| `knowledge-only` | 只有 `prompts`/`skills` | 注入知识，不执行工具 |
+| `unknown` | 什么也没有 | 观察模式，不自动交付 |
+
+分类器不会猜测插件名字，只使用清单和工具名中的通用动词。
+
+### 16.2 推断规则
+
+```text
+send/message/reply/notify/mail/qq  → communication
+read/get/list/search/fetch/browse  → perception
+generate/edit/draw/render/write    → action
+memory/archive/history/session      → memory
+skill/prompt/guide/knowledge        → knowledge
+```
+
+同时推断：
+
+- `outputs`：工具名含 image/draw/render 或显式 `outputs`
+- `effects`：`read`、`write`、`network`、`exec`、`cost`、`external_effect`
+- `permissions`：`image`、`exec`、`communication`
+- `bind`：原工具名
+
+推断出的 capability 标记：
+
+```json
+{
+  "inferred": true,
+  "confidence": "high|medium|low",
+  "requiresReview": true
+}
+```
+
+以下情况必须人工复核，平台不应自动信任：
+
+- `exec`
+- `network`
+- `external_effect`
+- 低置信度工具
+
+### 16.3 旧结果适配
+
+旧插件结果：
+
+```json
+{ "savedTo": "E:\\ws\\image.jpg", "cost": { "total": 14 } }
+```
+
+运行时归一化为：
+
+```json
+{
+  "source": "legacy",
+  "outputs": [
+    { "kind": "image", "path": "E:\\ws\\image.jpg", "mime": "image/jpeg" }
+  ],
+  "cost": { "amount": 14, "unit": "buzz" }
+}
+```
+
+原生 `meta.dsh` 优先；旧字段只在缺失时作为迁移兼容。
+
+### 16.4 接入方式
+
+```js
+import { createPluginAdapter } from './platform/plugin-adapter.js'
+
+const adapter = createPluginAdapter(packageJson, { pluginId: packageJson.name })
+
+// 按工具名找到推断出的能力
+adapter.capabilityForTool('generate_image')
+
+// 运行时归一化工具结果
+const normalized = adapter.normalizeResult(toolResult.meta)
+```
+
+平台根据 `level` 和 `requiresReview` 决定：
+
+- `native`：直接使用；
+- `legacy-tools`：可加载，但危险效果先复核；
+- `knowledge-only`：只加载 prompt；
+- `unknown`：只记录，不自动发图、不扣费。
+
+### 16.5 边界
+
+- 分类器不是安全沙箱；它只是把未知插件降级到可观察、可控的路径。
+- 推断出的 `effects` 只能用于审批提示，不能替代真实权限检查。
+- 旧插件即使被适配，也仍然不算符合 v1.1；适配层是迁移桥。

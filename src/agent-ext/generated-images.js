@@ -1,32 +1,33 @@
 import { sessionEventsFrom } from './events.js'
 import { presentedImages } from './present.js'
 import { archiveSessionImage } from './session-images.js'
+import { adaptToolResult } from '../platform/plugin-adapter.js'
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i
 
-function costOf(value) {
-  if (typeof value === 'number' && Number.isFinite(value)) return { total: value }
-  if (value !== null && typeof value === 'object' && typeof value.total === 'number') {
-    return { total: value.total, ...(typeof value.base === 'number' ? { base: value.base } : {}) }
-  }
-  return undefined
-}
-
 /**
- * Collect `savedTo` paths and provider cost from image-gen tool results.
- * `generate_image`, `generate_images` and `edit_image` all put their workspace
- * path in `meta`; Civitai also puts the charged Buzz under `meta.cost`.
+ * Collect images and provider cost from any tool result.
+ * Native `meta.dsh.outputs` / `meta.dsh.cost` are preferred; legacy
+ * `savedTo` / `cost.total` shapes are adapted during migration.
  * @param {unknown} value
  * @param {Map<string, { total?: number, base?: number }>} records
  */
 function collectRecords(value, records) {
-  if (value === null || typeof value !== 'object') return
-  if (typeof value.savedTo === 'string' && IMAGE_RE.test(value.savedTo)) {
-    const cost = costOf(value.cost)
-    if (cost !== undefined) records.set(value.savedTo, cost)
-    else if (!records.has(value.savedTo)) records.set(value.savedTo, {})
+  const adapted = adaptToolResult(value)
+  for (const output of adapted.outputs) {
+    if (output.kind !== 'image' || typeof output.path !== 'string' || !IMAGE_RE.test(output.path)) continue
+    const cost = adapted.cost
+    const recordCost = cost !== undefined
+      && typeof cost.amount === 'number'
+      && (cost.unit === undefined || cost.unit === 'buzz')
+      ? {
+          total: cost.amount,
+          ...(typeof cost.base === 'number' ? { base: cost.base } : {}),
+        }
+      : undefined
+    if (recordCost !== undefined) records.set(output.path, recordCost)
+    else if (!records.has(output.path)) records.set(output.path, {})
   }
-  for (const child of Object.values(value)) collectRecords(child, records)
 }
 
 /**

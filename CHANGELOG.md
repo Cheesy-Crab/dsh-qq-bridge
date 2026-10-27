@@ -1,5 +1,13 @@
 # 变更记录
 
+## 0.37.0
+
+- 新增未适配插件的运行时分类器与基础适配器：`src/platform/plugin-adapter.js`。
+- 支持 `native` / `legacy-tools` / `knowledge-only` / `unknown` 四级分类。
+- 从旧插件的 tools/prompts 推断能力、效果、权限与图片输出；危险效果标记人工复核。
+- 工具结果优先读取 `meta.dsh`，旧 `savedTo`/`cost.total` 归一化为通用输出与 Buzz 费用。
+- 生图转发改用通用结果适配器，不再只识别 image-gen 私有字段。
+
 ## 0.36.7
 
 - 生图网络类失败改为内部静默重试一次，不再询问用户；只有两次都失败才告知。
