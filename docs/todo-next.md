@@ -1,4 +1,4 @@
-# 下一阶段 TODO（可执行版）
+﻿# 下一阶段 TODO（可执行版）
 
 状态基线：2026-10-28 02:50  
 当前版本：
@@ -432,7 +432,7 @@ packages/platform-core/src/adapter-host.js
 - [x] platform-core 不再自己扫 `node_modules`
 - [x] 改为读取 DSH plugin manager inventory
 - [x] 保留 `extraDirs` 兼容测试
-- [ ] 增加 inventory 变化失效
+- [ ] 增加 inventory 变化失效（启动快照；host 变化仍由重启/HMR 处理）
 
 ## P2-2 CI
 
@@ -450,7 +450,12 @@ packages/platform-core/src/adapter-host.js
 - [x] `/profile/status`
 - [x] 输出 plugin count / capability count / profile count / revision
 
-## P2-4 Tavern 官方适配\n\n- [x] 新增 `dsh-tavern-qq` 包\n- [x] provider / bind / unbind 测试\n- [x] `/profile use tavern:<cardId>`\n- [ ] 安装到含 Tavern 的 profile（Tavern 未安装）
+## P2-4 Tavern 官方适配
+
+- [x] 新增 `dsh-tavern-qq` 包
+- [x] provider / bind / unbind 测试
+- [x] `/profile use tavern:<cardId>`
+- [ ] 安装到含 Tavern 的 profile（Tavern 未安装）
 
 新增：
 
@@ -513,6 +518,7 @@ dsh-tavern-qq
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
 
 
 
