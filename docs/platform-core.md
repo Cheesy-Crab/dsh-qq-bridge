@@ -182,13 +182,23 @@ forwardMediaOutputs({
 - `presentedFor`：该表面已展示的媒体；
 - `archive`：会话归档策略。
 
+## Web GUI 接入（TODO）
+
+Web GUI 的对话可以正常使用，但平台核心的 `agentExtensions` 目前只被 QQ 的 `ChatAgentManager` 消费。
+
+待办：
+
+- 在 DSH Host 增加通用 agent 创建 hook；
+- 或增加 Web 适配器，调用 `installCreativePrompt` / `installToolFailurePrompt`；
+- 接入后 Web 对话才具备平台级的创作和工具失败提示词。
+
 ## 迁移路线
 
 1. **代码边界**：平台目录不反向依赖 QQ（已完成）。
-2. **包边界**：把 `src/platform` 拆成独立包 `@dsh/platform-core`。
-3. **适配器边界**：QQ 作为独立包 `@dsh/qq-adapter` 依赖核心。
-4. **移除兼容 shim**：`agent-ext/events.js`、`agent-ext/generated-images.js`。
-5. **多沟通表面**：Web / Telegram 复用同一核心与契约。
+2. **包边界**：独立包 `@dsh/platform-core`（已完成）。
+3. **适配器边界**：QQ 作为独立包 `@dsh/qq-bridge` 依赖核心（已完成）。
+4. **移除兼容 shim**：`agent-ext/events.js`、`agent-ext/generated-images.js`（后续清理）。
+5. **多沟通表面**：Web / Telegram 复用同一核心与契约（Web 待接入）。
 
 ## 目标
 

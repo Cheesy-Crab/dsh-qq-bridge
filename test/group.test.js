@@ -10,10 +10,10 @@ test('group messages carry the sender QQ id; private messages do not', () => {
 })
 
 test('a group uses one principal for permission and quota', () => {
-  assert.equal(groupPrincipal({ type: 'group', id: '99' }), 'group:99')
-  assert.equal(groupPrincipal({ type: 'private', id: '42' }), '42')
-  assert.equal(quotaOwner({ type: 'group', id: '99', mention: '42' }), 'group:99')
-  assert.equal(quotaOwner({ type: 'private', id: '42' }), '42')
+  assert.equal(groupPrincipal({ type: 'group', id: '99' }), 'qq-group:99')
+  assert.equal(groupPrincipal({ type: 'private', id: '42' }), 'qq:42')
+  assert.equal(quotaOwner({ type: 'group', id: '99', mention: '42' }), 'qq-group:99')
+  assert.equal(quotaOwner({ type: 'private', id: '42' }), 'qq:42')
 })
 
 test('group prompt is only installed for group chats', () => {

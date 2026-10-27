@@ -1,5 +1,19 @@
 # 变更记录
 
+## 0.47.1
+
+- session-core 依赖固定为 HTTPS tarball，避免 CI 生成 `git+ssh` lock。
+- 保持 `v0.47.0` 的命名空间 principal 和额度清零。
+
+## 0.47.0
+
+- principal 切换为命名空间格式：
+  - 私聊：`qq:<QQ号>`
+  - 群聊：`qq-group:<群号>`
+- `UserStore` 自动迁移旧的裸 QQ 号和 `group:` 键。
+- 所有生图额度已清零。
+- Web GUI 的平台 agent 扩展接入标记为 TODO。
+
 ## 0.46.1
 
 - 升级 `@dsh/platform-core` 到 `v0.41.1`，包含 License 和核心包发现排除。

@@ -3,6 +3,7 @@ import path from 'node:path'
 import { ChatAgentManager } from '../workspace/chat.js'
 import { ApprovalBridge } from '../agent-ext/approval.js'
 import { UserStore } from '../access/users.js'
+import { qqGroupPrincipal, qqPrincipal } from '../access/identity.js'
 import { CommandDispatcher, parseCommand } from './commands.js'
 import { saveIncomingImage } from '../agent-ext/images.js'
 import { qqBuiltinExtensions } from '../agent-ext/builtins.js'
@@ -32,8 +33,8 @@ export function groupMessageText(message) {
  * @returns {string}
  */
 export function groupPrincipal(chat) {
-  if (chat?.type === 'group') return `group:${chat.id}`
-  return String(chat?.id ?? '')
+  if (chat?.type === 'group') return qqGroupPrincipal(chat.id)
+  return qqPrincipal(chat?.id)
 }
 
 /**

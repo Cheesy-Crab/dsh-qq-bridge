@@ -12,8 +12,8 @@ importers:
         specifier: github:Cheesy-Crab/dsh-platform-core#v0.41.1
         version: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/4ccf3dee18d3af59c5032dc1fdf78d4e5eedb9d3
       '@dsh/session-core':
-        specifier: github:Cheesy-Crab/dsh-session-core#v0.46.0
-        version: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/9395ad9e485ed837c4ec1f2ecbd865f82b3caf50
+        specifier: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0
+        version: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0
       ws:
         specifier: ^8.22.0
         version: 8.22.0
@@ -25,9 +25,9 @@ packages:
     version: 0.41.1
     engines: {node: '>=22'}
 
-  '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/9395ad9e485ed837c4ec1f2ecbd865f82b3caf50':
-    resolution: {gitHosted: true, integrity: sha512-JyN3xMkKEEp38veUUeM5R1Pvh+dM0hv5KKUVnBsV1GChWucgQvFWpS06vPMaVA3HzVxZ6Xqr56QAm/sj8DMQaQ==, tarball: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/9395ad9e485ed837c4ec1f2ecbd865f82b3caf50}
-    version: 0.46.0
+  '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0':
+    resolution: {integrity: sha512-5nmCIfMM7XlUBIIAMIfmTaeRn7fUs85MANLlxny+QRHSMbHQOCDeYmwH0YuWYnhrEIXq+YLwtD1cr5+zLUYtrA==, tarball: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0}
+    version: 0.47.0
     engines: {node: '>=22'}
 
   ws@8.22.0:
@@ -46,6 +46,6 @@ snapshots:
 
   '@dsh/platform-core@https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/4ccf3dee18d3af59c5032dc1fdf78d4e5eedb9d3': {}
 
-  '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/9395ad9e485ed837c4ec1f2ecbd865f82b3caf50': {}
+  '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.47.0': {}
 
   ws@8.22.0: {}
