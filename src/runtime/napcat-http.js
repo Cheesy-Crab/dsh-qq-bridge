@@ -137,6 +137,22 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
           sendJson(res, 200, await setup.bridgeStatus())
           return
         }
+        if (route === '/platform/status' && req.method === 'GET') {
+          sendJson(res, 200, {
+            platform: await setup?.platformStatus?.(),
+            session: await setup?.sessionStatus?.(),
+          })
+          return
+        }
+        if (route === '/session/status' && req.method === 'GET') {
+          sendJson(res, 200, await setup?.sessionStatus?.())
+          return
+        }
+        if (route === '/profile/status' && req.method === 'GET') {
+          const platform = await setup?.platformStatus?.()
+          sendJson(res, 200, platform?.profiles ?? null)
+          return
+        }
         if (route === '/napcat/status' && req.method === 'GET') {
           sendJson(res, 200, await napcat.status())
           return

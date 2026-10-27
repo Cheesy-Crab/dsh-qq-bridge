@@ -120,7 +120,7 @@ export class CommandDispatcher {
 
   registerBuiltins() {
     this.register('profile', {
-      usage: 'profile [list|use <id>|reset]',
+      usage: 'profile [list|use <id>[:<option>]|reset]',
       description: '查看或切换当前会话 profile',
       minLevel: 'L3',
       handler: async ({ message, args }) => {
@@ -136,12 +136,16 @@ export class CommandDispatcher {
           ].join('\n')
         }
         if (action === 'use') {
-          const id = String(args[1] ?? '').trim()
-          if (!id) return '用法：/profile use <id>'
+          const selector = String(args[1] ?? '').trim()
+          if (!selector) return '用法：/profile use <id>[:<option>]'
+          const [id, option] = selector.split(':', 2)
           const profile = profiles.resolve?.(id)
           if (!profile) return `未知 profile：${id}`
           try {
-            const binding = await profiles.bind?.(id, { chat: message.chat })
+            const binding = await profiles.bind?.(id, {
+              chat: message.chat,
+              ...(option ? { cardId: option } : {}),
+            })
             if (binding && binding.ok === false && binding.reason !== 'provider_missing') {
               return `profile 绑定失败：${binding.reason}`
             }
@@ -149,13 +153,13 @@ export class CommandDispatcher {
             return `profile 绑定失败：${error?.message ?? error}`
           }
           this.manager.setProfile(message.chat, profile)
-          return `已切换 profile：${id}；下一条消息使用新 profile。`
+          return `已切换 profile：${id}${option ? `（${option}）` : ''}；下一条消息使用新 profile。`
         }
         if (action === 'reset') {
           this.manager.setProfile(message.chat, undefined)
           return '已恢复默认 profile。'
         }
-        return '用法：/profile [list|use <id>|reset]'
+        return '用法：/profile [list|use <id>[:<option>]|reset]'
       },
     })
 

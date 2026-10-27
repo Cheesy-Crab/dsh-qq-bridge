@@ -1,7 +1,11 @@
 # DSH 插件接口规范 v1.1（能力优先）
 
-状态：草案  
-适用范围：DSH 平台上可被核心、QQ Bridge 及其他沟通表面消费的插件。
+> **DEPRECATED**  
+> 本文件描述 v1.1。新插件请使用 [plugin-interface-v1.2.md](plugin-interface-v1.2.md) 的 `dsh.platform` manifest 和 profile 模型。  
+> v1.1 字段仍被平台读取，但不再作为新插件目标。
+
+状态：已弃用  
+适用范围：旧版 v1.1 插件兼容说明。
 
 ## 1. 模型：平台是人，插件是能力
 

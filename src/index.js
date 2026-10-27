@@ -131,6 +131,8 @@ export function apply(ctx, rawConfig) {
       return { openid: id, level: 'L3' }
     },
     bridgeStatus: () => bridge.status(),
+    platformStatus: () => ctx.get('platformStatus')?.() ?? null,
+    sessionStatus: () => bridge.chat?.status?.() ?? null,
   }
 
   ctx.inject(['webServer'], (webCtx) => {

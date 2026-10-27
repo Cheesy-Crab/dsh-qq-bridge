@@ -411,9 +411,9 @@ packages/platform-core/src/adapter-host.js
 
 ## P2-1 消费 DSH inventory
 
-- [ ] platform-core 不再自己扫 `node_modules`
-- [ ] 改为读取 DSH plugin manager inventory
-- [ ] 保留 `extraDirs` 兼容测试
+- [x] platform-core 不再自己扫 `node_modules`
+- [x] 改为读取 DSH plugin manager inventory
+- [x] 保留 `extraDirs` 兼容测试
 - [ ] 增加 inventory 变化失效
 
 ## P2-2 CI
@@ -427,12 +427,12 @@ packages/platform-core/src/adapter-host.js
 
 ## P2-3 健康状态
 
-- [ ] `/platform/status`
-- [ ] `/session/status`
-- [ ] `/profile/status`
-- [ ] 输出 plugin count / capability count / profile count / revision
+- [x] `/platform/status`
+- [x] `/session/status`
+- [x] `/profile/status`
+- [x] 输出 plugin count / capability count / profile count / revision
 
-## P2-4 Tavern 官方适配
+## P2-4 Tavern 官方适配\n\n- [x] 新增 `dsh-tavern-qq` 包\n- [x] provider / bind / unbind 测试\n- [x] `/profile use tavern:<cardId>`\n- [ ] 安装到含 Tavern 的 profile（Tavern 未安装）
 
 新增：
 
@@ -463,11 +463,11 @@ dsh-tavern-qq
 
 ## P2-5 文档清理
 
-- [ ] v1.1 标记 deprecated
-- [ ] v1.2 作为主文档
-- [ ] 更新架构图
-- [ ] 更新 README 安装版本
-- [ ] 记录 DeliveryCoordinator / InvocationLedger 契约
+- [x] v1.1 标记 deprecated
+- [x] v1.2 作为主文档
+- [x] 更新架构图
+- [x] 更新 README 安装版本
+- [x] 记录 DeliveryCoordinator / InvocationLedger 契约
 
 ---
 
@@ -475,14 +475,14 @@ dsh-tavern-qq
 
 每个阶段发布前：
 
-- [ ] `node --test` 全部通过
-- [ ] `package.json` 无 BOM
-- [ ] `dsh.platform.contract` 存在
-- [ ] 旧字段兼容测试通过
-- [ ] profile 切换测试通过
-- [ ] 自动交付去重测试通过
-- [ ] DSH 启动无 404
-- [ ] QQ 离线，不触发登录
+- [x] `node --test` 全部通过
+- [x] `package.json` 无 BOM
+- [x] `dsh.platform.contract` 存在
+- [x] 旧字段兼容测试通过
+- [x] profile 切换测试通过
+- [x] 自动交付去重测试通过
+- [x] DSH 启动无 404
+- [x] QQ 离线，不触发登录
 
 ---
 
@@ -495,4 +495,7 @@ dsh-tavern-qq
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
+
+
 

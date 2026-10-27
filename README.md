@@ -6,14 +6,14 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 架构说明见 [docs/architecture.md](docs/architecture.md)：工作区对接域、agent 行为扩展域、QQ 适配层与运行支撑层。
 
-平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)。
+平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)，运行时幂等契约见 [docs/runtime-contracts.md](docs/runtime-contracts.md)，Tavern 官方适配见 [docs/tavern-qq.md](docs/tavern-qq.md)。
 
 ## 安装（DSH Desktop 推荐）
 
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.46.1
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.53.0
 ```
 
 仓库是 public。也可以填本地小包目录：
@@ -404,5 +404,7 @@ wscript.exe //B scripts\restart-dsh-hidden.vbs
 - 密钥会导入 DSH 凭据存储（`~/.dsh/.credentials.yaml`）；文本文件仍是每次启动的来源，文件存在时会覆盖存储值。
 - 通过 CLI 启动的 profile 没有 `DEEPSEEK_API_KEY`，真实对话会报 `MISSING_CREDENTIAL`。
 - Windows 控制台里中文日志可能显示为乱码，那是 `Get-Content` 的编码问题，数据本身是 UTF-8。
+
+
 
 
