@@ -1,13 +1,16 @@
-﻿# 下一阶段 TODO（可执行版）
+# 下一阶段 TODO（可执行版）
 
-状态基线：2026-10-28 03:30  
+状态基线：2026-10-28 02:50  
 当前版本：
 
 ```text
-@dsh/platform-core  0.45.1
-@dsh/session-core   0.50.0
-dsh-qq-bridge       0.52.0
+@dsh/platform-core  0.46.0
+@dsh/session-core   0.51.0
+dsh-qq-bridge       0.53.0
+dsh-tavern-qq       0.1.0
 ```
+
+> 以上版本已安装到 desktop profile；当前运行进程仍是 0.52，未自动重启。下次显式重启后启用 0.53。
 
 ## 执行状态
 
@@ -30,7 +33,22 @@ P1-3 contract 校验
 P1-4 命令扩展缝
 ```
 
-P2 继续按本文件执行。
+P2 已完成：
+
+```text
+P2-1 DSH inventory 快照（启动时读取，动态变化仍由重启/HMR 处理）
+P2-2 CI / BOM / JSON
+P2-3 /platform/status、/session/status、/profile/status
+P2-4 dsh-tavern-qq 包与 provider 测试
+P2-5 文档清理
+```
+
+P2 剩余安装项：
+
+```text
+dsh-tavern-qq 尚未安装到含 Tavern 的 profile
+原因是当前环境没有安装 dsh-liketavern
+```
 
 ## 执行规则
 
