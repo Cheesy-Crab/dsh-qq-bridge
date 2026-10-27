@@ -1,2 +1,2 @@
-﻿export { ChatAgentManager } from '../../packages/session-core/src/manager.js'
+﻿export { ChatAgentManager } from '@dsh/session-core/manager'
 

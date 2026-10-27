@@ -1,5 +1,14 @@
 # 变更记录
 
+## 0.44.0
+
+- QQ 仓库删除 `packages/platform-core` 和 `packages/session-core` 迁移副本。
+- 改为声明 GitHub 依赖：
+  - `@dsh/platform-core#v0.41.0`
+  - `@dsh/session-core#v0.43.0`
+- 根目录 shim 全部改为从包名 import，不再引用仓库内副本。
+- 删除已迁移到独立仓库的边界/插件测试；QQ 自身仍保持 164 项测试通过。
+
 ## 0.43.0
 
 - `@dsh/session-core` 成为核心服务插件，提供 `sessionService`。

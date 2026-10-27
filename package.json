@@ -1,6 +1,6 @@
 {
   "name": "dsh-qq-bridge",
-  "version": "0.43.0",
+  "version": "0.44.0",
   "private": true,
   "type": "module",
   "description": "QQ <-> DSH workspace bridge: per-user workspaces, permission tiers, and a command layer.",
@@ -14,8 +14,6 @@
   "files": [
     "src",
     "lib",
-    "packages/platform-core",
-    "packages/session-core",
     "cordis.patch.yml",
     "README.md"
   ],
@@ -37,6 +35,8 @@
     }
   },
   "dependencies": {
+    "@dsh/platform-core": "github:Cheesy-Crab/dsh-platform-core#v0.41.0",
+    "@dsh/session-core": "github:Cheesy-Crab/dsh-session-core#v0.43.0",
     "ws": "^8.22.0"
   }
 }

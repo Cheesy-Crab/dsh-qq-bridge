@@ -1,2 +1,2 @@
-﻿export * from '../../packages/platform-core/src/plugin-adapter.js'
+﻿export * from '@dsh/platform-core/plugin-adapter'
 

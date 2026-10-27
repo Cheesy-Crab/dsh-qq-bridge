@@ -1,2 +1,2 @@
-﻿export * from '../../packages/platform-core/src/delivery.js'
+﻿export * from '@dsh/platform-core/delivery'
 

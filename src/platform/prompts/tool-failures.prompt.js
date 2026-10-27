@@ -1,2 +1,2 @@
-﻿export * from '../../../packages/platform-core/src/prompts/tool-failures.prompt.js'
+﻿export { installToolFailurePrompt } from '@dsh/platform-core/prompts'
 

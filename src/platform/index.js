@@ -1,2 +1,2 @@
-﻿export * from '../../packages/platform-core/src/index.js'
+﻿export * from '@dsh/platform-core'
 

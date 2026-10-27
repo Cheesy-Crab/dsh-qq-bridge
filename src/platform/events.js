@@ -1,2 +1,2 @@
-﻿export * from '../../packages/platform-core/src/events.js'
+﻿export * from '@dsh/platform-core/events'
 

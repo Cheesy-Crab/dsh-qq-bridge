@@ -1,2 +1,2 @@
-﻿export * from '../../../packages/platform-core/src/prompts/creative.prompt.js'
+﻿export { installCreativePrompt } from '@dsh/platform-core/prompts'
 

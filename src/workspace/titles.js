@@ -1,2 +1,2 @@
-﻿export * from '../../packages/session-core/src/titles.js'
+﻿export * from '@dsh/session-core/titles'
 

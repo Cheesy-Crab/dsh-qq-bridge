@@ -1,4 +1,0 @@
-- insert:
-    - id: platform-core
-      name: '@dsh/platform-core'
-      config: {}

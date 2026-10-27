@@ -1,2 +1,2 @@
-﻿export * from '../../packages/session-core/src/paths.js'
+﻿export * from '@dsh/session-core/paths'
 

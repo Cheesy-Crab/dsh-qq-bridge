@@ -1,4 +1,0 @@
-- insert:
-    - id: session-core
-      name: '@dsh/session-core'
-      config: {}
