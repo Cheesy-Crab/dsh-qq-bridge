@@ -9,7 +9,7 @@ import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
  * @param {{ approval: any, chargeImage?: Function, log: (level: string, message: string) => void }} options
  * @returns {{ name: string, onSession?: Function, onTurnEnd?: Function }[]}
  */
-export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log }) {
+export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log, toolAllowed }) {
   return [
     {
       name: 'qq:group',
@@ -21,7 +21,7 @@ export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log }
     },
     {
       name: 'qq:policy',
-      onSession: ({ agent, level, state }) => applyAgentPolicy({ approval, agent, level, state, log }),
+      onSession: ({ agent, level, state }) => applyAgentPolicy({ approval, agent, level, state, log, toolAllowed }),
     },
     {
       name: 'qq:present',

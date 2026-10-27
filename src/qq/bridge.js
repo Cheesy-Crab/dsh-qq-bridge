@@ -119,6 +119,7 @@ export class QqBridge {
         approval: this.approval,
         chargeImage,
         forwardMedia: this.host.forwardMediaOutputs,
+        toolAllowed: this.host.access?.toolAllowed,
         log: this.log,
       }))
       this.extensionsRegistered = true
@@ -167,6 +168,7 @@ export class QqBridge {
       send,
       sendImage: (chat, file, options) => this.transport.sendImage(chat, file, options),
       status: () => this.status(),
+      access: this.host.access,
       napcat: this.napcat,
       credentials: () => this.credentials,
     })

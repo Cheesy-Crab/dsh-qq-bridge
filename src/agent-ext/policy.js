@@ -1,12 +1,10 @@
-import { toolAllowed } from '../access/capabilities.js'
-
 /**
  * Install approval policy and the non-L3 tool guard on an agent.
  * The guard closes over live state, so capability/level changes apply next turn.
  * @param {{ approval?: any, agent: any, level: string, state: any,
  *           log: (level: string, message: string) => void }} options
  */
-export function applyAgentPolicy({ approval, agent, level, state, log }) {
+export function applyAgentPolicy({ approval, agent, level, state, log, toolAllowed }) {
   const capabilities = state.capabilities ?? []
   const policy = level === 'L3' || capabilities.length > 0 ? 'ask' : 'never'
   if (state.approvalPolicy !== policy) {
@@ -18,7 +16,7 @@ export function applyAgentPolicy({ approval, agent, level, state, log }) {
     }
   }
   if (!state.guarded) {
-    guardAgentTools(agent, state, log)
+    guardAgentTools(agent, state, log, toolAllowed)
     state.guarded = true
   }
 }
@@ -31,7 +29,7 @@ export function applyAgentPolicy({ approval, agent, level, state, log }) {
  * @param {any} state
  * @param {(level: string, message: string) => void} log
  */
-export function guardAgentTools(agent, state, log) {
+export function guardAgentTools(agent, state, log, toolAllowed) {
   try {
     agent.ctx.tools.guard((exec) => {
       if (state.level === 'L3') return undefined

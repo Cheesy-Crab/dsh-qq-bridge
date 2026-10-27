@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict'
+import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -18,6 +18,7 @@ function testHost() {
     createSessionManager: (options) => new ChatAgentManager(options),
     registerExtensions: () => {},
     extensions: { sessionReady: () => {}, turnEnd: () => {} },
+    access: { normalizeCapabilities: (v) => v, normalizeLevel: (v) => v, atLeast: () => true, toolAllowed: () => true },
     forwardMediaOutputs: () => {},
   }
 }
@@ -188,4 +189,5 @@ test('bridge echoes once and deduplicates repeated ids', async () => {
 
   await bridge.stop()
 })
+
 

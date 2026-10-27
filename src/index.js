@@ -8,7 +8,6 @@ import { pickDirectory } from './runtime/browse.js'
 import { installNapcat } from './runtime/napcat-install.js'
 import { findNapcatDir, NapCatSupervisor } from './runtime/napcat.js'
 import { registerNapCatHttp } from './runtime/napcat-http.js'
-import { resolveWorkspacesRoot } from './core/paths.js'
 import { resolveApiKeyFile } from './core/secrets.js'
 import { runSelfTest } from './core/selftest.js'
 
@@ -21,7 +20,6 @@ export const name = 'dsh-qq-bridge'
  */
 export function apply(ctx, rawConfig) {
   const config = normalizeConfig(rawConfig)
-  const root = resolveWorkspacesRoot(config.workspacesRoot)
 
   const debug = process.env.DSH_QQ_BRIDGE_DEBUG === '1'
   const log = (level, message) => {
@@ -36,7 +34,7 @@ export function apply(ctx, rawConfig) {
     if (debug) console.log(line)
   }
 
-  log('info', `loaded platform=${process.platform} node=${process.version} root=${root}`)
+  log('info', `loaded platform=${process.platform} node=${process.version}`)
   if (config.agent.provider !== 'deepseek-account') {
     ensureCredential(ctx, { file: config.apiKeyFile, envName: config.apiKeyEnv, log }).catch((error) => {
       log('warn', `credential import failed: ${error?.stack ?? error}`)
@@ -52,6 +50,8 @@ export function apply(ctx, rawConfig) {
   if (!adapterHost?.mount) {
     throw new Error('adapterHost is not available; load @dsh/platform-core before dsh-qq-bridge')
   }
+  const root = adapterHost.resolveWorkspacesRoot(config.workspacesRoot)
+  log('info', `workspaces root=${root}`)
 
   let bridge
   const napcat = new NapCatSupervisor({

@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+﻿import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -55,6 +55,12 @@ function dispatcher(overrides = {}) {
       user: () => ({ level: 'L1', capabilities: ['read'] }),
     },
     config: normalizeConfig({ transport: { kind: 'fake' } }),
+    access: {
+      normalizeCapabilities: (value) => value,
+      normalizeLevel: (value) => value,
+      atLeast: (level, minimum) => ({ L0: 0, L1: 1, L2: 2, L3: 3 }[level] ?? 0) >= ({ L0: 0, L1: 1, L2: 2, L3: 3 }[minimum] ?? 0),
+      toolAllowed: () => true,
+    },
     root: '/root',
     log: () => {},
     send: async (chat, text) => {
@@ -282,3 +288,5 @@ test('/sandbox is L3-only and switches the mode', async () => {
   await run('/sandbox danger-full-access', 'L3')
   assert.match(sent[1].text, /已切换文件策略：danger-full-access/)
 })
+
+

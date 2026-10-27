@@ -1,5 +1,12 @@
 # 变更记录
 
+## 0.49.0
+
+- adapter host 注入 access 辅助函数（等级 / 能力 / 工具校验）。
+- adapter host 注入工作区根目录解析。
+- QQ 源码不再 import platform/session 实现（测试仍用兼容 shim）。
+- platform-core 升级到 `v0.43.0`，session-core 升级到 `v0.48.0`。
+
 ## 0.48.0
 
 - 引入 platform-core `AdapterHost` 作为通信适配器组装根。

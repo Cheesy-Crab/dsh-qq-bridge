@@ -1,8 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { normalizeCapabilities } from '../access/capabilities.js'
-import { atLeast, normalizeLevel } from '../access/levels.js'
 import { captureScreen } from '../agent-ext/screenshot.js'
 import { fetchCivitaiBalance } from '../core/civitai-account.js'
 
@@ -42,9 +40,10 @@ export class CommandDispatcher {
    *           send: (chat: any, text: string) => Promise<unknown>,
    *           status: () => any }} options
    */
-  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials }) {
+  constructor({ manager, users, config, root, log, send, sendImage, status, screenshot = captureScreen, napcat, credentials, access }) {
     this.manager = manager
     this.users = users
+    this.access = access
     this.config = config
     this.root = root
     this.log = log
@@ -86,7 +85,7 @@ export class CommandDispatcher {
       await this.reply(message.chat, `未知指令 ${parsed.prefix}${parsed.name}，发 ${parsed.prefix}help 查看可用指令。`)
       return true
     }
-    if (!atLeast(level, command.minLevel)) {
+    if (!this.access.atLeast(level, command.minLevel)) {
       await this.reply(message.chat, `权限不足：该指令需要 ${command.minLevel}，你当前是 ${level}。`)
       return true
     }
@@ -432,7 +431,7 @@ export class CommandDispatcher {
     }
     if (sub === 'allow' || sub === 'deny') {
       if (args.length < 3) throw new Error(`用法：/admin ${sub} <openid> <workspace|read|write|exec|image ...>`)
-      const capabilities = normalizeCapabilities(args.slice(2))
+      const capabilities = this.access.normalizeCapabilities(args.slice(2))
       if (capabilities.length === 0) throw new Error('能力只能是 workspace/read/write/exec/image')
       const result = sub === 'allow'
         ? this.users.addCapabilities(args[1], capabilities)
@@ -442,7 +441,7 @@ export class CommandDispatcher {
     if (sub === 'perms') {
       if (args.length < 2) throw new Error('用法：/admin perms <openid>')
       const user = this.users.user(args[1])
-      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec', 'image'] : (this.users.capabilitiesOf?.(args[1], user.level) ?? normalizeCapabilities(user.capabilities ?? []))
+      const caps = user.level === 'L3' ? ['workspace', 'read', 'write', 'exec', 'image'] : (this.users.capabilitiesOf?.(args[1], user.level) ?? this.access.normalizeCapabilities(user.capabilities ?? []))
       return `${args[1]}（${user.level}）：${caps.length > 0 ? caps.join(', ') : '仅聊天'}；生图额度=${this.users.imageQuotaOf?.(args[1]) ?? 0} Buzz`
     }
     if (sub === 'quota') {
@@ -462,7 +461,7 @@ export class CommandDispatcher {
       ]
     }
     if (sub === 'invite') {
-      const level = normalizeLevel(args[1] ?? 'L1')
+      const level = this.access.normalizeLevel(args[1] ?? 'L1')
       const minutes = this.config.access.bindCodeTtlMinutes
       const code = this.users.invite(level, minutes * 60 * 1000)
       return `配对码：${code}\n等级：${level}\n有效期：${minutes} 分钟`
@@ -470,7 +469,7 @@ export class CommandDispatcher {
     if (sub === 'level') {
       if (args.length < 3) throw new Error('用法：/admin level <openid> <L0-L3>')
       this.users.setLevel(args[1], args[2])
-      return `已把 ${args[1]} 设为 ${normalizeLevel(args[2])}。`
+      return `已把 ${args[1]} 设为 ${this.access.normalizeLevel(args[2])}。`
     }
     if (sub === 'freeze' || sub === 'unfreeze') {
       if (args.length < 2) throw new Error(`用法：/admin ${sub} <openid>`)
