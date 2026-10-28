@@ -1,4 +1,4 @@
-# Profile Resolution
+﻿# Profile Resolution
 
 状态：0.50.1 / 0.52.5 已实现“单点 effective profile”。
 
@@ -88,7 +88,7 @@ agentPreset 必须与当前 agent 一致
 否则 fallback default
 ```
 
-统计默认以后接在这里，不改 session-core。
+统计默认已接入：\n\n```text\nUserCapabilityStore\n  → topCapabilities(user)\n  → profile score\n  → predicted profile\n```\n\n样本阈值：3 次。\n预测只匹配同一 agentPreset 的 profile。\n预测 profile 会按 family 展开能力面。
 
 ## resolver 失败
 
@@ -137,3 +137,4 @@ sessionReady 只在 create/resume 调用一次，run 不再调用。
 ```
 
 用户未显式选择时，由 platform predictor 决定 effective profile。
+

@@ -202,7 +202,7 @@ image.edit
 
 ---
 
-## P1-4. predictor 尚未接统计
+## P1-4. predictor 尚未接统计\n\n状态：已修（0.51.0，UserCapabilityStore + createProfilePredictor）
 
 ### 现象
 
@@ -296,5 +296,6 @@ preset 组合
 9. P2-1 预测记录
 10. P2-2 scope
 ```
+
 
 
