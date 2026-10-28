@@ -511,13 +511,13 @@ dsh-tavern-qq
 
 # 后续：参考 DSH Desktop / Fabric
 
-详见 [dsh-desktop-reference.md](dsh-desktop-reference.md) 和 [fabric-field-map.md](fabric-field-map.md)。
+详见 [dsh-desktop-reference.md](dsh-desktop-reference.md)、[fabric-field-map.md](fabric-field-map.md) 和 [fabric-generation-effect.md](fabric-generation-effect.md)。
 
 - [x] 读 Fabric RFC 0001–0004
 - [x] 对比 `dsh.platform` 与 Fabric manifest
 - [x] 设计 Host Descriptor v0
 - [x] 设计 required / optional capability
-- [ ] 设计 generation id 与 effect ownership
+- [x] 设计 generation id 与 effect ownership（设计稿）
 - [x] 评估 Fabric 兼容 adapter，不立即切换标准
 
 已实现：
@@ -532,8 +532,8 @@ fabricCompatibility
 待补：
 
 ```text
-generation id
-effect ledger 的 pluginId / activationId
+generation id 实现
+effect ledger 的 pluginId / activationId 实现
 Fabric 兼容状态展示
 ```
 
