@@ -1,4 +1,4 @@
-﻿# dsh-qq-bridge
+# dsh-qq-bridge
 
 QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。每个客户端 QQ 管理自己的工作区，每个群有专属工作区，普通消息即对话，`/` 开头为指令。
 
@@ -8,7 +8,9 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)，运行时幂等契约见 [docs/runtime-contracts.md](docs/runtime-contracts.md)，Tavern 官方适配见 [docs/tavern-qq.md](docs/tavern-qq.md)，Fabric 字段对照见 [docs/fabric-field-map.md](docs/fabric-field-map.md)，capability→tool 暴露见 [docs/tool-exposure.md](docs/tool-exposure.md)。
 
-结构图见 [docs/architecture-v0.53.png](docs/architecture-v0.53.png)。\n\n## 安装（DSH Desktop 推荐）
+结构图见 [docs/architecture-v0.54.png](docs/architecture-v0.54.png)。
+
+## 安装（DSH Desktop 推荐）
 
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
 
