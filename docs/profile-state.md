@@ -1,4 +1,4 @@
-# Profile State
+﻿# Profile State
 
 profile 现在可以有独立于 chat/session 的持久状态。
 
@@ -120,3 +120,4 @@ token / cost 需要从 LLM usage 另行归集
 - token/cost 归集
 - 按 chat 聚合
 - 清理策略 / 保留期
+

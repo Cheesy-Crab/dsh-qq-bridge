@@ -4,13 +4,13 @@
 当前版本：
 
 ```text
-@dsh/platform-core  0.48.2
+@dsh/platform-core  0.49.0
 @dsh/session-core   0.51.0
-dsh-qq-bridge       0.53.2
+dsh-qq-bridge       0.54.0
 dsh-tavern-qq       0.1.0
 ```
 
-> 当前运行进程已加载 platform 0.48.2 + QQ 0.53.2。  
+> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.49.0 / 0.54.0 已安装，待重启。  
 > image profile 已注册；generation/effect 已生效。
 
 ## 执行状态
@@ -567,4 +567,13 @@ Fabric 兼容状态展示
 
 
 
+
+
+## Profile State
+
+- [x] ProfileStateStore
+- [x] tool usage collector
+- [x] onTurnEnd 持久化
+- [x] /profile/state 路由（0.54.0）
+- [ ] 重启后实际统计
 
