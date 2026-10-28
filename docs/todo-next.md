@@ -5,12 +5,12 @@
 
 ```text
 @dsh/platform-core  0.53.0
-@dsh/session-core   0.52.7
-dsh-qq-bridge       0.55.2
+@dsh/session-core   0.52.8
+dsh-qq-bridge       0.55.3
 dsh-tavern-qq       0.1.0
 ```
 
-> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.53.0 / 0.52.7 / 0.55.2 已安装，待重启。  
+> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.53.0 / 0.52.8 / 0.55.3 已安装，待重启。  
 > image profile 已注册；generation/effect 已生效。
 
 ## 执行状态
@@ -608,3 +608,4 @@ Fabric 兼容状态展示
 - [ ] 取消 `source === "predicted"` 才展开 family 的分支
 - [ ] 评估显式 image profile 的工具数从 33 回到接近 40 的 token 成本
 - [ ] 如果用户要省 token，应显式选择更窄的 capability 子集，而不是禁止预测
+
