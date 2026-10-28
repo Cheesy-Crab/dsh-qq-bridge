@@ -599,3 +599,12 @@ Fabric 兼容状态展示
 
 
 
+
+# 待做：显式 profile 也需要能力预测
+
+- [ ] selected profile 只锁定 profile / agentPreset / family 边界
+- [ ] capabilities 仍然由 user stats 预测
+- [ ] selected profile 默认展开 family
+- [ ] 取消 `source === "predicted"` 才展开 family 的分支
+- [ ] 评估显式 image profile 的工具数从 33 回到接近 40 的 token 成本
+- [ ] 如果用户要省 token，应显式选择更窄的 capability 子集，而不是禁止预测
