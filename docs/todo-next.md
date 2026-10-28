@@ -1,16 +1,16 @@
-﻿# 下一阶段 TODO（可执行版）
+# 下一阶段 TODO（可执行版）
 
 状态基线：2026-10-28 02:50  
 当前版本：
 
 ```text
-@dsh/platform-core  0.46.2
+@dsh/platform-core  0.47.0
 @dsh/session-core   0.51.0
 dsh-qq-bridge       0.53.2
 dsh-tavern-qq       0.1.0
 ```
 
-> 以上版本已安装到 desktop profile；当前运行进程是 0.53.1；0.53.2 已安装，下次重启启用。
+> 以上版本已安装到 desktop profile；当前运行进程仍是 0.53.1 / platform 0.46.1，未自动重启。下次显式重启后启用 0.53.2 + Fabric 兼容层。
 
 ## 执行状态
 
@@ -508,6 +508,42 @@ dsh-tavern-qq
 - [x] QQ 离线，不触发登录
 
 ---
+
+# 后续：参考 DSH Desktop / Fabric
+
+详见 [dsh-desktop-reference.md](dsh-desktop-reference.md) 和 [fabric-field-map.md](fabric-field-map.md)。
+
+- [x] 读 Fabric RFC 0001–0004
+- [x] 对比 `dsh.platform` 与 Fabric manifest
+- [x] 设计 Host Descriptor v0
+- [x] 设计 required / optional capability
+- [ ] 设计 generation id 与 effect ownership
+- [x] 评估 Fabric 兼容 adapter，不立即切换标准
+
+已实现：
+
+```text
+platform-core/src/fabric.js
+platformStatus.host
+platformHostDescriptor
+fabricCompatibility
+```
+
+待补：
+
+```text
+generation id
+effect ledger 的 pluginId / activationId
+Fabric 兼容状态展示
+```
+
+# 暂缓：capability → tool exposure
+
+- [ ] 验证 `ctx.tools.restrict` 对 image-gen 是否有效
+- [ ] 确认 image-gen 工具是 global 还是 preset scope
+- [ ] profile.capabilities → activeToolSet
+- [ ] 用 contextBreakdown.toolsTokens 做前后对比
+- [ ] 验证通过后再接正式架构
 
 # 明确不做
 
