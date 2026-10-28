@@ -1,4 +1,4 @@
-# QQ 自动登录
+﻿# QQ 自动登录
 
 ## 当前配置
 
@@ -84,3 +84,33 @@ napcat:
 ```json
 { "autoLoginAccount": "" }
 ```
+
+## 常见失败：账号已被桌面 QQ 占用
+
+NapCat 状态：
+
+```json
+{
+  "loginPhase": "waiting_qrcode",
+  "qrcodeurl": "",
+  "loginError": "当前账号(<QQ号>)已登录,无法重复登录"
+}
+```
+
+原因：
+
+```text
+桌面 QQ 正在使用 <QQ号>
+NapCat 不能再登录同一账号
+```
+
+处理：
+
+```text
+1. 完全退出桌面 QQ（不是只关窗口）
+2. 让 NapCat 重新尝试快速登录
+   或
+3. 给 NapCat 换一个独立 QQ 账号
+```
+
+同一 QQ 账号不能同时被桌面客户端和 NapCat 使用。
