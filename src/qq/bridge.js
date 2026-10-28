@@ -213,11 +213,11 @@ export class QqBridge {
       return
     }
     const senderLevel = this.users.levelOf(message.userId)
-    const senderCapabilities = this.users.capabilitiesOf(message.userId, senderLevel)
+    const senderGrants = this.users.capabilitiesOf(message.userId, senderLevel)
     const level = message.chat.type === 'group' ? this.users.levelOf(principal) : senderLevel
-    const capabilities = message.chat.type === 'group'
+    const accessGrants = message.chat.type === 'group'
       ? this.users.capabilitiesOf(principal, level)
-      : senderCapabilities
+      : senderGrants
     const imageQuota = this.users.imageQuotaOf(principal)
 
     if (message.chat.type === 'group') {
@@ -237,7 +237,7 @@ export class QqBridge {
 
     // Slash commands win over a pending approval/question. Otherwise a user
     // answering a question with /help has it consumed as a custom answer.
-    if (await this.commands.execute(message, { level: senderLevel, capabilities: senderCapabilities })) return
+    if (await this.commands.execute(message, { level: senderLevel, accessGrants: senderGrants })) return
 
     if (this.approval.tryAnswer(message)) return
     if (this.questions.tryAnswer(message)) return
@@ -266,7 +266,7 @@ export class QqBridge {
     }
     await this.chat.handle(message, {
       level,
-      capabilities,
+      accessGrants,
       imageQuota,
       requester: message.userId,
       principal,
@@ -314,6 +314,7 @@ export class QqBridge {
     }
   }
 }
+
 
 
 

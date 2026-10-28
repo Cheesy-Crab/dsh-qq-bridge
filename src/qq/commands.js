@@ -78,10 +78,11 @@ export class CommandDispatcher {
    * @param {{ level?: string }} [options]
    * @returns {Promise<boolean>} whether the message was a command
    */
-  async execute(message, { level = 'L0', capabilities = [] } = {}) {
+  async execute(message, { level = 'L0', accessGrants, capabilities = [] } = {}) {
     const parsed = parseCommand(message.text, this.prefixes())
     if (!parsed) return false
-    this.manager?.setContext?.(message.chat, { level, capabilities })
+    const grants = accessGrants ?? capabilities
+    this.manager?.setContext?.(message.chat, { level, accessGrants: grants })
     const command = this.commands.get(parsed.name) ?? this.commandRegistry?.get(parsed.name)
     if (!command) {
       await this.reply(message.chat, `未知指令 ${parsed.prefix}${parsed.name}，发 ${parsed.prefix}help 查看可用指令。`)
@@ -91,12 +92,12 @@ export class CommandDispatcher {
       await this.reply(message.chat, `权限不足：该指令需要 ${command.minLevel}，你当前是 ${level}。`)
       return true
     }
-    if (command.capability && level !== 'L3' && !capabilities.includes(command.capability)) {
+    if (command.capability && level !== 'L3' && !grants.includes(command.capability)) {
       await this.reply(message.chat, `权限不足：该指令需要管理员把 ${command.capability} 加入你的白名单。`)
       return true
     }
     try {
-      const result = await command.handler({ message, args: parsed.args, command, level, capabilities })
+      const result = await command.handler({ message, args: parsed.args, command, level, capabilities: grants, accessGrants: grants })
       const lines = Array.isArray(result) ? result : result === undefined ? [] : [result]
       const text = lines
         .filter((line) => line !== undefined && line !== null && String(line) !== '')
