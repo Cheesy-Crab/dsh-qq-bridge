@@ -4,13 +4,13 @@
 当前版本：
 
 ```text
-@dsh/platform-core  0.48.0
+@dsh/platform-core  0.48.1
 @dsh/session-core   0.51.0
 dsh-qq-bridge       0.53.2
 dsh-tavern-qq       0.1.0
 ```
 
-> 以上版本已安装到 desktop profile；当前运行进程仍是 0.53.1 / platform 0.46.1，未自动重启。下次显式重启后启用 0.53.2 + platform 0.48.0（generation/effect/tool exposure）。
+> 以上版本已安装到 desktop profile；当前运行进程仍是 0.53.1 / platform 0.46.1，未自动重启。下次显式重启后启用 0.53.2 + platform 0.48.1（generation/effect/tool exposure）。
 
 ## 执行状态
 
@@ -543,7 +543,7 @@ Fabric 兼容状态展示
 - [x] 验证 `ctx.tools.restrict` 的真实签名
 - [ ] 确认 image-gen 工具是 global 还是 preset scope
 - [x] profile.capabilities → activeToolSet（helper 已实现）
-- [ ] 为 image-gen 增加 capabilityBindings
+- [x] 为 image-gen 增加内置 capabilityBindings
 - [ ] 用 contextBreakdown.toolsTokens 做前后对比
 - [x] 接入 agent/created，保留 base tools
 
@@ -556,6 +556,7 @@ Fabric 兼容状态展示
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
 
 
 

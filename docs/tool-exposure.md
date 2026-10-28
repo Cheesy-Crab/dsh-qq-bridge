@@ -1,6 +1,6 @@
-# Capability → Tool Exposure
+﻿# Capability → Tool Exposure
 
-状态：基础版已实现（platform-core 0.48.0），尚未在当前运行进程激活。
+状态：基础版已实现（platform-core 0.48.1），尚未在当前运行进程激活。
 
 ## 规则
 
@@ -21,7 +21,7 @@ agent.ctx.tools.restrict({ deny: [...] })
 
 ## 配置
 
-如果插件 manifest 没有 capability 映射，可以在 platform-core config 中补：
+platform-core 0.48.1 已内置 image-gen 的 8 个工具映射（`src/capability-bindings.js`）；插件 manifest 或 config 仍可覆盖/补充：
 
 ```yaml
 - id: platform-core
@@ -84,3 +84,4 @@ image-gen 0.9.2 没有 dsh.platform capabilities
 不用 guard 代替 exposure
 不为了省 token 动态切换当前 turn 的工具表
 ```
+
