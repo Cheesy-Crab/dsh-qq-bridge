@@ -1,4 +1,4 @@
-﻿# 运行时契约：DeliveryCoordinator 与 InvocationLedger
+# 运行时契约：DeliveryCoordinator 与 InvocationLedger
 
 ## DeliveryCoordinator
 
@@ -85,9 +85,8 @@ sessionId + turnId + tool + sha256(normalizedArgs)
 chat.handle(message, {
   level,          // 访问等级 L0-L3
   accessGrants,   // 访问授权 image/read/write/exec，不是 profile capabilities
-  imageQuota,     // Buzz 计费快照
   requester,      // 本条消息发送者
-  principal,      // 额度/群权限归属
+  principal,      // 群权限归属
 })
 ```
 
@@ -96,7 +95,6 @@ chat.handle(message, {
 ```text
 state.level
 state.accessGrants
-state.imageQuota
 state.requester
 state.principal
 ```
@@ -119,5 +117,6 @@ profile policy     防止错误 prompt/tool 面
 ```
 
 四者不能互相替代。
+
 
 
