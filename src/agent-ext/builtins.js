@@ -9,7 +9,7 @@ import { installGroupPrompt, installQqPrompt } from './prompts/index.js'
  * @param {{ approval: any, log: (level: string, message: string) => void }} options
  * @returns {{ name: string, onSession?: Function, onTurnEnd?: Function }[]}
  */
-export function qqBuiltinExtensions({ approval, forwardMedia, log, toolAllowed }) {
+export function qqBuiltinExtensions({ approval, chargeImage, forwardMedia, log, toolAllowed }) {
   return [
     {
       name: 'qq:group',
@@ -39,6 +39,7 @@ export function qqBuiltinExtensions({ approval, forwardMedia, log, toolAllowed }
       onTurnEnd: ({ sendImage, sendText, chat, session, state, fromSeq }) => forwardMedia({
         sendImage,
         sendText,
+        charge: chargeImage,
         chat,
         session,
         state,

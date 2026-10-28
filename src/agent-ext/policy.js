@@ -40,6 +40,10 @@ export function guardAgentTools(agent, state, log, toolAllowed, profile) {
       if (Array.isArray(policy?.allow) && policy.allow.length > 0 && !policy.allow.includes(name)) {
         return `当前 profile 仅允许：${policy.allow.join(', ')}`
       }
+      if (/^(generate_image|generate_images|edit_image)$/i.test(String(name ?? ''))
+        && Number.isFinite(state.imageQuota) && state.imageQuota <= 0) {
+        return '生图额度不足；请联系管理员分配额度'
+      }
       if (state.level === 'L3') return undefined
       if (!toolAllowed(name, state.accessGrants ?? [])) return '当前账号仅允许聊天；该工具需要管理员加入白名单'
       return undefined

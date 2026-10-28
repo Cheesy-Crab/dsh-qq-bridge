@@ -109,8 +109,16 @@ export class QqBridge {
     this.router = new ConversationRouter()
 
     if (!this.extensionsRegistered) {
+      const chargeImage = ({ chat, state, cost }) => {
+        const openid = quotaOwner(chat)
+        if (!openid) throw new Error('群聊缺少发送者 QQ 号，无法扣除生图额度')
+        const billing = this.users.chargeImageQuota(openid, cost)
+        if (state) state.imageQuota = billing.remaining
+        return billing
+      }
       this.host.registerExtensions(qqBuiltinExtensions({
         approval: this.approval,
+        chargeImage,
         forwardMedia: this.host.forwardMediaOutputs,
         toolAllowed: this.host.access?.toolAllowed,
         log: this.log,
@@ -258,6 +266,7 @@ export class QqBridge {
     await this.chat.handle(message, {
       level,
       accessGrants,
+      imageQuota: () => this.users.imageQuotaOf(principal),
       requester: message.userId,
       principal,
     })
