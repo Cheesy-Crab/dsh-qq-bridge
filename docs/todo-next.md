@@ -584,3 +584,13 @@ Fabric 兼容状态展示
 
 
 
+
+# 暂缓：hot count 动态 capabilities
+
+- [ ] 定义 hot count：按 capability 的调用次数 + 衰减 + 成功率
+- [ ] 统计归属：user / chat / session，不放在 profile 共享字段
+- [ ] 默认策略：hot count 只影响下一次 session 的 active capabilities
+- [ ] 会话内动态：turn 边界重算，不在 tool call 中途切换
+- [ ] 保存 tool exposure disposer，切换前 dispose 旧 restriction
+- [ ] 加迟滞阈值，避免 tools 抖动
+- [ ] 需要时再考虑 capability family 一起激活
