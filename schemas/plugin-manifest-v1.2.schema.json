@@ -43,6 +43,20 @@
               "type": "array",
               "items": { "$ref": "https://dsh.local/schemas/conversation-profile.schema.json" }
             },
+            "requires": {
+              "type": "object",
+              "properties": {
+                "required": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "optional": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              },
+              "additionalProperties": true
+            },
             "adapter": { "type": "boolean" }
           },
           "additionalProperties": true

@@ -15,6 +15,12 @@
       "items": { "type": "string" },
       "uniqueItems": true
     },
+    "capabilities": {
+      "type": "array",
+      "description": "Active capability IDs for this profile. Absent = legacy unrestricted exposure.",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
     "promptPolicy": {
       "type": "object",
       "properties": {

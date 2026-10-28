@@ -1,7 +1,38 @@
 # Fabric Generation 与 Effect Ledger 设计
 
-状态：设计稿，尚未实现。  
+状态：基础版已实现；profile/capability generation 边界仍待接入。  
 目标：把 Desktop 的 generation 边界和 Fabric 的 effect ownership 映射到我们的平台。
+
+## 已实现（platform-core 0.48.0）
+
+```text
+platformGeneration
+effectLedger
+DeliveryCoordinator: generationId + effect records
+InvocationLedger: generation-scoped keys
+/platform/status: generation + effects stats
+```
+
+`platformGeneration` 在 platform-core apply 时生成：
+
+```text
+gen-<time>-<random>
+```
+
+效果记录包含：
+
+```text
+generationId
+owner.pluginId
+owner.activationId
+effectId
+effectKind
+operation
+state
+resourceId
+```
+
+当前 owner 固定为 `platform-core`；插件级 owner 还需 adapter 传入。
 
 ## 1. 为什么需要 generation
 
@@ -132,4 +163,14 @@ cleanup-failed
 不把 generation 做成安全沙箱
 不要求跨代恢复内存对象
 不把未实现的 Fabric 字段伪装成标准
+```
+
+## 8. 剩余实现
+
+```text
+session state 记录 generationId
+profile/capability 切换时生成新 generation
+adapter 传入真实 pluginId / activationId
+stale generation 请求拒绝
+cleanup-failed 记录 adapter 释放失败
 ```
