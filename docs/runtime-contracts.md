@@ -79,6 +79,37 @@ sessionId + turnId + tool + sha256(normalizedArgs)
 - `exclusive`：同 capability 同 turn 只允许一次成功。
 - 失败 release，允许重试。
 
+## bridge → session-core
+
+```js
+chat.handle(message, {
+  level,          // 访问等级 L0-L3
+  capabilities,   // 访问授权 image/read/write/exec，不是 profile capabilities
+  imageQuota,     // Buzz 计费快照
+  requester,      // 本条消息发送者
+  principal,      // 额度/群权限归属
+})
+```
+
+落盘字段：
+
+```text
+state.level
+state.capabilities
+state.accessCapabilities
+state.imageQuota
+state.requester
+state.principal
+```
+
+边界：
+
+```text
+bridge 不选择 profile
+bridge 不计算 capability bindings
+bridge 不决定 tool exposure
+```
+
 ## 边界
 
 ```text

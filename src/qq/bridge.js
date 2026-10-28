@@ -264,7 +264,13 @@ export class QqBridge {
       await this.transport.sendText(message.chat, `[qq-bridge] 今日额度已用完（${quota.used}/${quota.limit}）。`)
       return
     }
-    await this.chat.handle(message, { level, capabilities, imageQuota })
+    await this.chat.handle(message, {
+      level,
+      capabilities,
+      imageQuota,
+      requester: message.userId,
+      principal,
+    })
   }
 
   /**
