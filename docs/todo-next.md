@@ -1,6 +1,6 @@
-﻿# 下一阶段 TODO（可执行版）
+# 下一阶段 TODO（可执行版）
 
-状态基线：2026-10-28 02:50  
+状态基线：2026-10-28 23:45  
 当前版本：
 
 ```text
@@ -10,7 +10,8 @@ dsh-qq-bridge       0.53.2
 dsh-tavern-qq       0.1.0
 ```
 
-> 以上版本已安装到 desktop profile；当前运行进程仍是 0.53.1 / platform 0.46.1，未自动重启。下次显式重启后启用 0.53.2 + platform 0.48.2（generation/effect/tool exposure）。
+> 当前运行进程已加载 platform 0.48.2 + QQ 0.53.2。  
+> image profile 已注册；generation/effect 已生效。
 
 ## 执行状态
 
@@ -545,7 +546,8 @@ Fabric 兼容状态展示
 - [x] profile.capabilities → activeToolSet（helper + image profile 已实现）
 - [x] 为 image-gen 增加内置 capabilityBindings
 - [ ] 用 contextBreakdown.toolsTokens 做前后对比
-- [x] 接入 agent/created，保留 base tools
+- [x] 接入 sessionReady，保留 base tools
+- [ ] QQ 里实际执行 `/profile use image`（当前 QQ 离线）
 
 # 明确不做
 
