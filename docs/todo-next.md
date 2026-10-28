@@ -1,4 +1,4 @@
-# 下一阶段 TODO（可执行版）
+﻿# 下一阶段 TODO（可执行版）
 
 状态基线：2026-10-28 23:45  
 当前版本：
@@ -542,12 +542,12 @@ Fabric 兼容状态展示
 # 暂缓：capability → tool exposure
 
 - [x] 验证 `ctx.tools.restrict` 的真实签名
-- [ ] 确认 image-gen 工具是 global 还是 preset scope
+- [x] 确认 image-gen 工具可被 restrict 隐藏
 - [x] profile.capabilities → activeToolSet（helper + image profile 已实现）
 - [x] 为 image-gen 增加内置 capabilityBindings
-- [ ] 用 contextBreakdown.toolsTokens 做前后对比
+- [x] 用 contextBreakdown.toolsTokens 做前后对比（11,588 → 8,260）
 - [x] 接入 sessionReady，保留 base tools
-- [ ] QQ 里实际执行 `/profile use image`（当前 QQ 离线）
+- [x] QQ 里实际执行 `/profile use image`
 
 # 明确不做
 
@@ -558,6 +558,7 @@ Fabric 兼容状态展示
 - [ ] 不 fork liketavern
 - [ ] 不一次性删除旧 manifest 字段
 - [ ] 不为了“统一”重写 DSH agent loop
+
 
 
 
