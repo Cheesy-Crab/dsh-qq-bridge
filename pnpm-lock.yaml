@@ -13,17 +13,17 @@ importers:
         version: 8.22.0
     devDependencies:
       '@dsh/platform-core':
-        specifier: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.46.2
-        version: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.46.2
+        specifier: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.49.0
+        version: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.49.0
       '@dsh/session-core':
         specifier: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.51.0
         version: https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.51.0
 
 packages:
 
-  '@dsh/platform-core@https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.46.2':
-    resolution: {integrity: sha512-jNvuNWTDSj1lioMfkiddVaxOuWCtiQZy296jXnTR6hEBWyyb/pMYI9o+QiKO8PcwMqNldJgrGQME9g+TdCjAEg==, tarball: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.46.2}
-    version: 0.46.2
+  '@dsh/platform-core@https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.49.0':
+    resolution: {integrity: sha512-R+dFXe8DTOTaEBGPabZQYDwNXvQoP64FWWev+ifk6CaDc1jdgJi61OnkkRV8FeucQqMjhrviKNuKG3TrUAw64Q==, tarball: https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.49.0}
+    version: 0.49.0
     engines: {dsh: '>=0.2.1-rc.2', node: '>=22'}
 
   '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.51.0':
@@ -45,7 +45,7 @@ packages:
 
 snapshots:
 
-  '@dsh/platform-core@https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.46.2': {}
+  '@dsh/platform-core@https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.49.0': {}
 
   '@dsh/session-core@https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.51.0': {}
 

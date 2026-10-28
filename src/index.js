@@ -132,6 +132,7 @@ export function apply(ctx, rawConfig) {
     },
     bridgeStatus: () => bridge.status(),
     platformStatus: () => ctx.get('platformStatus')?.() ?? null,
+    profileState: (id) => ctx.get('profileState')?.snapshot(id) ?? null,
     sessionStatus: () => bridge.chat?.status?.() ?? null,
   }
 

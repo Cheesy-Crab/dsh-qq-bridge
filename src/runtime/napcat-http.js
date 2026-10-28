@@ -153,6 +153,19 @@ export function registerNapCatHttp(webServer, napcat, log, setup) {
           sendJson(res, 200, platform?.profiles ?? null)
           return
         }
+        if (route === '/profile/state' && req.method === 'GET') {
+          const id = url.searchParams.get('id')
+          if (id) {
+            sendJson(res, 200, await setup?.profileState?.(id))
+            return
+          }
+          const platform = await setup?.platformStatus?.()
+          const ids = platform?.profiles?.ids ?? []
+          const states = {}
+          for (const profileId of ids) states[profileId] = await setup?.profileState?.(profileId)
+          sendJson(res, 200, states)
+          return
+        }
         if (route === '/napcat/status' && req.method === 'GET') {
           sendJson(res, 200, await napcat.status())
           return
