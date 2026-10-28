@@ -167,7 +167,7 @@ capability availability
 
 ---
 
-## P1-3. capability family 太窄
+## P1-3. capability family 太窄\n\n状态：已修（0.50.3，仅 predicted profile 扩 family；显式选择保持窄）
 
 ### 现象
 
@@ -296,4 +296,5 @@ preset 组合
 9. P2-1 预测记录
 10. P2-2 scope
 ```
+
 
