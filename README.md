@@ -8,7 +8,7 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)，运行时幂等契约见 [docs/runtime-contracts.md](docs/runtime-contracts.md)，Tavern 官方适配见 [docs/tavern-qq.md](docs/tavern-qq.md)，Fabric 字段对照见 [docs/fabric-field-map.md](docs/fabric-field-map.md)，capability→tool 暴露见 [docs/tool-exposure.md](docs/tool-exposure.md)，profile 持久状态见 [docs/profile-state.md](docs/profile-state.md)，profile 解析见 [docs/profile-resolution.md](docs/profile-resolution.md)，待修问题见 [docs/profile-tool-issues.md](docs/profile-tool-issues.md)。
 
-结构图见 [docs/architecture-v0.54.png](docs/architecture-v0.54.png)。
+结构图见 [docs/architecture-v0.54.png](docs/architecture-v0.54.png)，执行流图见 [docs/execution-flow-v0.55.png](docs/execution-flow-v0.55.png)。
 
 ## 安装（DSH Desktop 推荐）
 
@@ -406,6 +406,7 @@ wscript.exe //B scripts\restart-dsh-hidden.vbs
 - 密钥会导入 DSH 凭据存储（`~/.dsh/.credentials.yaml`）；文本文件仍是每次启动的来源，文件存在时会覆盖存储值。
 - 通过 CLI 启动的 profile 没有 `DEEPSEEK_API_KEY`，真实对话会报 `MISSING_CREDENTIAL`。
 - Windows 控制台里中文日志可能显示为乱码，那是 `Get-Content` 的编码问题，数据本身是 UTF-8。
+
 
 
 
