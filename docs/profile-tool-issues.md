@@ -1,4 +1,4 @@
-# Profile → Capabilities → Tool 问题清单
+﻿# Profile → Capabilities → Tool 问题清单
 
 状态：待逐项处理  
 范围：`session-core` 的 profile 解析、platform 的 effective profile、capability bindings、tool exposure。
@@ -7,7 +7,7 @@
 
 ---
 
-## P0-1. restrict 失败静默
+## P0-1. restrict 失败静默\n\n状态：已修（0.50.2）
 
 ### 现象
 
@@ -45,7 +45,7 @@ catch 里记录 profileId / agentPreset / deny / error
 
 ---
 
-## P0-2. capability id 未校验
+## P0-2. capability id 未校验\n\n状态：已修（0.50.2）
 
 ### 现象
 
@@ -109,7 +109,7 @@ resume 优先复用，不再重新预测。
 
 ---
 
-## P1-1. capability binding 冲突 first-wins
+## P1-1. capability binding 冲突 first-wins\n\n状态：已修（0.50.2，优先级 plugin > config > legacy）
 
 ### 现象
 
@@ -138,7 +138,7 @@ legacy image bindings
 
 ---
 
-## P1-2. capability prompt 会宣传未安装工具
+## P1-2. capability prompt 会宣传未安装工具\n\n状态：已修（0.50.2，按 known tools 过滤）
 
 ### 现象
 
@@ -296,3 +296,4 @@ preset 组合
 9. P2-1 预测记录
 10. P2-2 scope
 ```
+
