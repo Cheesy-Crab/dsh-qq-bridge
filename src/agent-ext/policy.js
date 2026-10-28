@@ -5,7 +5,7 @@
  *           log: (level: string, message: string) => void }} options
  */
 export function applyAgentPolicy({ approval, agent, level, state, profile, log, toolAllowed }) {
-  const accessGrants = state.accessGrants ?? state.capabilities ?? []
+  const accessGrants = state.accessGrants ?? []
   const policy = level === 'L3' || accessGrants.length > 0 ? 'ask' : 'never'
   if (state.approvalPolicy !== policy) {
     try {
@@ -41,7 +41,7 @@ export function guardAgentTools(agent, state, log, toolAllowed, profile) {
         return `当前 profile 仅允许：${policy.allow.join(', ')}`
       }
       if (state.level === 'L3') return undefined
-      if (!toolAllowed(name, state.accessGrants ?? state.capabilities ?? [])) return '当前账号仅允许聊天；该工具需要管理员加入白名单'
+      if (!toolAllowed(name, state.accessGrants ?? [])) return '当前账号仅允许聊天；该工具需要管理员加入白名单'
       if (/^(generate_image|generate_images|edit_image)$/i.test(String(name ?? ''))
         && Number.isFinite(state.imageQuota) && state.imageQuota <= 0) {
         return '生图额度不足；请联系管理员分配额度'

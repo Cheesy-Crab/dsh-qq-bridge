@@ -90,7 +90,7 @@ function dispatcher(overrides = {}) {
   const chat = { type: 'private', id: '42' }
   const ALL = ['workspace', 'read', 'write', 'exec']
   const run = (text, level = 'L3', target = chat, capabilities = ALL) =>
-    commands.execute({ chat: target, text }, { level, capabilities })
+    commands.execute({ chat: target, text }, { level, accessGrants: capabilities })
   return { commands, sent, images, run }
 }
 
@@ -288,5 +288,6 @@ test('/sandbox is L3-only and switches the mode', async () => {
   await run('/sandbox danger-full-access', 'L3')
   assert.match(sent[1].text, /已切换文件策略：danger-full-access/)
 })
+
 
 

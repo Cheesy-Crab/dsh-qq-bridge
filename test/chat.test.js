@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+﻿import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -147,7 +147,7 @@ test('whitelisted write capability upgrades the sandbox to workspace-write', asy
   const { manager, events } = fakeEnvironment()
   await manager.handle(
     { id: 'm1', chat: { type: 'private', id: '42' }, text: 'hello' },
-    { level: 'L1', capabilities: ['read', 'write'] },
+    { level: 'L1', accessGrants: ['read', 'write'] },
   )
   assert.deepEqual(events.filter((event) => event.type === 'sandbox/mode').map((event) => event.data.mode), ['workspace-write'])
 })
@@ -353,3 +353,4 @@ test('a workspace registered through a junction moves to its canonical path', as
     fs.rmSync(real, { recursive: true, force: true })
   }
 })
+
