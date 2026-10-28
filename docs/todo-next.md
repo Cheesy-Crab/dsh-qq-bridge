@@ -4,13 +4,13 @@
 当前版本：
 
 ```text
-@dsh/platform-core  0.51.0
+@dsh/platform-core  0.52.0
 @dsh/session-core   0.52.7
-dsh-qq-bridge       0.55.0
+dsh-qq-bridge       0.55.1
 dsh-tavern-qq       0.1.0
 ```
 
-> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.51.0 / 0.52.7 / 0.55.0 已安装，待重启。  
+> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.52.0 / 0.52.7 / 0.55.1 已安装，待重启。  
 > image profile 已注册；generation/effect 已生效。
 
 ## 执行状态
@@ -594,6 +594,7 @@ Fabric 兼容状态展示
 - [ ] 保存 tool exposure disposer，切换前 dispose 旧 restriction
 - [ ] 加迟滞阈值，避免 tools 抖动
 - [ ] 需要时再考虑 capability family 一起激活
+
 
 
 

@@ -226,7 +226,7 @@ UserCapabilityStats
 
 ---
 
-## P2-1. 没有预测记录
+## P2-1. 没有预测记录\n\n状态：已修（0.52.0，prediction log）
 
 ### 现象
 
@@ -255,7 +255,7 @@ missingCapabilities
 
 ---
 
-## P2-2. scope 工具不受 restrict 影响
+## P2-2. scope 工具不受 restrict 影响\n\n状态：已处理（0.52.0，scope 工具仍可能可见，但执行由 tool guard 拒绝）
 
 ### 现象
 
@@ -296,6 +296,7 @@ preset 组合
 9. P2-1 预测记录
 10. P2-2 scope
 ```
+
 
 
 
