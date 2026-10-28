@@ -82,75 +82,30 @@ unknown capability → warning
 
 ## P0-3. predictor 返回值未校验
 
-### 现象
+状态：已修（0.50.1）
 
-```js
-const predicted = predictor?.predict?.(...)
-```
-
-### 风险
-
-predictor 可返回：
+实现：
 
 ```text
-不存在的 profile
-agentPreset 和当前 agent 不一致的 profile
-capabilities 非法的 profile
-```
-
-platform 会直接接受。
-
-### 修复
-
-```text
-predicted 必须能在 ProfileRegistry 里找到
-predicted.agentPreset 必须等于 session.meta.agentPreset
-capabilities 必须经过 P0-2 的校验
-不满足则 fallback default
+predicted profile 必须存在于 registry
+predicted.agentPreset 必须与当前 agent 一致
+否则 fallback default
 ```
 
 ---
 
 ## P0-4. 默认 profile 未记录到 session
 
-### 现象
+状态：已修（0.50.1）
 
-只有用户选择会写：
-
-```text
-session.meta.profileId
-```
-
-预测结果只写：
+实现：
 
 ```text
-agent.__platformProfile
+session.meta.effectiveProfileId
+session.meta.effectiveProfileSource
 ```
 
-### 风险
-
-进程重启、session 恢复后：
-
-```text
-meta.profileId 不存在
-→ predictor 重新预测
-→ 可能得到不同 profile
-```
-
-同一个 session 前后工具面变化。
-
-### 修复
-
-在 session meta 记录：
-
-```text
-effectiveProfileId
-effectiveProfileSource
-```
-
-但不要写 `state.profileId`。
-
-`profileId` 仍然只表示用户选择。
+resume 优先复用，不再重新预测。
 
 ---
 
