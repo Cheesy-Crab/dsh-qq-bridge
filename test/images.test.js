@@ -5,6 +5,7 @@ import path from 'node:path'
 import test from 'node:test'
 
 import { saveIncomingImage } from '../src/agent-ext/images.js'
+import { QqBridge } from '../src/qq/bridge.js'
 import { imagesOf } from '../src/transport/onebot.js'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qq-images-'))
@@ -45,4 +46,20 @@ test('saveIncomingImage downloads http images with a content type', async () => 
 
 test('saveIncomingImage rejects segments without a source', async () => {
   await assert.rejects(() => saveIncomingImage({}, dir), /找不到可下载的图片地址/)
+})
+
+test('image download falls back to NapCat get_image for file ids', async () => {
+  const source = path.join(dir, 'resolved.jpg')
+  fs.writeFileSync(source, Buffer.from([7, 8, 9]))
+  const bridge = Object.create(QqBridge.prototype)
+  bridge.transport = {
+    action: async (action, params) => {
+      assert.equal(action, 'get_image')
+      assert.equal(params.file_id, 'file-id')
+      return { file: source }
+    },
+  }
+  const file = await bridge.resolveIncomingImage({ fileId: 'file-id' }, path.join(dir, 'resolved'))
+  assert.equal(path.extname(file), '.jpg')
+  assert.deepEqual([...fs.readFileSync(file)], [7, 8, 9])
 })

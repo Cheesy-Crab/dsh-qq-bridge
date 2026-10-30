@@ -278,6 +278,26 @@ export class QqBridge {
    * @param {{ chat: any, images?: any[] }} message
    * @returns {Promise<string[]>}
    */
+  async resolveIncomingImage(image, dir) {
+    try {
+      return await saveIncomingImage(image, dir)
+    } catch (firstError) {
+      const ref = image?.fileId ?? image?.file
+      if (!ref || typeof this.transport?.action !== 'function') throw firstError
+      const info = await this.transport.action('get_image', {
+        file: ref,
+        ...(image.fileId ? { file_id: image.fileId } : {}),
+      })
+      const resolved = {
+        ...image,
+        ...(info?.file ? { file: info.file } : {}),
+        ...(info?.url ? { url: info.url } : {}),
+        ...(info?.base64 ? { file: `base64://${info.base64}` } : {}),
+      }
+      return await saveIncomingImage(resolved, dir)
+    }
+  }
+
   async saveIncomingImages(message) {
     const images = message.images ?? []
     if (images.length === 0) return []
@@ -286,7 +306,7 @@ export class QqBridge {
     const saved = []
     for (const image of images) {
       try {
-        const file = await saveIncomingImage(image, dir)
+        const file = await this.resolveIncomingImage(image, dir)
         saved.push(file)
         this.log('info', `image saved ${message.chat.type}:${message.chat.id} ${file}`)
       } catch (error) {
