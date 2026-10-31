@@ -1,4 +1,4 @@
-﻿# Profile State
+# Profile State
 
 profile 现在可以有独立于 chat/session 的持久状态。
 
@@ -114,10 +114,21 @@ token / cost 需要从 LLM usage 另行归集
 工具失败判断依赖 tool/result 的 isError / error / 文本前缀
 ```
 
+## 入口
+
+```text
+GET /qq-bridge/profile/state
+GET /qq-bridge/profile/state?id=image
+```
+
 ## 后续
 
-- `/profile/state` HTTP/命令入口
 - token/cost 归集
 - 按 chat 聚合
 - 清理策略 / 保留期
+
+## 验证状态（2026-11-01）
+
+`image` 的 profile 文件存在，但 `tools` / `capabilities` 为空：重启后还没有产生新的工具调用，
+历史调用不回灌。跑一轮生图后再查同一路由，能看到对应条目——这就是“重启后实际统计”的核对方法。
 

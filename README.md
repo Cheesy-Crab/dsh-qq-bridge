@@ -1,4 +1,4 @@
-﻿# dsh-qq-bridge
+# dsh-qq-bridge
 
 QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。每个客户端 QQ 管理自己的工作区，每个群有专属工作区，普通消息即对话，`/` 开头为指令。
 
@@ -6,7 +6,9 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 
 架构说明见 [docs/architecture.md](docs/architecture.md)：工作区对接域、agent 行为扩展域、QQ 适配层与运行支撑层。
 
-平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)，v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)，运行时幂等契约见 [docs/runtime-contracts.md](docs/runtime-contracts.md)，Tavern 官方适配见 [docs/tavern-qq.md](docs/tavern-qq.md)，Fabric 字段对照见 [docs/fabric-field-map.md](docs/fabric-field-map.md)，capability→tool 暴露见 [docs/tool-exposure.md](docs/tool-exposure.md)，profile 持久状态见 [docs/profile-state.md](docs/profile-state.md)，profile 解析见 [docs/profile-resolution.md](docs/profile-resolution.md)，待修问题见 [docs/profile-tool-issues.md](docs/profile-tool-issues.md)。
+**接手开发先读 [docs/current-state.md](docs/current-state.md)**：版本基线、安装形态、运行态、测试基线与已知限制都在那里。
+
+平台插件接口规范见 [docs/plugin-interface.md](docs/plugin-interface.md)（v1.1，已弃用），v1.2 manifest/profile 规范见 [docs/plugin-interface-v1.2.md](docs/plugin-interface-v1.2.md)，机器可读 schema 在 [schemas/](schemas/)；平台核心边界见 [docs/platform-core.md](docs/platform-core.md)，独立仓库为 https://github.com/Cheesy-Crab/dsh-platform-core；会话核心独立仓库为 https://github.com/Cheesy-Crab/dsh-session-core；通信适配器契约见 [docs/adapter-contract.md](docs/adapter-contract.md)。外部平台/插件边界结论见 [docs/adr/0001-external-platform-boundary.md](docs/adr/0001-external-platform-boundary.md)。重启与会话连续性见 [docs/restart-policy.md](docs/restart-policy.md)，运行时幂等契约见 [docs/runtime-contracts.md](docs/runtime-contracts.md)，Tavern 官方适配见 [docs/tavern-qq.md](docs/tavern-qq.md)，Fabric 字段对照见 [docs/fabric-field-map.md](docs/fabric-field-map.md)，Fabric generation/effect 设计见 [docs/fabric-generation-effect.md](docs/fabric-generation-effect.md)，DSH Desktop 参考见 [docs/dsh-desktop-reference.md](docs/dsh-desktop-reference.md)，capability→tool 暴露见 [docs/tool-exposure.md](docs/tool-exposure.md)，profile 持久状态见 [docs/profile-state.md](docs/profile-state.md)，profile 解析见 [docs/profile-resolution.md](docs/profile-resolution.md)，待修问题见 [docs/profile-tool-issues.md](docs/profile-tool-issues.md)，QQ 自动登录见 [docs/qq-autologin.md](docs/qq-autologin.md)。
 
 结构图见 [docs/architecture-v0.54.png](docs/architecture-v0.54.png)，执行流图见 [docs/execution-flow-v0.55.png](docs/execution-flow-v0.55.png)，节点说明见 [docs/execution-flow.md](docs/execution-flow.md)。
 
@@ -15,13 +17,13 @@ QQ ↔ DSH 工作区对接插件：让 QQ 成为 DSH 工作区的远程入口。
 DSH Desktop 侧边栏 **插件 → 添加插件 → 安装第三方插件**，填 GitHub 地址：
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.53.2
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.55.4
 ```
 
 仓库是 public。也可以填本地小包目录：
 
 ```
-dist\dsh-qq-bridge-0.36.0-package
+dist\dsh-qq-bridge-0.55.4-package
 ```
 
 安装并启用 `dsh-qq-bridge`，重启 Desktop，然后在 **设置 → QQ Bridge** 按向导完成：
@@ -345,8 +347,12 @@ dsh web
 
 ```powershell
 $node = 'E:\dsh\resources\runtime\primary-runtime\dependencies\node\bin\node.exe'
-node --test          # 81 个用例：路径、配置、密钥、去重、OneBot、WS、会话路由、指令、存储、权限、审批、群聊
+node --test          # 166 个用例：路径、配置、密钥、去重、OneBot、WS、会话路由、指令、存储、权限、审批、群聊、图片
 ```
+
+在 DSH agent 的沙箱里跑 `node --test` 会因测试运行器使用管道 stdio 报 `spawn EPERM`；
+此时逐文件执行：`Get-ChildItem test -Filter *.test.js | ForEach-Object { & $node $_.FullName }`。
+完整基线与唯一的环境相关失败见 [docs/current-state.md](docs/current-state.md#4-测试基线)。
 
 本地跑与 CI 完全相同的两步（会先把 DSH 自带的 node/pnpm 接进 PATH）：
 
@@ -358,23 +364,24 @@ Linux 侧可以用 WSL 验证：把仓库复制到家目录（排除 `node_modul
 
 ## 目录
 
-```
+```text
 src/
-  index.js            Cordis 入口：配置、日志、生命周期、自检开关
-  bridge.js           传输编排：去重 → 回显，未来接会话路由
-  config.js           配置默认值与校验
-  paths.js            跨平台路径层
-  selftest.js         四接缝自检
-  transport/
-    onebot.js         OneBot 11 反向 WS：握手、token、收发、action 关联
-    dedupe.js         message_id 去重（TTL + 容量）
-    fake.js           测试/离线传输
+  index.js              Cordis 入口 / composition root
+  core/                 配置、路径、存储、凭据、自检
+  transport/            OneBot 11 反向 WS、message_id 去重、fake 传输
+  qq/                   组合根、会话路由、指令适配器、命令扩展点
+  agent-ext/            prompt / 审批 / 提问 / 图片 / present / 截图 / 工具 guard
+  runtime/              NapCat 进程守护、安装、Desktop 控制 API
 scripts/
-  fake-napcat.mjs     模拟 NapCat 的联调客户端
-test/
-  paths/config/dedupe/onebot/transport 共 28 个用例
+  ci.ps1 / ci.sh        CI（JSON、BOM、manifest、单测）
+  bundle.ps1            生成 dist 分发包
+  fake-*.mjs            无 NapCat 联调客户端
+  restart-dsh.ps1       重启 DSH（隐藏窗口版 restart-dsh-hidden.vbs）
+test/                   166 个用例
 docs/
-  api-notes.md        已实测的 DSH 宿主 API 与坑
+  current-state.md      接手交接：版本、运行态、测试基线、已知限制
+  api-notes.md          已实测的 DSH 宿主 API 与坑
+  architecture.md       域划分与依赖规则
 ```
 
 ## 更新与重启
@@ -384,8 +391,9 @@ profile 里的 `node_modules\dsh-qq-bridge` 是指向 `dist\dsh-qq-bridge-<版�
 不是本仓库的 `src/`：
 
 ```powershell
-# 1. 刷新分发包（先自己备份或保留旧目录做回滚）
-robocopy src dist\dsh-qq-bridge-0.31.0-package\src /MIR
+# 1. 刷新 profile 实际加载的目录（junction 指向 dist\dsh-qq-bridge-<版本>-package）
+robocopy src dist\dsh-qq-bridge-0.55.4-package\src /MIR
+#    需要发版时再打包：powershell -File scripts\bundle.ps1（产出 dist\dsh-qq-bridge-<版本>.zip）
 # 2. 重启 DSH / QQ 桥 / NapCat（无控制台窗口）
 wscript.exe //B scripts\restart-dsh-hidden.vbs
 ```

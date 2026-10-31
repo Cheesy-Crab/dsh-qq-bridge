@@ -1,4 +1,4 @@
-﻿# Profile → Capabilities → Tool 问题清单
+# Profile → Capabilities → Tool 问题清单
 
 状态：待逐项处理  
 范围：`session-core` 的 profile 解析、platform 的 effective profile、capability bindings、tool exposure。
@@ -7,7 +7,9 @@
 
 ---
 
-## P0-1. restrict 失败静默\n\n状态：已修（0.50.2）
+## P0-1. restrict 失败静默
+
+状态：已修（0.50.2）
 
 ### 现象
 
@@ -45,7 +47,9 @@ catch 里记录 profileId / agentPreset / deny / error
 
 ---
 
-## P0-2. capability id 未校验\n\n状态：已修（0.50.2）
+## P0-2. capability id 未校验
+
+状态：已修（0.50.2）
 
 ### 现象
 
@@ -109,7 +113,9 @@ resume 优先复用，不再重新预测。
 
 ---
 
-## P1-1. capability binding 冲突 first-wins\n\n状态：已修（0.50.2，优先级 plugin > config > legacy）
+## P1-1. capability binding 冲突 first-wins
+
+状态：已修（0.50.2，优先级 plugin > config > legacy）
 
 ### 现象
 
@@ -138,7 +144,9 @@ legacy image bindings
 
 ---
 
-## P1-2. capability prompt 会宣传未安装工具\n\n状态：已修（0.50.2，按 known tools 过滤）
+## P1-2. capability prompt 会宣传未安装工具
+
+状态：已修（0.50.2，按 known tools 过滤）
 
 ### 现象
 
@@ -167,7 +175,9 @@ capability availability
 
 ---
 
-## P1-3. capability family 太窄\n\n状态：已修（0.50.3，仅 predicted profile 扩 family；显式选择保持窄）
+## P1-3. capability family 太窄
+
+状态：已修（0.50.3，仅 predicted profile 扩 family；显式选择保持窄）
 
 ### 现象
 
@@ -202,7 +212,9 @@ image.edit
 
 ---
 
-## P1-4. predictor 尚未接统计\n\n状态：已修（0.51.0，UserCapabilityStore + createProfilePredictor）
+## P1-4. predictor 尚未接统计
+
+状态：已修（0.51.0，UserCapabilityStore + createProfilePredictor）
 
 ### 现象
 
@@ -226,7 +238,9 @@ UserCapabilityStats
 
 ---
 
-## P2-1. 没有预测记录\n\n状态：已修（0.52.0，prediction log）
+## P2-1. 没有预测记录
+
+状态：已修（0.52.0，prediction log）
 
 ### 现象
 
@@ -255,7 +269,9 @@ missingCapabilities
 
 ---
 
-## P2-2. scope 工具不受 restrict 影响\n\n状态：已处理（0.52.0，scope 工具仍可能可见，但执行由 tool guard 拒绝）
+## P2-2. scope 工具不受 restrict 影响
+
+状态：已处理（0.52.0，scope 工具仍可能可见，但执行由 tool guard 拒绝）
 
 ### 现象
 

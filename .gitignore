@@ -8,3 +8,4 @@ vendor/napcat/
 dist/
 dsh-image-gen/
 .bridge-out/
+attachments/
