@@ -1,226 +1,147 @@
 # 管理手册（服务端 / 部署者）
 
-面向在一台 Windows 机器上部署和维护机器人的人。Linux 部署见 [deploy-linux.md](deploy-linux.md)。
+面向在一台 Windows 机器上部署和维护机器人的人。Linux 部署见 [deploy-linux.md](deploy-linux.md)，
+QQ 用户的使用说明见 [manual-user.md](manual-user.md)。当前版本与运行态见 [current-state.md](current-state.md)。
 
-> **部署形态（2026-11-01）**：当前生产实例是 **DSH Desktop 的 `desktop` profile**，
-> 插件与 NapCat 都由 Desktop 管理，控制接口在 `/qq-bridge/*`，Web GUI 端口由 Desktop
-> 随机分配（`--port 0`）。本文中的 `qqweb` profile、`3080` 端口属于旧版独立部署写法，
-> 保留作参考。当前运行态与版本见 [current-state.md](current-state.md)。
+## 1. 部署形态与组成
 
-## 1. 组成与端口
+当前生产实例是 **DSH Desktop + `desktop` profile** 的形态：Desktop 自己加载插件、
+管理 NapCat、提供设置页；不需要 qqweb、浏览器后台或单独启动 NapCat。
 
+```text
+QQ 客户端 ⇄ 腾讯服务器 ⇄ NapCat ⇄(ws://127.0.0.1:6700)⇄ dsh-qq-bridge ⇄ DSH 会话/工作区
 ```
-QQ 客户端 ⇄ 腾讯服务器 ⇄ NapCat ⇄(ws://127.0.0.1:6700)⇄ DSH 插件 ⇄ DSH 会话/工作区
-```
 
-| 组件 | 本机路径 | 端口 |
+| 组件 | 本机位置 | 端口 |
 |---|---|---|
-| DSH + 插件 | `E:\dsh`，profile `qqweb` | 3080（Web GUI）、6700（OneBot 反向 WS） |
-| NapCat | `E:\NapCat\NapCat.Shell.Windows.Node` | 6099（WebUI） |
-| 工作区 | `E:\QQdsh` | — |
+| DSH Desktop | `E:\dsh\DeepSeek Harness.exe`，profile `desktop` | GUI 端口每次启动随机（`--port 0`） |
+| dsh-qq-bridge | junction → `dist\dsh-qq-bridge-<版本>-package` | 监听 OneBot 反向 WS 6700 |
+| NapCat Shell | 插件设置里的 `napcatCwd`，当前是仓库内 `vendor\napcat` | WebUI 6099 |
+| 工作区根 | `E:\QQdsh` | — |
 | 状态 | `%USERPROFILE%\.dsh\storages\qq-bridge\` | — |
+| 桥设置 | `%USERPROFILE%\.dsh\qq-bridge\settings.json` | — |
 
-## 2. 启动与停止
+## 2. 启动、停止、重启
 
-**启动 DSH（先起，监听 6700）**
+**日常**：打开 DSH Desktop，插件随 profile 启动；`napcat.autoStart` 为 true 时 NapCat 一起拉起。
+
+**重启**（不自动重启，见 [restart-policy.md](restart-policy.md)）：
 
 ```powershell
-& 'E:\dsh\resources\runtime\cli\bin\dsh.cmd' --profile qqweb --no-open
+wscript.exe //B "E:\dsh\工作区对接QQ\scripts\restart-dsh-hidden.vbs"
 ```
 
-**启动 NapCat**
+`restart-dsh.ps1` 会优雅关闭 DSH 进程树、重新拉起，并轮询 `/qq-bridge/bridge/status`
+直到 OneBot 重连；日志在 `%USERPROFILE%\.dsh\logs\restart-*.log`。
+参数：`-SkipStart` 只停机、`-TimeoutSec 180` 放宽等待、`-Port` 换端口。
+在 DSH 会话内执行会连调用方一起杀掉，默认拒绝，需加 `-Force`。
+
+**检查**：
 
 ```powershell
-cd 'E:\NapCat\NapCat.Shell.Windows.Node'
-.\napcat.bat
-```
-
-如果出现二维码，用机器人 QQ 扫码；登录后 NapCat 会自动连 6700。
-
-**停止**：两个窗口分别 `Ctrl+C`。强制结束：
-
-```powershell
-Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*--profile qqweb*' } | ForEach-Object { taskkill /PID $_.ProcessId /T /F }
-Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like 'E:\NapCat\*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
-```
-
-**检查**
-
-```powershell
-Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 3080,6099,6700
+Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 6700,6099
+Invoke-RestMethod http://127.0.0.1:<GUI端口>/qq-bridge/bridge/status
 ```
 
 ## 3. 首次配置
 
-### 3.1 管理员
+### 3.1 提供 NapCat 路径
 
-编辑 `%USERPROFILE%\.dsh\profiles\qqweb\cordis.patch.yml`：
+设置页 **NapCat 路径**：已有 NapCat 点「选择目录」（目录里必须有 `napcat.bat`），
+或粘路径回车；没有就点「下载」，装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`。
+路径写入 `settings.json` 的 `napcatCwd`，重启后继续使用。
+
+当前实例指向仓库内 `vendor\napcat`（约 345MB，已在 `.gitignore` 里，不随插件分发）。
+
+### 3.2 模型账号
+
+默认直接用 DSH Desktop 当前登录的 DeepSeek 账号（`deepseek-account`），不需要 API Key。
+当前 profile 覆盖为 API Key 模式时（`agent.provider: deepseek-official`），在设置页保存 `sk-...`，
+或写入 `%USERPROFILE%\.dsh\deepseek-key.txt`（支持裸 key 或 `DEEPSEEK_API_KEY=sk-...`）。
+插件启动时读文件并写入 DSH 凭据存储；环境变量已存在时优先用环境变量。
+
+### 3.3 设置管理员
+
+设置页填自己的 QQ 号点「设为管理员」，该账号变为 L3，之后可用 `/admin` 管理其他人。
+也可以用 profile patch 指定（启动时合并）：
 
 ```yaml
 - id: qq-bridge
   config:
     access:
-      admins:
-        - '10001'
+      admins: ['<QQ号>']
 ```
 
-openid 就是 QQ 号（OneBot 的 `user_id`）。重启 DSH 后，该账号自动升为 L3。
+### 3.4 启动并扫码
 
-### 3.2 API Key
+设置页点 **启动** → **显示二维码** → 机器人 QQ 扫码。登录后状态变为 **QQ 已连接**。
 
-`%USERPROFILE%\.dsh\deepseek-key.txt`，内容：
+### 3.5 免扫码（可选）
 
-```text
-DEEPSEEK_API_KEY=sk-...
-```
-
-插件启动时读入并写入 DSH 凭据存储（`~/.dsh/.credentials.yaml`）。文件是每次启动的来源。
-
-### 3.3 内置 NapCat
-
-插件默认从项目内 `vendor/napcat` 启动 NapCat，不再依赖 `E:\NapCat` 外部目录：
-
-- `vendor/napcat` 约 345MB，已加入 `.gitignore`，用 `scripts/install-napcat.ps1` 填充；
-- 配置：
+首次扫码后，在 NapCat 的 `napcat\config\webui.json` 里设置 `autoLoginAccount` 为该 QQ 号，
+或在 profile patch 里：
 
 ```yaml
-napcat:
-  enabled: true
-  autoStart: true
-  args: ['-q', '123456789']
+- id: qq-bridge
+  config:
+    napcat:
+      args: ['-q', '<QQ号>']
 ```
 
-- 首次启动仍需扫码，二维码在 `vendor\napcat\napcat\cache\qrcode.png`；
-  登录过一次后 `-q <QQ>` 可快速登录；
-- 已有外部 OneBot 客户端连接时，插件不会重复启动 NapCat，也不会结束外部进程；
-- `/napcat status` 查看状态，`/napcat qr` 重发二维码，`/napcat restart` 重启。
-- DSH Desktop 的「设置 → QQ Bridge」也提供状态、启动、停止、重启和二维码按钮；
-  这些按钮通过同源 `/qq-bridge/napcat/*` 接口工作。
+同一 QQ 号不能同时被桌面 QQ 和 NapCat 登录；报「当前账号已登录,无法重复登录」时先完全退出桌面 QQ，
+或给 NapCat 换一个独立账号。详见 [qq-autologin.md](qq-autologin.md)。
 
-如果继续使用外部 NapCat，反向 WS 配置在：
+## 4. 用户与权限
 
-```
-E:\NapCat\NapCat.Shell.Windows.Node\napcat\config\onebot11_<QQ号>.json
-```
+等级与白名单：
 
-关键片段：
+| 等级 | 文件沙箱 | 审批 | 默认能力 |
+|---|---|---|---|
+| L0 访客 | `read-only` | `never` | 仅聊天（共享访客工作区） |
+| L1 用户 | `workspace-write` | `ask` | 聊天 + `image`（额度 0） |
+| L2 高级 | `workspace-write` | `ask` | 聊天 + `image`（额度 0，配额更高） |
+| L3 管理员 | `danger-full-access` | `ask` | 全部 |
 
-```json
-{
-  "network": {
-    "websocketClients": [
-      {
-        "name": "dsh-qq-bridge",
-        "enable": true,
-        "url": "ws://127.0.0.1:6700/",
-        "messagePostFormat": "array",
-        "reportSelfMessage": false,
-        "reconnectInterval": 3000,
-        "token": "",
-        "debug": false,
-        "heartInterval": 30000
-      }
-    ]
-  }
-}
-```
+- 审批策略按「L3 或存在 `accessGrants`」取 `ask`，否则 `never`；
+- **L3 也不自动放行**：沙箱最大，但审批仍由本人回 `1`/`2`；
+- 白名单能力：`workspace` / `read` / `write` / `exec` / `image`；变更在下一条消息生效。
 
-改完必须重启 NapCat，它不热加载。重启后可能要重新扫码。
-
-如果要在 **DSH Desktop 应用内**看到控制按钮，而不是在 3080 网页里：用 Desktop
-侧边栏 **插件 → 添加插件 → 安装第三方插件**，安装本地目录
-`packages/qq-bridge-ui`。它只含客户端 UI，不会启动第二个 bot；按钮控制
-`http://127.0.0.1:3080` 的 qqweb 实例。
-
-## 4. 用户与权限管理
-
-在 QQ 里发给机器人（L3）：
+管理员在 QQ 里（私聊机器人）操作：
 
 | 指令 | 作用 |
 |---|---|
 | `/admin users` | 用户、等级、状态、今日轮次 |
-| `/admin invite [L0-L3]` | 生成 5 分钟一次性配对码，默认 L1 |
+| `/admin invite [L0-L3]` | 生成一次性配对码，默认 L1，5 分钟有效 |
 | `/admin level <openid> <L0-L3>` | 调整等级 |
-| `/admin freeze <openid>` | 冻结 |
-| `/admin unfreeze <openid>` | 解冻 |
-| `/admin ws list` | 所有工作区（跨用户） |
+| `/admin freeze <openid>` / `/admin unfreeze <openid>` | 冻结/解冻 |
+| `/admin allow <openid> <能力…>` / `/admin deny …` | 能力白名单 |
+| `/admin perms <openid>` | 查看能力 |
+| `/admin ws list` | 全部工作区（跨用户） |
+| `/admin quota <openid> <数量>` | 生图额度（Buzz） |
+| `/admin image-balance` | Civitai 账户总额（仅 L3） |
 | `/napcat status\|start\|stop\|restart\|qr` | 管理内置 NapCat |
 
-绑定流程（仅私聊需要；群聊不需要 `/bind`）：管理员 `/admin invite L1` → 把六位码给用户 → 用户 `/bind 123456`。
-
-等级与配额含义见 [使用手册](manual-user.md#7-权限等级与白名单)。
-
-### 4.1 能力白名单
-
-L3 以外默认仅聊天；L1/L2 额外默认拥有 `image`（额度仍为 0）。按账号授予其他能力：
-
-| 能力 | 作用 |
-|---|---|
-| `workspace` | `/ws`、`/new`、`/sessions`、`/use` |
-| `read` | read/glob/grep 等读取工具 |
-| `write` | 写文件（隐含 read） |
-| `exec` | 执行命令（隐含 read/write，工具集全开） |
-| `image` | `generate_image` / `edit_image` / `present` 等生图与发图工具 |
+群主体按 `group:<群号>` 单独配置：
 
 ```text
-/admin allow <openid> workspace write image
-/admin deny <openid> exec
-/admin perms <openid>
+/admin level group:<群号> L3
+/admin allow group:<群号> image
+/admin quota group:<群号> 100
 ```
 
-生图额度按 Buzz 分配，和 Civitai 账户总额无关；QQ 用户只看到自己被分配的余额：
+绑定流程（仅私聊需要）：`/admin invite L1` → 用户 `/bind <配对码>`。群聊加进群即可，不需要绑定。
 
-```text
-/admin quota <openid> 100
-/admin quota <openid>
-```
+### 4.1 提问与审批
 
-- 额度为 0 时，生图工具会被 guard 拦截；
-- 余额大于 0 但不足以支付一次生成时，允许生成，扣到 0 为止；
-- 每次生成后，QQ 会收到“本次消耗 / 剩余额度”的提示，不显示账户总额。
-
-管理员可查看 Civitai 账户总额（仅 L3，不下发给普通用户）：
-
-```text
-/admin image-balance
-```
-
-返回 `blue / green / yellow / total`，数据来自
-`https://civitai.com/api/trpc/buzz.getBuzzAccount`。
-
-也可以写在 profile 配置里（启动时合并进用户记录）：
-
-```yaml
-access:
-  whitelist:
-    '123456': ['workspace', 'read', 'write']
-```
-
-白名单变更后，该用户下一条消息生效；已建立的会话会用新能力重新挂 guard 和沙箱模式。
-
-文件策略按等级自动套用（默认见上表），L3 也可以在 QQ 里临时切换当前会话：
-
-```
-/sandbox danger-full-access
-/sandbox workspace-write
-/sandbox
-```
-
-`agent.preset` 决定会话能看到哪些工具。不要删除，否则会话只剩全局的 `working_directory`，连写文件都做不到。
-
-### 4.2 用户提问
-
-agent 的 `ask_user_question` 现在会转成 QQ 文字：
-
-- 选项按 `1. 2. 3.` 列出，用户回复序号、选项文字或自定义文字；
-- 多选回复 `1,3`；
-- 默认等待 30 分钟，`questions.timeoutSec` 可改，`0` 为不限时；
-- 提问由 QQ 会话接管后，桌面端的同一选项框不会同时生效；
-- 超时后模型收到“用户超时未回复”的自定义答案，可继续或结束任务。
+- `ask_user_question` 转成 QQ 文字：选项按 `1. 2. 3.` 列出，回序号、选项文字或自定义文字；
+  多选回 `1,3`；默认等 30 分钟（`questions.timeoutSec`，0 为不限时）；
+- 工具审批发「回复 1 允许，2 拒绝」，只认发起人，超时或拒绝都 fail-closed
+  （`approval.timeoutSec`，默认 120 秒）。
 
 ## 5. 配置项
 
-在 profile 的 `cordis.patch.yml` 里按 id 覆盖：
+在 `%USERPROFILE%\.dsh\profiles\desktop\cordis.patch.yml` 里按 id 覆盖（完整默认值见
+`src/core/config.js` 与 README）：
 
 ```yaml
 - id: qq-bridge
@@ -228,110 +149,105 @@ agent 的 `ask_user_question` 现在会转成 QQ 文字：
     workspacesRoot: E:\QQdsh
     commandPrefix: ['/', '!', '#']
     agent:
-      provider: deepseek-account
+      provider: deepseek-official
       model: deepseek-flash
       preset: standard
       turnTimeoutMs: 1800000
+      followUp:
+        enabled: true
     sandbox:
-      modeByLevel:
-        L0: read-only
-        L1: workspace-write
-        L2: workspace-write
-        L3: danger-full-access
+      modeByLevel: { L0: read-only, L1: workspace-write, L2: workspace-write, L3: danger-full-access }
     limits:
       maxChars: 1800
       maxWorkspaces: { L1: 3, L2: 10, L3: 0 }
       dailyTurns: { L0: 20, L1: 200, L2: 1000, L3: 0 }
     approval:
       timeoutSec: 120
-    access:
-      admins: ['10001']
-      bindCodeTtlMinutes: 5
+    questions:
+      timeoutSec: 1800
+    napcat:
+      enabled: true
+      autoStart: true
     transport:
       onebot:
         port: 6700
         accessTokenEnv: QQ_ONEBOT_TOKEN
 ```
 
-完整默认值见仓库 [src/core/config.js](../src/core/config.js) 与 [README](../README.md)。
+`agent.preset` 决定会话能看到哪些工具，不要删除（否则只剩全局工具）。
 
 ## 6. 状态与数据
 
-| 文件 | 内容 |
+| 文件 / 目录 | 内容 |
 |---|---|
-| `~/.dsh/storages/qq-bridge/state.json` | 每个聊天的当前工作区、当前会话、各工作区上次会话 |
-| `~/.dsh/storages/qq-bridge/users.json` | 用户等级、冻结状态、每日轮次、配对码 |
-| `E:\QQdsh\u-*\` | 个人工作区 |
-| `E:\QQdsh\g-*\` | 群工作区 |
+| `~/.dsh/storages/qq-bridge/state.json` | 每个聊天的当前工作区、当前会话、各工作区上次会话、标题、归档 |
+| `~/.dsh/storages/qq-bridge/users.json` | 等级、冻结、每日轮次、能力、生图额度、配对码 |
+| `~/.dsh/qq-bridge/settings.json` | NapCat 路径等桥设置 |
+| `~/.dsh/platform/profiles/<profileId>.json` | profile 持久统计 |
+| `~/.dsh/platform/predictions.jsonl` | profile 预测日志（只记元数据） |
+| `E:\QQdsh\u-*\`、`E:\QQdsh\g-*\` | 个人 / 群工作区 |
 
-- 会话恢复失败会自动新建，旧会话仍在 DSH 里，可 `/sessions` 后 `/use` 切回。
-- 归档（`/archive`）只把会话从列表隐藏并调用 DSH 的 archive，不删除 `~/.dsh/sessions` 下的日志；需要彻底删除只能停服务后手动清理。
-- `/ws delete` 调用 `workspaceRegistry.delete(id)`，只移除工作区登记，不删目录和会话；会话会变成 ungrouped。
-- 备份：停掉 DSH，复制 `E:\QQdsh` 和 `~/.dsh/storages/qq-bridge` 即可；密钥文件单独保管。
-- 重置某个用户：删 `users.json` 里对应条目（先停 DSH），或 `/admin level` 重设。
+状态路由都在 `/qq-bridge` 前缀下：`setup/status`、`bridge/status`、`platform/status`、
+`session/status`、`profile/status`、`profile/state[?id=]`、`napcat/status|qr`、
+`napcat/start|stop|restart`（POST 需 `x-qq-bridge-control: 1`）。
 
-## 7. 截图
+备份：停掉 DSH，复制 `E:\QQdsh` 和 `%USERPROFILE%\.dsh\storages\qq-bridge`，密钥文件单独保管。
+会话历史在 `~/.dsh/sessions`，归档只隐藏不删除。
 
-L3 在 QQ 里发送：
+## 7. 截图与图片
 
-```
-/screenshot
-```
-
-插件会抓取所有显示器（虚拟屏幕），压缩成 JPEG（质量 70），保存到当前工作区的
-`attachments/qq/`，再以 OneBot `image` 段（base64）发回当前聊天；群里会附带 @。
-
-依赖：Python + Pillow。DSH 自带的 Python 通常已含 Pillow；找不到时可设
-`DSH_QQ_PYTHON` 指向带 Pillow 的 `python.exe`。抓屏需要交互式桌面会话，服务化/
-无桌面环境会失败。
-
-另外，agent 在回复里用 `present` 展示图片时，桥接器会在该轮结束时把图片自动转发到
-对应的 QQ 会话（只转发 png/jpg/jpeg/gif/webp；其他文件仍只发文字）。
-
-入站图片会下载到当前工作区的 `attachments/incoming/`，文件名形如
-`qq-2026-10-23T16-45-08-078Z-9otz0p.jpg`，大小上限 20MB；下载失败时消息里会出现
-`[图片下载失败]`。模型是否理解图片内容取决于模型能力，桥接器只负责落盘和传路径。
+- `/screenshot`（L3）：抓所有显示器，压成 JPEG，存到当前工作区 `attachments/qq/` 后按 base64 发回；
+  依赖 Python + Pillow，可用 `DSH_QQ_PYTHON` 指定解释器；需要交互式桌面会话；
+- 入站图片：下载到 `attachments/incoming/`，只有 `file_id` 时先调 NapCat `get_image` 再落盘；
+  失败时消息里出现 `[图片下载失败]`；
+- 出站：`present` 展示的图片在 turn 结束自动转发；L3 可用 `/sendimage <路径>`；
+  支持 png/jpg/jpeg/gif/webp/bmp，其他文件只发文字。
 
 ## 8. 日志与排障
 
 | 现象 | 排查 |
 |---|---|
-| 6700 被占用 | 已经有一个 DSH 实例在跑；先结束重复进程 |
+| 6700 被占用 | 已有 DSH 实例在跑；结束重复进程 |
 | NapCat 反复 `ECONNREFUSED 127.0.0.1:6700` | DSH 没起或没监听；先起 DSH，NapCat 每 3 秒重试 |
-| DSH 连上但 QQ 不回 | 看 NapCat 日志有没有 `接收 <-`；看插件日志有没有 `处理失败` |
-| `MISSING_CREDENTIAL` | key 文件缺失或格式不对；确认 `DEEPSEEK_API_KEY=` 前缀或裸 key |
+| 连上但 QQ 不回 | 看 NapCat 是否收到事件、插件是否 `处理失败`；`/qq-bridge/bridge/status` 的 `pending` |
+| `MISSING_CREDENTIAL` | key 文件缺失或格式不对 |
 | `resume failed ... lacks an identified message` | 旧会话是早期版本写的，回退新会话即可 |
-| 扫码后立刻又掉线 | 机器人账号在别处登录被踢；只保留一个 NapCat |
-| WebUI 打不开 6099 | NapCat 没起，或看日志里的 token URL |
+| 扫码后立刻掉线 | 机器人账号在别处登录被踢；只保留一个 NapCat |
+| WebUI 6099 打不开 | NapCat 没起；token 在 `napcat\config\webui.json` |
 
-日志位置：
-
-- DSH：启动窗口输出，或启动时重定向的文件（如 `E:\NapCat\dsh-qqbridge3.log`）；
-- NapCat：启动窗口输出，或 `E:\NapCat\napcat-run2.log`。
-
-打开调试日志：启动 DSH 前设 `DSH_QQ_BRIDGE_DEBUG=1`。
+日志：DSH 启动窗口或 `%USERPROFILE%\.dsh\logs\`（含 `restart-*.log`）；NapCat 启动终端输出。
+排障时设 `DSH_QQ_BRIDGE_DEBUG=1` 把插件日志镜像到 console。
 
 ## 9. 安全
 
-- NapCat 和插件都在 `127.0.0.1`，不对外暴露 6700/6099。
-- **OneBot token 尚未设置**（见 [TODO](../TODO.md)）：本机自用可接受，跨机/多用户前必须加，填 `websocketClients[].token` 与 `QQ_ONEBOT_TOKEN`。
-- 管理员账号就是 L3，等同于服务器权限；不要随意 `/admin level` 提权。
-- 群工作区内容对群成员可见，提醒用户不要发敏感信息。
-- 审批 fail-closed：超时、错人、无应答者都会拒绝。
-- **L3 也不自动放行**：L3 的沙箱是 `danger-full-access`，但审批仍是 `ask`，由 L3 的 QQ 本人回 `1`/`2`。
-- **没有跨会话授权**：另一个会话无法代授权限；DSH 权限按会话与每次调用判定。
-- 密钥文件只给运行 DSH 的账号读；不要提交进 git。
+- NapCat 与插件都只连 `127.0.0.1`，不要对外暴露 6700/6099；
+- **OneBot token 尚未设置**（见 [TODO](../TODO.md)）：跨机/多用户前必须补，
+  NapCat 的 `websocketClients[].token` 与 `QQ_ONEBOT_TOKEN` 填同一个值；
+- 管理员账号等同服务器权限；不要随意 `/admin level` 提权；
+- 群工作区内容对群成员可见，提醒不要发敏感信息；
+- 密钥只给运行 DSH 的账号读，不要提交进 git；`~/.dsh/.credentials.yaml` 同理。
 
 ## 10. 升级
 
 ```powershell
 cd 'E:\dsh\工作区对接QQ'
 git pull
-& 'E:\dsh\resources\runtime\cli\bin\dsh.cmd' plugin --profile qqweb add 'E:\dsh\工作区对接QQ'
+# 刷新 profile 加载的目录（junction 目标）
+robocopy src dist\dsh-qq-bridge-0.55.4-package\src /MIR
+# 重启 DSH
+wscript.exe //B scripts\restart-dsh-hidden.vbs
 ```
 
-然后重启 DSH。NapCat 不需要动。升级前备份工作区和状态目录。
+或按 [deploy-windows.md](deploy-windows.md) 在插件管理器里重装 GitHub tag。
+升级前备份工作区与状态目录；发版流程见 [release-checklist.md](release-checklist.md)。
 
 ## 11. 已知缺口
 
-见 [TODO.md](../TODO.md)：官方机器人适配、图片/文件、去重持久化、开机自启、早期测试工作区清理。
+见 [TODO.md](../TODO.md)：官方 QQ 机器人适配、出站非图片文件、去重持久化、开机自启、
+早期测试工作区清理；Fabric generation 收尾见 [todo-next.md](todo-next.md)。
+
+## 附录：旧版 qqweb 部署（仅参考）
+
+早期形态是在 `qqweb` profile 里用 CLI 启动 DSH（3080 端口）并手动起外部 NapCat
+（`dsh plugin --profile qqweb add ...`）。该流程仍可用，但不再是默认形态；
+需要时按 `git show <旧版本>:docs/manual-admin.md` 取旧文档。
