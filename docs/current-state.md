@@ -10,7 +10,7 @@
 | 包 | 版本 | 本地位置 | 远端 |
 |---|---|---|---|
 | `dsh-qq-bridge` | 0.55.4 | `E:\dsh\工作区对接QQ` | `Cheesy-Crab/dsh-qq-bridge` |
-| `@dsh/platform-core` | 0.54.0（仓库，待发版；运行中 0.53.0） | `E:\dsh\dsh-platform-core` | `Cheesy-Crab/dsh-platform-core` |
+| `@dsh/platform-core` | 0.54.0（已推送 tag；运行中 0.53.0） | `E:\dsh\dsh-platform-core` | `Cheesy-Crab/dsh-platform-core` |
 | `@dsh/session-core` | 0.52.8 | `E:\dsh\dsh-session-core` | `Cheesy-Crab/dsh-session-core` |
 | `dsh-tavern-qq` | 0.1.0 | `E:\dsh\dsh-tavern-qq` | 未安装（环境无 `dsh-liketavern`） |
 | `dsh-image-gen` | 0.9.2 | 第三方安装目录（profile junction） | 上游插件，不在本仓库 |
@@ -18,8 +18,8 @@
 - 三个仓库都在 `main`，都配了 GitHub `origin`；**本地提交不等于发布**。
 - QQ 仓库通过 `codeload` tarball 依赖核心包（见 `package.json` 的 `devDependencies`）：
   platform-core `v0.54.0`、session-core `v0.52.8`。
-- **platform-core 0.54.0 尚未推送 tag**：本地仓库已是 0.54.0，运行中的 profile 仍安装 0.53.0；
-  发版步骤见 §7。
+- **platform-core 0.54.0 已推送 `main` + tag `v0.54.0`**：运行中的 profile 仍安装 0.53.0，
+  重装并重启后生效（见 §7）。
 - 依赖方向固定：QQ 适配器 → 平台核心 / 会话核心，核心不反向依赖 QQ。
 
 ## 2. 安装形态
@@ -120,10 +120,33 @@ Get-ChildItem test -Filter *.test.js | ForEach-Object { & $node $_.FullName }
 未完成项按优先级见 [todo-next.md](todo-next.md)：
 
 ```text
-1. platform-core 0.54.0 发版：push main + tag v0.54.0 → 重装 profile 的 platform-core → 重启 DSH
+1. 重装 profile 的 platform-core 到 v0.54.0 并重启 DSH（tag 已推送）
    （重启会中断当前会话，需先确认没有进行中的工具调用）
 2. 去重表持久化 + 出站非图片文件
 3. 显式 profile 展开 family / 预测失败修正
 4. Profile State 重启后统计核对
 5. dsh-tavern-qq 安装（阻塞：无 liketavern）
+```
+
+## 8. 安全基线（2026-11-01 排查）
+
+三个公开仓库已配置：
+
+```text
+secret scanning + push protection
+Dependabot alerts（vulnerability alerts）与 security updates
+CodeQL default setup
+main 分支保护：禁止 force push / 删除，必须通过 ci 检查，conversation resolution
+fork PR 需要维护者批准（all external contributors）
+Actions 默认权限 read（workflow 内另声明显式 permissions）
+无 fork / webhook / deploy key / 额外 collaborator / Actions secrets
+```
+
+仍然待办（需要人工）：
+
+```text
+GitHub 账号未开 2FA（最高优先级）
+Actions 允许全部第三方 action；建议改为 GitHub-owned + verified，或把 action 固定到 commit SHA
+NapCat 下载没有校验 checksum（运行时供应链风险）
+OneBot token 未设置（当前仅 127.0.0.1；跨机前必须设 QQ_ONEBOT_TOKEN）
 ```
