@@ -1,4 +1,4 @@
-﻿# 运行时契约：DeliveryCoordinator 与 InvocationLedger
+# 运行时契约：DeliveryCoordinator 与 InvocationLedger
 
 ## DeliveryCoordinator
 
@@ -79,7 +79,34 @@ sessionId + turnId + tool + sha256(normalizedArgs)
 - `exclusive`：同 capability 同 turn 只允许一次成功。
 - 失败 release，允许重试。
 
-## tool execution\n\nplatform 注册：\n\n```text\nctx.on("tools/execute", handler)\n```\n\n对 managed tool：\n\n```text\nsessionId = agent.session.header.id\nturnId = tool/call event.data.turn\ntool = exec.name\nargs = exec.arguments\n```\n\nclaim → next() → complete / fail。\n\n效果：\n\n```text\n同 session/turn/tool/args 只执行一次\n并发重复加入 in-flight\n失败释放 claim\n```\n\n## bridge → session-core
+## tool execution
+
+platform 注册：
+
+```text
+ctx.on("tools/execute", handler)
+```
+
+对 managed tool：
+
+```text
+sessionId = agent.session.header.id
+turnId = tool/call event.data.turn
+tool = exec.name
+args = exec.arguments
+```
+
+claim → next() → complete / fail。
+
+效果：
+
+```text
+同 session/turn/tool/args 只执行一次
+并发重复加入 in-flight
+失败释放 claim
+```
+
+## bridge → session-core
 
 ```js
 chat.handle(message, {

@@ -2,14 +2,16 @@
 
 按优先级记录尚未完成的事项。已完成项见 [CHANGELOG.md](CHANGELOG.md) 与 [PLAN.md](PLAN.md)。
 
-## 权限现状（2026-10-22 确认）
+## 权限现状（2026-11-01 核对）
 
 | 等级 | 文件沙箱 | 审批行为 | 默认能力 |
 |---|---|---|---|
 | L0 访客 | `read-only` | `never` | 仅聊天 |
-| L1 用户 | `read-only` | `never`（无工具） | 仅聊天；白名单可开 |
-| L2 高级 | `read-only` | `never`（无工具） | 仅聊天；白名单可开 |
-| L3 管理员 | `danger-full-access` | `ask`，L3 QQ 本人回 `1`/`2` | 全部 |
+| L1 用户 | `workspace-write` | `ask`（有白名单授权时） | 聊天 + `image`（额度 0） |
+| L2 高级 | `workspace-write` | `ask` | 聊天 + `image`（额度 0，配额更高） |
+| L3 管理员 | `danger-full-access` | `ask`，本人在 QQ 回 `1`/`2` | 全部 |
+
+审批策略按“L3 或存在 `accessGrants`”取 `ask`，否则 `never`（`src/agent-ext/policy.js`）。
 
 已确认的设计决定：
 

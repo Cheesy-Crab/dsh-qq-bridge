@@ -2,6 +2,11 @@
 
 面向在一台 Windows 机器上部署和维护机器人的人。Linux 部署见 [deploy-linux.md](deploy-linux.md)。
 
+> **部署形态（2026-11-01）**：当前生产实例是 **DSH Desktop 的 `desktop` profile**，
+> 插件与 NapCat 都由 Desktop 管理，控制接口在 `/qq-bridge/*`，Web GUI 端口由 Desktop
+> 随机分配（`--port 0`）。本文中的 `qqweb` profile、`3080` 端口属于旧版独立部署写法，
+> 保留作参考。当前运行态与版本见 [current-state.md](current-state.md)。
+
 ## 1. 组成与端口
 
 ```

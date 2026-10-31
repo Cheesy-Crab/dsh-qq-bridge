@@ -1,17 +1,20 @@
-﻿# 下一阶段 TODO（可执行版）
+# 下一阶段 TODO（可执行版）
 
-状态基线：2026-10-28 23:45  
+状态基线：2026-11-01 01:45  
 当前版本：
 
 ```text
 @dsh/platform-core  0.53.0
 @dsh/session-core   0.52.8
-dsh-qq-bridge       0.55.3
-dsh-tavern-qq       0.1.0
+dsh-qq-bridge       0.55.4
+dsh-tavern-qq       0.1.0（未安装）
 ```
 
-> 当前运行进程加载 platform 0.48.2 + QQ 0.53.2；0.53.0 / 0.52.8 / 0.55.3 已安装，待重启。  
-> image profile 已注册；generation/effect 已生效。
+> 运行态、安装形态、测试基线与已知限制见 [current-state.md](current-state.md)。
+> 本文只保留“尚未完成”的可执行项。
+>
+> 2026-11-01 核实：DSH 已加载 platform 0.53.0 / session 0.52.8 / QQ 0.55.4；
+> image profile 已注册；generation/effect 已生效；invocation ledger 已接入 `tools/execute`。
 
 ## 执行状态
 
@@ -575,7 +578,7 @@ Fabric 兼容状态展示
 - [x] tool usage collector
 - [x] onTurnEnd 持久化
 - [x] /profile/state 路由（0.54.0）
-- [ ] 重启后实际统计
+- [ ] 重启后实际统计核对（2026-11-01 实测 `image` 统计为空：重启后尚未产生新的工具调用，需跑一轮生图后再看）
 
 
 

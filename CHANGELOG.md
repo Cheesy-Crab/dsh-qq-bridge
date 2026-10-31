@@ -1,4 +1,76 @@
-﻿# 变更记录
+# 变更记录
+
+## 0.55.4
+
+- 入站图片只有 `file_id` / `file` 引用时，先调 NapCat `get_image` 解析，再落盘 `attachments/incoming`。
+- 平台核心 0.53.0，会话核心 0.52.8。
+
+## 0.55.3
+
+- 恢复生图额度闸门：`generate_image` / `generate_images` / `edit_image` 在额度为 0 时被 guard 拒绝。
+- turn 结束按实际 cost 扣减额度并回写 `state.imageQuota`；群聊按群主体扣费。
+- 会话核心 0.52.8（turn context 带回实时生图额度）。
+
+## 0.55.2
+
+- 平台核心 0.53.0：InvocationLedger 接入 `tools/execute`，同 session/turn/tool/args 只执行一次。
+- 新增执行流图与节点说明（docs/execution-flow.md、execution-flow-v0.55.png）。
+
+## 0.55.1
+
+- 平台核心 0.52.0：群聊按 principal 聚合预测、预测日志 `platform/predictions.jsonl`、scope 工具执行 guard。
+
+## 0.55.0
+
+- 平台核心 0.51.0：UserCapabilityStore + `profilePredictor`，按用户/群调用统计预测默认 profile。
+- 会话核心 0.52.7：session meta 记录 `requester` / `principal`。
+
+## 0.54.9
+
+- 平台核心 0.50.3：只对 predicted profile 展开 capability family，显式 profile 保持窄能力集。
+
+## 0.54.8
+
+- 平台核心 0.50.2：capability id 校验、`tools.restrict` 失败可观测、capability brief 按 known tools 过滤。
+
+## 0.54.7
+
+- 会话核心 0.52.6：session 扩展拿到 effective profile。
+
+## 0.54.6
+
+- 平台核心 0.50.1：持久化 effective profile 并校验预测结果。
+- 会话核心 0.52.5：只持久化用户选择的 `profileId`，不再预测默认。
+
+## 0.54.5
+
+- 平台核心 0.50.0：effective profile 在 `agent/created` 单点解析（selected > predicted > 无）。
+- 会话核心 0.52.4：组装一次，按 selected profileId 决定 agentPreset。
+
+## 0.54.4
+
+- 移除运行时的 dev 计费闸门（生图额度改由用户额度与平台 guard 承担）。
+- 会话核心 0.52.3。
+
+## 0.54.3
+
+- 会话核心 0.52.2：turn context 绑定到排队 job，避免并发回合读错上下文。
+
+## 0.54.2
+
+- 能力白名单字段改名 `accessGrants`（原 access capabilities），bridge 契约同步。
+- 会话核心 0.52.1。
+
+## 0.54.1
+
+- bridge 向 session-core 传显式 turn context（`level` / `accessGrants` / `requester` / `principal`）。
+- 会话核心 0.52.0。
+
+## 0.54.0
+
+- 新增 `/qq-bridge/profile/state` 路由（profile 级持久统计，可按 `?id=` 查询）。
+- 平台核心 0.49.0：ProfileStateStore（profile 级工具/能力统计）。
+- 会话核心 0.51.0：session status 快照。
 
 ## 0.53.2
 

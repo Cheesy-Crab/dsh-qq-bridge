@@ -1,4 +1,4 @@
-﻿# Windows 部署（DSH Desktop 一键版）
+# Windows 部署（DSH Desktop 一键版）
 
 适用于 Windows 10/11。目标：把 QQ Bridge 装进 **DSH Desktop 本身**，让 Desktop 同时
 跑 bridge、NapCat 和设置页；不再需要 qqweb、浏览器页面或单独启动 NapCat。
@@ -23,13 +23,13 @@ DSH Desktop 侧边栏：**插件 → 添加插件 → 安装第三方插件**，
 ### 方式 A：GitHub 地址（推荐）
 
 ```
-https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.46.1
+https://github.com/Cheesy-Crab/dsh-qq-bridge.git#v0.55.4
 ```
 
 或：
 
 ```
-github:Cheesy-Crab/dsh-qq-bridge#v0.46.1
+github:Cheesy-Crab/dsh-qq-bridge#v0.55.4
 ```
 
 仓库是 **public**，不需要 GitHub 凭据。
@@ -38,7 +38,7 @@ github:Cheesy-Crab/dsh-qq-bridge#v0.46.1
 
 ### 方式 B：本地小包
 
-把 `dist\dsh-qq-bridge-0.36.0-package` 复制到目标机器，安装时填：
+把 `dist\dsh-qq-bridge-0.55.4-package` 复制到目标机器，安装时填：
 
 ```
 D:\dsh-qq-bridge
@@ -48,7 +48,7 @@ D:\dsh-qq-bridge
 
 ### 方式 C：离线完整包（仅离线备用）
 
-`dist\dsh-qq-bridge-0.36.0.zip` 约 118MB，包含 `vendor/napcat`。只有在目标机器
+`dist\dsh-qq-bridge-0.55.4.zip` 约 118MB，包含 `vendor/napcat`。只有在目标机器
 无法联网、下载按钮不可用时才需要它；解压后把解压目录作为本地路径安装。
 
 ## 3. 启用插件
@@ -160,7 +160,7 @@ Desktop 的 **设置 → QQ Bridge** 应显示：
 
 **GitHub 安装失败**
 - private 仓库鉴权失败：改用本地目录，或把仓库设为 public；
-- 网络失败：用本地 `dist\dsh-qq-bridge-0.20.0-package`。
+- 网络失败：用本地 `dist\dsh-qq-bridge-0.55.4-package`。
 
 **NapCat 下载失败**
 - 在安装输入框填本地 NapCat 目录或 zip；

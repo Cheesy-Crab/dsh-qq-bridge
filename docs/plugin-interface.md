@@ -408,7 +408,7 @@ QQ Bridge 只保留沟通能力语义：
 
 平台不能要求所有现存插件立即改代码，因此运行时先做保守分类。
 
-参考实现：[src/platform/plugin-adapter.js](../src/platform/plugin-adapter.js)。
+参考实现：`@dsh/platform-core` 的 `plugin-adapter.js`（见 [platform-core.md](platform-core.md)）。
 
 ### 16.1 分类结果
 
