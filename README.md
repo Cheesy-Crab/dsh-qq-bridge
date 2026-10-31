@@ -291,7 +291,7 @@ NapCat 默认安装到 `%USERPROFILE%\.dsh\qq-bridge\napcat`，不随插件仓�
 
 ## API Key 文件
 
-插件启动时从文本文件读取模型密钥并写入 `DEEPSEEK_API_KEY`（不会写进配置或日志）。默认路径（`%USERPROFILE%` 是你的 Windows 用户目录，本机为 `C:\Users\雪之下雪奶酪`）：
+插件启动时从文本文件读取模型密钥并写入 `DEEPSEEK_API_KEY`（不会写进配置或日志）。默认路径（`%USERPROFILE%` 是你的 Windows 用户目录，例如 `C:\Users\<用户名>`）：
 
 ```
 %USERPROFILE%\.dsh\deepseek-key.txt

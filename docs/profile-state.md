@@ -11,7 +11,7 @@ $DSH_HOME/platform/profiles/<profileId>.json
 默认：
 
 ```text
-C:\Users\雪之下雪奶酪\.dsh\platform\profiles\image.json
+C:\Users\<用户名>\.dsh\platform\profiles\image.json
 ```
 
 ## 结构
