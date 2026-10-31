@@ -186,9 +186,12 @@ profile policy        防止错误的 prompt / tool 面
 ```
 
 四者不能互相替代，契约见 [runtime-contracts.md](runtime-contracts.md)。
-platform-core 还维护 `platformGeneration` 与 `effectLedger`（effect 归属记录），
+platform-core 还维护 per-session generation（`GenerationRegistry`，记录在
+`session.meta.generationId`）、`platformGeneration`（进程代）、`effectLedger`
+（effect 归属：adapter `pluginId` / `activationId`、delivery、cleanup-failed），
 以及 profile 统计（ProfileStateStore）、用户能力统计（UserCapabilityStore）和预测日志
-（`%DSH_HOME%\platform\predictions.jsonl`），见 [profile-state.md](profile-state.md)。
+（`%DSH_HOME%\platform\predictions.jsonl`），见 [profile-state.md](profile-state.md)
+与 [fabric-generation-effect.md](fabric-generation-effect.md)。
 
 ## 9. 扩展点
 
