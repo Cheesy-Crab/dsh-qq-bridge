@@ -7,7 +7,8 @@
 @dsh/platform-core  0.54.0（仓库，待发版；运行中 0.53.0）
 @dsh/session-core   0.52.8
 dsh-qq-bridge       0.55.4
-dsh-tavern-qq       0.1.0（未安装）
+dsh-tavern-qq       0.1.0（已安装，待重启）
+dsh-liketavern      0.5.9（已安装，待重启）
 ```
 
 > 运行态、安装形态、测试基线与已知限制见 [current-state.md](current-state.md)。
@@ -50,8 +51,8 @@ P2-5 文档清理
 P2 剩余安装项：
 
 ```text
-dsh-tavern-qq 尚未安装到含 Tavern 的 profile
-原因是当前环境没有安装 dsh-liketavern
+无；dsh-liketavern 0.5.9 + dsh-tavern-qq 0.1.0 已装入 desktop profile（2026-11-01）
+生效需要重启 DSH（当前运行进程仍是重启前的组合）
 ```
 
 ## 执行规则
@@ -459,7 +460,7 @@ packages/platform-core/src/adapter-host.js
 - [x] 新增 `dsh-tavern-qq` 包
 - [x] provider / bind / unbind 测试
 - [x] `/profile use tavern:<cardId>`
-- [ ] 安装到含 Tavern 的 profile（Tavern 未安装）
+- [x] 安装到含 Tavern 的 profile（liketavern 0.5.9 + tavern-qq 0.1.0，2026-11-01；待重启生效）
 
 新增：
 

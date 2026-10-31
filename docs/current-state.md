@@ -10,9 +10,10 @@
 | 包 | 版本 | 本地位置 | 远端 |
 |---|---|---|---|
 | `dsh-qq-bridge` | 0.55.4 | `E:\dsh\工作区对接QQ` | `Cheesy-Crab/dsh-qq-bridge` |
-| `@dsh/platform-core` | 0.54.0（已推送 tag；运行中 0.53.0） | `E:\dsh\dsh-platform-core` | `Cheesy-Crab/dsh-platform-core` |
+| `@dsh/platform-core` | 0.54.0（已安装；运行中仍是 0.53.0，待重启） | `E:\dsh\dsh-platform-core` | `Cheesy-Crab/dsh-platform-core` |
 | `@dsh/session-core` | 0.52.8 | `E:\dsh\dsh-session-core` | `Cheesy-Crab/dsh-session-core` |
-| `dsh-tavern-qq` | 0.1.0 | `E:\dsh\dsh-tavern-qq` | 未安装（环境无 `dsh-liketavern`） |
+| `dsh-tavern-qq` | 0.1.0（已装入 desktop profile，待重启） | `E:\dsh\dsh-tavern-qq` | 本地 `link:` |
+| `dsh-liketavern` | 0.5.9（已装入 desktop profile，待重启） | 源包 `E:\dsh\dsh-liketavern`，tarball `E:\dsh\dsh-liketavern-0.5.9.tgz` | 第三方向 `file:` |
 | `dsh-image-gen` | 0.9.2 | 第三方安装目录（profile junction） | 上游插件，不在本仓库 |
 
 - 三个仓库都在 `main`，都配了 GitHub `origin`；**本地提交不等于发布**。
@@ -30,9 +31,11 @@
 bundles:
   @deepseek-ai/dsh-base
   @deepseek-ai/dsh-web-app
-  @dsh/platform-core      0.53.0（运行中；0.54.0 待安装）
+  @dsh/platform-core      0.54.0（已安装；重启后加载）
   dsh-qq-bridge           0.55.4   (junction → dist\dsh-qq-bridge-0.55.4-package)
   @dsh/session-core       0.52.8
+  dsh-liketavern          0.5.9（已安装；重启后加载）
+  dsh-tavern-qq           0.1.0（已安装；重启后加载）
   dsh-image-gen           0.9.2
   dsh-whale-widget        0.4.2
 ```
@@ -120,12 +123,13 @@ Get-ChildItem test -Filter *.test.js | ForEach-Object { & $node $_.FullName }
 未完成项按优先级见 [todo-next.md](todo-next.md)：
 
 ```text
-1. 重装 profile 的 platform-core 到 v0.54.0 并重启 DSH（tag 已推送）
+1. 重启 DSH（platform-core 0.54.0、dsh-liketavern 0.5.9、dsh-tavern-qq 0.1.0 已安装）
    （重启会中断当前会话，需先确认没有进行中的工具调用）
-2. 去重表持久化 + 出站非图片文件
-3. 显式 profile 展开 family / 预测失败修正
-4. Profile State 重启后统计核对
-5. dsh-tavern-qq 安装（阻塞：无 liketavern）
+2. 验证 Tavern：Web UI 出现酒馆入口；`/qq-bridge/profile/status` 出现 `tavern`；
+   QQ `/profile use tavern:<cardId>`
+3. 去重表持久化 + 出站非图片文件
+4. 显式 profile 展开 family / 预测失败修正
+5. Profile State 重启后统计核对
 ```
 
 ## 8. 安全基线（2026-11-01 排查）
