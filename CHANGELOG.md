@@ -1,5 +1,11 @@
 # 变更记录
 
+## 未发布
+
+- 依赖 platform-core 0.54.0：per-session generation、adapter owner、`stale_generation` 拒绝、
+  `cleanup-failed` 记录。
+- QQ 适配器代码无改动；重装 profile 的 platform-core 并重启 DSH 后生效。
+
 ## 0.55.4
 
 - 入站图片只有 `file_id` / `file` 引用时，先调 NapCat `get_image` 解析，再落盘 `attachments/incoming`。

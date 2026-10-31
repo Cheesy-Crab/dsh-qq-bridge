@@ -25,14 +25,19 @@ deliver({
   target,
   output,
   send,
+  generationId,   // 可选：per-session generation
+  owner,          // 可选：{ pluginId, activationId }，写入 effect ledger
 })
 ```
 
 键：
 
 ```text
-sessionId + turnId + surface + outputId
+generationId + sessionId + turnId + surface + outputId
 ```
+
+`generationId` 缺省时退回进程 generation；已退休的 id 返回
+`{ skipped: 'stale_generation' }`，不发送。
 
 状态：
 
@@ -62,14 +67,17 @@ claim({
   args,
   capabilityId,
   exclusive,
+  generationId,   // 可选：per-session generation
 })
 ```
 
 键：
 
 ```text
-sessionId + turnId + tool + sha256(normalizedArgs)
+generationId + sessionId + turnId + tool + sha256(normalizedArgs)
 ```
+
+已退休的 generation 返回 `{ ok: false, reason: 'stale_generation' }`。
 
 规则：
 
@@ -141,9 +149,22 @@ DeliveryCoordinator 防止重复发送
 InvocationLedger   防止重复执行
 capability mutex   防止同能力多 provider
 profile policy     防止错误 prompt/tool 面
+generation         防止跨装配重放（stale_generation）
 ```
 
-四者不能互相替代。
+五者不能互相替代。
+
+## adapter owner
+
+`AdapterHost.mount()` 为每个 adapter 生成：
+
+```text
+{ pluginId, activationId }
+```
+
+mount 记录 `create`，dispose 记录 `release`；`stop()` 抛错记录
+`cleanup-failed`（`errorCode: adapter-stop-failed`）。delivery 的 effect
+记录使用同一 owner。
 
 
 

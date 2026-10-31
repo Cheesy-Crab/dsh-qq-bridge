@@ -13,6 +13,8 @@ InvocationLedger: generation-scoped keys
 /platform/status: generation + effects stats
 ```
 
+0.54.0 在此基础上补齐了 per-session generation、adapter owner 和跨代拒绝，见 §8。
+
 `platformGeneration` 在 platform-core apply 时生成：
 
 ```text
@@ -87,21 +89,21 @@ surface adapter reload
 
 ## 3. 当前状态
 
-已存在：
+已存在（0.54.0）：
 
 ```text
-profile 切换会清 sessionId / handle
-下一条消息重新 createSession
-Delivery/Invocation ledger 按 session/turn 去重
+per-session generationId（session.meta.generationId）
+profile / capability 切换时 fork 新 generation
+DeliveryCoordinator / InvocationLedger 显式拒绝 stale_generation
+adapter owner（pluginId + activationId）
+adapter create / release / cleanup-failed 记录
 ```
 
-缺少：
+仍然不做：
 
 ```text
-显式 generationId
-跨代引用校验
-跨代 delivery / invocation 拒绝
-adapter 释放记录
+不把 generation 做成安全沙箱
+不要求跨代恢复内存对象
 ```
 
 ## 4. Effect Ledger 字段
@@ -165,12 +167,34 @@ cleanup-failed
 不把未实现的 Fabric 字段伪装成标准
 ```
 
-## 8. 剩余实现
+## 8. 实现状态（0.54.0）
 
 ```text
-session state 记录 generationId
-profile/capability 切换时生成新 generation
-adapter 传入真实 pluginId / activationId
-stale generation 请求拒绝
-cleanup-failed 记录 adapter 释放失败
+[x] session state 记录 generationId
+[x] profile/capability 切换时生成新 generation
+[x] adapter 传入真实 pluginId / activationId
+[x] stale generation 请求拒绝（stale_generation）
+[x] cleanup-failed 记录 adapter 释放失败
 ```
+
+语义：
+
+```text
+新 session            → 新 generation
+同 session 同装配 resume → 复用
+profile 变化          → fork（profile-switch）
+capability 集变化      → fork（capability-switch）
+未知 generation id    → 放行（进程重启后 registry 为空）
+已知但已退休的 id      → 拒绝
+```
+
+待发布：
+
+```text
+platform-core v0.54.0 push + tag
+profile 重新安装 platform-core
+重启 DSH 后生效
+```
+
+QQ 适配器无需改代码：`host.forwardMediaOutputs` 自动带 owner，delivery 从
+`session.meta.generationId` 取 generation。

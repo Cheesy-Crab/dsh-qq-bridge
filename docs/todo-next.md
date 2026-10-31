@@ -4,7 +4,7 @@
 当前版本：
 
 ```text
-@dsh/platform-core  0.53.0
+@dsh/platform-core  0.54.0（仓库，待发版；运行中 0.53.0）
 @dsh/session-core   0.52.8
 dsh-qq-bridge       0.55.4
 dsh-tavern-qq       0.1.0（未安装）
@@ -531,15 +531,17 @@ platform-core/src/fabric.js
 platformStatus.host
 platformHostDescriptor
 fabricCompatibility
+platform-core/src/generation.js（0.54.0）
+per-session generationId + stale_generation 拒绝（0.54.0）
+adapter pluginId / activationId + cleanup-failed（0.54.0）
 ```
 
 待补：
 
 ```text
-profile/capability 切换时的新 generation
-adapter 的 pluginId / activationId
-image-gen capability 映射
+image-gen 仍无 dsh.platform manifest（platform-core 的 legacy bindings 已覆盖 8 个工具）
 Fabric 兼容状态展示
+platform-core 0.54.0 发版与 profile 重装（重启后生效）
 ```
 
 # 暂缓：capability → tool exposure

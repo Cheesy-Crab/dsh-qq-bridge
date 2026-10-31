@@ -42,7 +42,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@dsh/platform-core": "https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.53.0",
+    "@dsh/platform-core": "https://codeload.github.com/Cheesy-Crab/dsh-platform-core/tar.gz/v0.54.0",
     "@dsh/session-core": "https://codeload.github.com/Cheesy-Crab/dsh-session-core/tar.gz/v0.52.8"
   }
 }
