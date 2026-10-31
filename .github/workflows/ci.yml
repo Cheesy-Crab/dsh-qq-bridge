@@ -1,8 +1,11 @@
-﻿name: ci
+name: ci
 
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -17,6 +20,8 @@ jobs:
           - 24
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -32,4 +37,3 @@ jobs:
       - run: pnpm run check
 
       - run: pnpm test
-
